@@ -12,6 +12,7 @@ namespace BankDirectoryApi.API.Extensions
 {
     public static class ServiceExtensions
     {
+        
         public static void AddApplicationMappers(this IServiceCollection services)
         {
 

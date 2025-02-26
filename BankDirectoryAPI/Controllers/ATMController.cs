@@ -16,6 +16,7 @@ namespace BankDirectoryApi.API.Controllers
             _aTMService = ATMService;
         }
 
+
         [HttpGet]
         public async Task<IActionResult> GetAllATMs()
         {
