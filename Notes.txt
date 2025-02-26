@@ -1,0 +1,33 @@
+BankDirectoryApi/
+├── src/
+│   ├── BankDirectoryApi.API/
+│   │   ├── Controllers/
+│   │   ├── Middleware/
+│   │   ├── Extensions/
+│   │   ├── Program.cs
+│   │   └── appsettings.json
+│   ├── BankDirectoryApi.Application/
+│   │   ├── Services/
+│   │   ├── DTOs/
+│   │   ├── Interfaces/
+│   │   ├── Mappings/
+│   │   └── Exceptions/
+│   ├── BankDirectoryApi.Domain/
+│   │   ├── Entities/
+│   │   ├── Enums/
+│   │   ├── ValueObjects/
+│   │   └── Interfaces/
+│   ├── BankDirectoryApi.Infrastructure/
+│   │   ├── Data/
+│   │   ├── Repositories/
+│   │   ├── Services/
+│   │   └── Migrations/
+│   └── BankDirectoryApi.Common/
+│       ├── Constants/
+│       ├── Helpers/
+│       ├── Logging/
+│       └── Extensions/
+├── tests/
+│   ├── BankDirectoryApi.UnitTests/
+│   └── BankDirectoryApi.IntegrationTests/
+└── BankDirectoryApi.sln
