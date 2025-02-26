@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BankDirectoryApi.Common\BankDirectoryApi.Common.csproj" />
     <ProjectReference Include="..\BankDirectoryApi.Infrastructure\BankDirectoryApi.Infrastructure.csproj" />
   </ItemGroup>
 

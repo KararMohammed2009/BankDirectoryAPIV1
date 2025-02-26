@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace BankDirectoryApi.Common.Helpers
 {
@@ -19,6 +20,30 @@ namespace BankDirectoryApi.Common.Helpers
             }
 
             return secretKey;
+        }
+        public static string GetJwtIssuer(IConfiguration configuration)
+        {
+            var issuer = Environment.GetEnvironmentVariable("JWT_ISSUER")
+                            ?? configuration["JwtSettings:Issuer"];
+
+            if (string.IsNullOrEmpty(issuer))
+            {
+                throw new InvalidOperationException("JWT Issuer is not configured!");
+            }
+
+            return issuer;
+        }
+        public static string GetJwtAudience(IConfiguration configuration)
+        {
+            var audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE")
+                            ?? configuration["JwtSettings:Audience"];
+
+            if (string.IsNullOrEmpty(audience))
+            {
+                throw new InvalidOperationException("JWT Audience is not configured!");
+            }
+
+            return audience;
         }
     }
 }
