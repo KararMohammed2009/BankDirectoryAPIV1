@@ -9,10 +9,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BankDirectoryApi.Infrastructure.Identity;
-using BankDirectoryApi.Application.DTOs;
 using Microsoft.SqlServer.Server;
 using Google.Apis.Auth;
 using Microsoft.Extensions.Configuration;
+using BankDirectoryApi.Application.DTOs.Auth;
 namespace YourProject.Application.Services
 {
     public class UserService : IUserService

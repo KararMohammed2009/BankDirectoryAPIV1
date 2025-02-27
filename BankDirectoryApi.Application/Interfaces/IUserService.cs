@@ -1,4 +1,4 @@
-﻿using BankDirectoryApi.Application.DTOs;
+﻿using BankDirectoryApi.Application.DTOs.Auth;
 using Microsoft.AspNetCore.Identity.Data;
 using System;
 using System.Collections.Generic;

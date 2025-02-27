@@ -1,4 +1,4 @@
-﻿using BankDirectoryApi.Application.DTOs;
+﻿using BankDirectoryApi.Application.DTOs.Auth;
 using BankDirectoryApi.Application.Interfaces;
 using BankDirectoryApi.Domain.Entities;
 using Google.Apis.Auth;
@@ -7,70 +7,40 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Application.Services.ExternalAuthProviders
 {
-    public class GoogleAuthProvider : IExternalAuthProvider
+    public class GoogleAuthProvider : ExternalAuthProviderBase, IExternalAuthProvider
     {
         private readonly IConfiguration _configuration;
-        private readonly UserManager<User> _userManager;
 
-        public GoogleAuthProvider(IConfiguration configuration, UserManager<User> userManager)
+        public GoogleAuthProvider(UserManager<User> userManager, HttpClient httpClient, IConfiguration configuration)
+            : base(userManager, httpClient)
         {
             _configuration = configuration;
-            _userManager = userManager;
         }
 
         public async Task<(bool Success, User? User, AuthenticationDTO? Response)> ValidateAndGetUserAsync(string idToken)
         {
-            try
+            var googleApiUrl = $"https://oauth2.googleapis.com/tokeninfo?id_token={idToken}";
+            var response = await _httpClient.GetAsync(googleApiUrl);
+
+            if (!response.IsSuccessStatusCode)
             {
-                var clientId = _configuration["Google:ClientId"];
-                if (string.IsNullOrEmpty(clientId))
-                {
-                    throw new InvalidOperationException("Google ClientId is not configured.");
-                }
-
-                var settings = new GoogleJsonWebSignature.ValidationSettings()
-                {
-                    Audience = new List<string>() { clientId }
-                };
-
-                var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
-                var email = payload.Email;
-
-                var user = await _userManager.FindByEmailAsync(email);
-
-                if (user == null)
-                {
-                    user = new User
-                    {
-                        UserName = email,
-                        Email = email,
-                        NormalizedUserName = payload.GivenName,
-                        FamilyName = payload.FamilyName,
-                    };
-
-                    var result = await _userManager.CreateAsync(user);
-
-                    if (!result.Succeeded)
-                    {
-                        return (false, null, new AuthenticationDTO { Success = false, Errors = result.Errors });
-                    }
-                }
-
-                return (true, user, null);
+                return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Google token." } } });
             }
-            catch (InvalidJwtException ex)
+
+            var content = await response.Content.ReadAsStringAsync();
+            var googleUser = JsonSerializer.Deserialize<GoogleUserDTO>(content);
+            if (googleUser is null)
             {
-                return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = $"Invalid token: {ex.Message}" } } });
+                return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Google User." } } });
             }
-            catch (Exception ex)
-            {
-                return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = $"External login error: {ex.Message}" } } });
-            }
+            return await ValidateUserAsync(googleUser.Email, googleUser.GivenName, googleUser.FamilyName);
         }
     }
 }

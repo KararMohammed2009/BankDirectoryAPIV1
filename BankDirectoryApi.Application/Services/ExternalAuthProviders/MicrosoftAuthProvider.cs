@@ -6,87 +6,43 @@ using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using BankDirectoryApi.Application.Interfaces;
-using BankDirectoryApi.Application.DTOs;
 using BankDirectoryApi.Domain.Entities;
 using Microsoft.Extensions.DependencyInjection;
+using BankDirectoryApi.Application.DTOs.Auth;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace BankDirectoryApi.Application.Services.ExternalAuthProviders
 {
 
-    public class MicrosoftAuthProvider : IExternalAuthProvider
+    public class MicrosoftAuthProvider : ExternalAuthProviderBase, IExternalAuthProvider
     {
-        private readonly IConfiguration _configuration;
-        private readonly UserManager<User> _userManager;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-
-        public MicrosoftAuthProvider(IConfiguration configuration, UserManager<User> userManager, IHttpContextAccessor httpContextAccessor)
+        public MicrosoftAuthProvider(UserManager<User> userManager, HttpClient httpClient)
+            : base(userManager, httpClient)
         {
-            _configuration = configuration;
-            _userManager = userManager;
-            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<(bool Success, User? User, AuthenticationDTO? Response)> ValidateAndGetUserAsync(string accessToken)
         {
-            try
+            var request = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
             {
-                var httpContext = _httpContextAccessor.HttpContext;
-                if (httpContext == null)
-                {
-                    return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "HttpContext is null." } } });
-                }
-
-                var authProperties = new AuthenticationProperties();
-                authProperties.StoreTokens(new[] { new AuthenticationToken { Name = "access_token", Value = accessToken } });
-
-
-                var authenticateResult = await httpContext.AuthenticateAsync(MicrosoftAccountDefaults.AuthenticationScheme);
-                if (!authenticateResult.Succeeded)
-                {
-                    return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "Microsoft authentication failed." } } });
-                }
-
-                httpContext.User = authenticateResult.Principal;
-                var claims = authenticateResult.Principal.Claims;
-
-                var email = claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-                var firstName = claims.FirstOrDefault(c => c.Type == ClaimTypes.GivenName)?.Value;
-                var lastName = claims.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value;
-                var phone = claims.FirstOrDefault(c => c.Type == ClaimTypes.MobilePhone)?.Value;
-                if (string.IsNullOrEmpty(email))
-                {
-                    return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "Email not found from Microsoft account." } } });
-                }
-
-                var user = await _userManager.FindByEmailAsync(email);
-
-                if (user == null)
-                {
-                    user = new User
-                    {
-                        UserName = email,
-                        Email = email,
-                        NormalizedUserName = firstName,
-                        FamilyName = lastName,
-                    };
-
-                    var result = await _userManager.CreateAsync(user);
-
-                    if (!result.Succeeded)
-                    {
-                        return (false, null, new AuthenticationDTO { Success = false, Errors = result.Errors });
-                    }
-                }
-            
-
-                return (true, user, null);
-        } 
-            catch (Exception ex)
-            {
-                return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = $"Microsoft login error: {ex.Message}" }
-    }
-});
+                return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Microsoft access token." } } });
             }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var microsoftUser = JsonSerializer.Deserialize<MicrosoftUserDTO>(content);
+            if(microsoftUser is null)
+            {
+                return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Microsoft User." } } });
+            }
+            return await ValidateUserAsync(microsoftUser.Mail, microsoftUser.GivenName, microsoftUser.Surname);
         }
     }
+
+
+
 }

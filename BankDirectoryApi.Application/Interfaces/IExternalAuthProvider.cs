@@ -1,4 +1,4 @@
-﻿using BankDirectoryApi.Application.DTOs;
+﻿using BankDirectoryApi.Application.DTOs.Auth;
 using BankDirectoryApi.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -13,3 +13,4 @@ namespace BankDirectoryApi.Application.Interfaces
         Task<(bool Success, User? User, AuthenticationDTO? Response)> ValidateAndGetUserAsync(string idToken);
     }
 }
+
