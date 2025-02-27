@@ -5,10 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BankDirectoryApi.Application.Interfaces
+namespace BankDirectoryApi.Domain.Interfaces
 {
-    public interface ICardRepository:IRepository<Card>
+    public interface IATMRepository:IRepository<ATM>
     {
-
     }
 }

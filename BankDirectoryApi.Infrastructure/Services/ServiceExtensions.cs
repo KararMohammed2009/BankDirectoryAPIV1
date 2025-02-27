@@ -1,5 +1,4 @@
-﻿using BankDirectoryApi.Application.Interfaces;
-using BankDirectoryApi.Application.Services;
+﻿using BankDirectoryApi.Domain.Interfaces;
 using BankDirectoryApi.Domain.Entities;
 using BankDirectoryApi.Infrastructure.Data;
 using BankDirectoryApi.Infrastructure.Repositories;
@@ -28,11 +27,11 @@ namespace BankDirectoryApi.Infrastructure.Services
             services.AddScoped<IATMRepository, ATMRepository>();
             services.AddScoped<ICardRepository, CardRepository>();
            
-            // Register Services
-            services.AddScoped<IBankService, BankService>();
-            services.AddScoped<IBranchService, BranchService>();
-            services.AddScoped<IATMService, ATMService>();
-            services.AddScoped<ICardService, CardService>();
+            //// Register Services
+            //services.AddScoped<IBankService, BankService>();
+            //services.AddScoped<IBranchService, BranchService>();
+            //services.AddScoped<IATMService, ATMService>();
+            //services.AddScoped<ICardService, CardService>();
         }
     }
 }

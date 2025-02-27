@@ -5,9 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BankDirectoryApi.Application.Interfaces
+namespace BankDirectoryApi.Domain.Interfaces
 {
-    public interface IATMRepository:IRepository<ATM>
+    public interface IBankRepository:IRepository<Bank>
     {
+        Task<Bank?> GetBankWithBranchesAsync(int bankId);
     }
 }

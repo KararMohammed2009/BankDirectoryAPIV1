@@ -11,7 +11,7 @@ namespace BankDirectoryApi.Common.Helpers
     {
         public static string GetJwtSecretKey(IConfiguration configuration)
         {
-            var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET")
+            var secretKey = Environment.GetEnvironmentVariable("BankDirectoryApi_JWT_SECRET")
                             ?? configuration["JwtSettings:SecretKey"];
 
             if (string.IsNullOrEmpty(secretKey))
@@ -23,7 +23,7 @@ namespace BankDirectoryApi.Common.Helpers
         }
         public static string GetJwtIssuer(IConfiguration configuration)
         {
-            var issuer = Environment.GetEnvironmentVariable("JWT_ISSUER")
+            var issuer = Environment.GetEnvironmentVariable("BankDirectoryApi_JWT_ISSUER")
                             ?? configuration["JwtSettings:Issuer"];
 
             if (string.IsNullOrEmpty(issuer))
@@ -35,7 +35,7 @@ namespace BankDirectoryApi.Common.Helpers
         }
         public static string GetJwtAudience(IConfiguration configuration)
         {
-            var audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE")
+            var audience = Environment.GetEnvironmentVariable("BankDirectoryApi_JWT_AUDIENCE")
                             ?? configuration["JwtSettings:Audience"];
 
             if (string.IsNullOrEmpty(audience))
@@ -44,6 +44,23 @@ namespace BankDirectoryApi.Common.Helpers
             }
 
             return audience;
+        }
+        public static int GetJwtExpirationHours(IConfiguration configuration)
+        {
+            var expirationHoursString = Environment.GetEnvironmentVariable("BankDirectoryApi_JWT_EXPIRATIONHOURS")
+                            ?? configuration["JwtSettings:ExpirationHours"];
+
+            if (string.IsNullOrEmpty(expirationHoursString))
+            {
+                throw new InvalidOperationException("JWT ExpirationHours is not configured!");
+            }
+            int expirationHours;
+            if(!int.TryParse(expirationHoursString, out expirationHours))
+            {
+                expirationHours = 0;
+            }
+            
+            return expirationHours;
         }
     }
 }

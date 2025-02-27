@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Text.Json;
-
 namespace BankDirectoryApi.API.Middleware
 {
     public class ExceptionMiddleware

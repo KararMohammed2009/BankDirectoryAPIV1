@@ -1,9 +1,8 @@
 ﻿
 
 using BankDirectoryApi.Application.Interfaces;
+using BankDirectoryApi.Domain.Interfaces;
 using BankDirectoryApi.Application.Services;
-using BankDirectoryApi.Infrastructure.Data;
-using BankDirectoryApi.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using BankDirectoryApi.Application.Mappings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -12,11 +11,22 @@ using System.Text;
 using BankDirectoryApi.API.Middleware;
 using AspNetCoreRateLimit;
 using BankDirectoryApi.Common.Extensions;
+using BankDirectoryApi.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
+using BankDirectoryApi.Infrastructure.Repositories;
+using BankDirectoryApi.Application.Services.ExternalAuthProviders;
 
 namespace BankDirectoryApi.API.Extensions
 {
     public static class ServiceExtensions
     {
+        public static void AddTheExternalAuthProviders(this WebApplicationBuilder builder)
+        {
+            builder.Services.AddScoped<IExternalAuthProvider, GoogleAuthProvider>();
+            builder.Services.AddScoped<IExternalAuthProvider, MicrosoftAuthProvider>();
+            builder.Services.AddScoped<IExternalAuthProvider, FacebookAuthProvider>();
+            builder.Services.AddScoped<IExternalAuthProvider, TwitterAuthProvider>();
+        }
         public static void AddTheSwagger(this WebApplicationBuilder builder)
         {
 

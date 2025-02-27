@@ -11,16 +11,10 @@ using BankDirectoryApi.Common.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-
-
-
-// Register Application Services  
 builder.Services.AddApplicationMappers();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
-
 
 builder.AddTheSwagger();
 builder.AddJwtAuth();

@@ -18,22 +18,29 @@ namespace BankDirectoryApi.Common.Extensions
             var jwtSecret = JwtHelper.GetJwtSecretKey(configuration);
             var jwtIssuer = JwtHelper.GetJwtIssuer(configuration);
             var jwtAudience = JwtHelper.GetJwtAudience(configuration);
+            var jwtExpirationHours = JwtHelper.GetJwtExpirationHours(configuration);
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = key,
-                        ValidateIssuer = true,  // for better security
-                        ValidateAudience = true, // for better security
-                        ValidIssuer = jwtIssuer,
-                        ValidAudience = jwtAudience
-                    };
-                });
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = key,
+                    ValidIssuer = jwtIssuer,
+                    ValidAudience = jwtAudience,
+                    ClockSkew = TimeSpan.Zero, // Optional: disables clock skew
+                };
+            });
 
             return services;
         }

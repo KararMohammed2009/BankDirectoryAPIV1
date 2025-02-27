@@ -1,4 +1,4 @@
-﻿using BankDirectoryApi.Application.Interfaces;
+﻿using BankDirectoryApi.Domain.Interfaces;
 using BankDirectoryApi.Domain.Entities;
 using BankDirectoryApi.Infrastructure.Data;
 using System;
