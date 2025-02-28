@@ -26,7 +26,8 @@ namespace BankDirectoryApi.Infrastructure.Services
             services.AddScoped<IBranchRepository, BranchRepository>();
             services.AddScoped<IATMRepository, ATMRepository>();
             services.AddScoped<ICardRepository, CardRepository>();
-           
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+
             //// Register Services
             //services.AddScoped<IBankService, BankService>();
             //services.AddScoped<IBranchService, BranchService>();

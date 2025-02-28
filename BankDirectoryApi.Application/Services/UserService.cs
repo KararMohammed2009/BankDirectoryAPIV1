@@ -8,76 +8,152 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using BankDirectoryApi.Infrastructure.Identity;
+using BankDirectoryApi.Infrastructure.Data;
 using Microsoft.SqlServer.Server;
 using Google.Apis.Auth;
 using Microsoft.Extensions.Configuration;
 using BankDirectoryApi.Application.DTOs.Auth;
+using YourProject.Infrastructure.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 namespace YourProject.Application.Services
 {
     public class UserService : IUserService
     {
         private readonly UserManager<User> _userManager;
-        private readonly IIdentityService _identityService;
-        private readonly IMapper _mapper;
         private readonly SignInManager<User> _signInManager;
-        private readonly IConfiguration _configuration;
-        private readonly IEnumerable<IExternalAuthProvider> _externalAuthProviders; //inject here.
+        private readonly ApplicationDbContext _dbContext;
+        private readonly IdentityService _identityService;  // A service to handle JWT and refresh tokens
+        private readonly IServiceProvider _serviceProvider;
 
-        public UserService(UserManager<User> userManager, IIdentityService identityService, 
-            IMapper mapper, SignInManager<User> signInManager, IConfiguration configuration
-            , IEnumerable<IExternalAuthProvider> externalAuthProviders)
+        public UserService(UserManager<User> userManager,
+                           SignInManager<User> signInManager,
+                           ApplicationDbContext dbContext,
+                           IdentityService identityService,
+                           IServiceProvider serviceProvider)
         {
             _userManager = userManager;
-            _identityService = identityService;
-            _mapper = mapper;
             _signInManager = signInManager;
-            _configuration = configuration;
-            _externalAuthProviders = externalAuthProviders;
+            _dbContext = dbContext;
+            _identityService = identityService;
+            _serviceProvider = serviceProvider;
         }
 
-        public async Task<AuthenticationDTO> RegisterAsync(RegisterRequest request)
+        public async Task<User> GetUserByIdAsync(string userId)
         {
-            var user = _mapper.Map<User>(request);
-            var result = await _userManager.CreateAsync(user, request.Password);
-            if (result.Succeeded)
-            {
-                var token = await _identityService.GenerateJwtToken(user);
-                return new AuthenticationDTO { Token = token, Success = true };
-            }
-            return new AuthenticationDTO { Success = false, Errors = result.Errors };
+            return await _userManager.FindByIdAsync(userId);
         }
 
-        public async Task<AuthenticationDTO> LoginAsync(LoginRequest request)
+        public async Task<User> GetUserByUsernameAsync(string username)
         {
-            var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user != null && await _userManager.CheckPasswordAsync(user, request.Password))
-            {
-                var token = await _identityService.GenerateJwtToken(user);
-                return new AuthenticationDTO { Token = token, Success = true };
-            }
-            return new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid credentials" } } };
+            return await _userManager.FindByNameAsync(username);
         }
 
-        public async Task<AuthenticationDTO?> ExternalLoginAsync(string provider, string idToken)
+        public async Task<IdentityResult> CreateUserAsync(User user, string password)
         {
-            var authProvider = _externalAuthProviders.FirstOrDefault(p => p.GetType().Name.ToLower().Contains(provider.ToLower()));
-
-            if (authProvider == null)
-            {
-                return new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid provider." } } };
-            }
-
-            var (success, user, response) = await authProvider.ValidateAndGetUserAsync(idToken);
-
-            if (!success || user == null)
-            {
-                return response;
-            }
-
-            var token = await _identityService.GenerateJwtToken(user);
-            return new AuthenticationDTO { Token = token, Success = true };
+            return await _userManager.CreateAsync(user, password);
         }
 
+        public async Task<AuthResponseDTO> GenerateTokensAsync(User user)
+        {
+            // Generate JWT and Refresh Token
+            var jwtToken = await _identityService.GenerateJwtToken(user);
+            var refreshToken = _identityService.GenerateJwtRefreshToken(user);
+
+            // Store refresh token in the database
+            var refreshTokenEntity = new RefreshToken
+            {
+                Token = refreshToken,
+                UserId = user.Id,
+                ExpirationDate = DateTime.UtcNow.AddDays(7),
+                CreationDate = DateTime.UtcNow,
+                IsRevoked = false,
+                
+            };
+
+            _dbContext.RefreshTokens.Add(refreshTokenEntity);
+            await _dbContext.SaveChangesAsync();
+
+            return new AuthResponseDTO
+            {
+                Token = jwtToken,
+                RefreshToken = refreshToken
+            };
+        }
+
+        public async Task<AuthResponseDTO> RefreshTokenAsync(string refreshToken)
+        {
+            var refreshTokenEntity = await _dbContext.RefreshTokens
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+
+            if (refreshTokenEntity == null || refreshTokenEntity.ExpirationDate < DateTime.UtcNow)
+            {
+                throw new UnauthorizedAccessException("Invalid or expired refresh token.");
+            }
+
+            var user = await _userManager.FindByIdAsync(refreshTokenEntity.UserId);
+            if (user == null) throw new UnauthorizedAccessException("User not found.");
+
+            return await GenerateTokensAsync(user);
+        }
+
+        public async Task<IdentityResult> ResetPasswordAsync(string userId, string token, string newPassword)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) throw new InvalidOperationException("User not found.");
+
+            return await _userManager.ResetPasswordAsync(user, token, newPassword);
+        }
+
+        public async Task<IdentityResult> ChangePasswordAsync(User user, string currentPassword, string newPassword)
+        {
+            return await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+        }
+
+        public async Task<IdentityResult> LogoutAsync(string refreshToken)
+        {
+            var refreshTokenEntity = await _dbContext.RefreshTokens
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+
+            if (refreshTokenEntity != null)
+            {
+                _dbContext.RefreshTokens.Remove(refreshTokenEntity);
+                await _dbContext.SaveChangesAsync();
+            }
+
+            return IdentityResult.Success;  // Return success on logout
+        }
+
+        public async Task<AuthResponseDTO> ExternalLoginAsync(string provider, string accessToken)
+        {
+            var externalAuthProvider = _serviceProvider.GetServices<IExternalAuthProvider>()
+                                                   .FirstOrDefault(p => p.GetType().Name.StartsWith(provider, StringComparison.OrdinalIgnoreCase));
+
+            if (externalAuthProvider == null)
+            {
+                throw new InvalidOperationException("External provider not supported.");
+            }
+            var result = (await externalAuthProvider.ValidateAndGetUserAsync(accessToken));
+            if (!result.Success || result.User == null)
+            {
+                throw new InvalidOperationException($"External login failed ");
+            }
+            // Add login information (link external account to local account);
+            var externalLoginInfo = new ExternalLoginInfo(
+           user: result.User,
+           loginProvider: provider,
+           providerKey: result.User.ProviderKey, // Assuming you get this from the external provider result
+           displayName: result.User.DisplayName // This could be the name or email of the user
+       );
+            var loginResult = await _userManager.AddLoginAsync(result.User , externalLoginInfo);
+
+            if (!loginResult.Succeeded)
+            {
+                throw new InvalidOperationException("Failed to add external login.");
+            }
+
+
+        }
     }
+
 }

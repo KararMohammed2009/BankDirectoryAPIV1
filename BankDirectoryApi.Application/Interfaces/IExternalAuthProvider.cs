@@ -10,7 +10,8 @@ namespace BankDirectoryApi.Application.Interfaces
 {
     public interface IExternalAuthProvider
     {
-        Task<(bool Success, User? User, AuthenticationDTO? Response)> ValidateAndGetUserAsync(string idToken);
+        Task<(bool Success, User? User, AuthResponseDTO? Response)> ValidateAndGetUserAsync(string idToken);
+        string GetProviderName();
     }
 }
 

@@ -16,6 +16,8 @@ namespace BankDirectoryApi.Infrastructure.Data
         public DbSet<ATM> ATMs { get; set; } = null!;
         public DbSet<Card> Cards { get; set; } = null!;
         public DbSet<Branch> Branches { get; set; } = null!;
+        public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -7,10 +7,12 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Application.DTOs.Auth
 {
-    public class AuthenticationDTO
+    public class AuthResponseDTO
     {
         public string Token { get; set; }
+        public string RefreshToken { get; set; }
         public bool Success { get; set; }
         public IEnumerable<IdentityError> Errors { get; set; }
     }
+
 }

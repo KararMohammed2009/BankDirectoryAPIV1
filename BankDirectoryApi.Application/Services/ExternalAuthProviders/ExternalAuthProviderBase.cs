@@ -14,17 +14,17 @@ namespace BankDirectoryApi.Application.Services.ExternalAuthProviders
         protected readonly UserManager<User> _userManager;
         protected readonly HttpClient _httpClient;
 
-        protected ExternalAuthProviderBase(UserManager<User> userManager, HttpClient httpClient)
+        protected ExternalAuthProviderBase(UserManager<User> userManager,HttpClient httpClient)
         {
             _userManager = userManager;
             _httpClient = httpClient;
         }
 
-        protected async Task<(bool Success, User? User, AuthenticationDTO? Response)> ValidateUserAsync(string email, string firstName, string lastName)
+        protected async Task<(bool Success, User? User, AuthResponseDTO? Response)> ValidateUserAsync(string email, string firstName, string lastName)
         {
             if (string.IsNullOrEmpty(email))
             {
-                return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "Email not found from external provider." } } });
+                return (false, null, new AuthResponseDTO { Success = false, Errors = new[] { new IdentityError { Description = "Email not found from external provider." } } });
             }
 
             var user = await _userManager.FindByEmailAsync(email);
@@ -41,7 +41,7 @@ namespace BankDirectoryApi.Application.Services.ExternalAuthProviders
                 var result = await _userManager.CreateAsync(user);
                 if (!result.Succeeded)
                 {
-                    return (false, null, new AuthenticationDTO { Success = false, Errors = result.Errors });
+                    return (false, null, new AuthResponseDTO { Success = false, Errors = result.Errors });
                 }
             }
 

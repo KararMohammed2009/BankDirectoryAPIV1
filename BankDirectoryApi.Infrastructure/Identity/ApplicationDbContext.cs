@@ -15,5 +15,6 @@ namespace BankDirectoryApi.Infrastructure.Identity
             : base(options) { }
 
         // Add DbSet properties for other entities
+       
     }
 }

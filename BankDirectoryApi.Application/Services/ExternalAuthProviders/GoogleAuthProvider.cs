@@ -16,29 +16,32 @@ namespace BankDirectoryApi.Application.Services.ExternalAuthProviders
 {
     public class GoogleAuthProvider : ExternalAuthProviderBase, IExternalAuthProvider
     {
-        private readonly IConfiguration _configuration;
 
-        public GoogleAuthProvider(UserManager<User> userManager, HttpClient httpClient, IConfiguration configuration)
+        private readonly string Name = "Google";
+        public GoogleAuthProvider(UserManager<User> userManager, HttpClient httpClient)
             : base(userManager, httpClient)
         {
-            _configuration = configuration;
-        }
 
-        public async Task<(bool Success, User? User, AuthenticationDTO? Response)> ValidateAndGetUserAsync(string idToken)
+        }
+        public string GetProviderName()
+        {
+            return Name;
+        }
+        public async Task<(bool Success, User? User, AuthResponseDTO? Response)> ValidateAndGetUserAsync(string idToken)
         {
             var googleApiUrl = $"https://oauth2.googleapis.com/tokeninfo?id_token={idToken}";
             var response = await _httpClient.GetAsync(googleApiUrl);
 
             if (!response.IsSuccessStatusCode)
             {
-                return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Google token." } } });
+                return (false, null, new AuthResponseDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Google token." } } });
             }
 
             var content = await response.Content.ReadAsStringAsync();
             var googleUser = JsonSerializer.Deserialize<GoogleUserDTO>(content);
             if (googleUser is null)
             {
-                return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Google User." } } });
+                return (false, null, new AuthResponseDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Google User." } } });
             }
             return await ValidateUserAsync(googleUser.Email, googleUser.GivenName, googleUser.FamilyName);
         }

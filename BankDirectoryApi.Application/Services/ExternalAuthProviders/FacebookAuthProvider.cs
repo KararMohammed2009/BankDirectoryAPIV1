@@ -14,15 +14,19 @@ namespace BankDirectoryApi.Application.Services.ExternalAuthProviders
 {
     public class FacebookAuthProvider : ExternalAuthProviderBase, IExternalAuthProvider
     {
-        private readonly IConfiguration _configuration;
 
-        public FacebookAuthProvider(UserManager<User> userManager, HttpClient httpClient, IConfiguration configuration)
+        private readonly string Name = "Facebook";
+
+        public FacebookAuthProvider(UserManager<User> userManager, HttpClient httpClient)
             : base(userManager, httpClient)
         {
-            _configuration = configuration;
-        }
 
-        public async Task<(bool Success, User? User, AuthenticationDTO? Response)> ValidateAndGetUserAsync(string accessToken)
+        }
+        public string GetProviderName()
+        {
+            return Name;
+        }
+        public async Task<(bool Success, User? User, AuthResponseDTO? Response)> ValidateAndGetUserAsync(string accessToken)
         {
            
 
@@ -31,14 +35,14 @@ namespace BankDirectoryApi.Application.Services.ExternalAuthProviders
 
             if (!response.IsSuccessStatusCode)
             {
-                return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Facebook access token." } } });
+                return (false, null, new AuthResponseDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Facebook access token." } } });
             }
 
             var content = await response.Content.ReadAsStringAsync();
             var facebookUser = JsonSerializer.Deserialize<FacebookUserDTO>(content);
             if(facebookUser is null)
             {
-                return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Facebook User." } } });
+                return (false, null, new AuthResponseDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Facebook User." } } });
             }
 
             return await ValidateUserAsync(facebookUser.Email, facebookUser.FirstName, facebookUser.LastName);

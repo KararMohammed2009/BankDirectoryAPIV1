@@ -15,17 +15,38 @@ using BankDirectoryApi.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using BankDirectoryApi.Infrastructure.Repositories;
 using BankDirectoryApi.Application.Services.ExternalAuthProviders;
+using YourProject.Application.Services;
+using YourProject.Infrastructure.Identity;
+using BankDirectoryApi.Domain.Entities;
+using Microsoft.AspNetCore.Hosting;
 
 namespace BankDirectoryApi.API.Extensions
 {
     public static class ServiceExtensions
     {
-        public static void AddTheExternalAuthProviders(this WebApplicationBuilder builder)
+        public static void AddTheUserServices(this WebApplicationBuilder builder)
         {
+            // Register UserService
+            builder.Services.AddScoped<IUserService, UserService>();
+
+            // Register Identity Services
+            builder.Services.AddScoped<IIdentityService, IdentityService>();
+
+            // Register ASP.NET Identity Managers
+            builder.Services.AddScoped<UserManager<User>>();
+            builder.Services.AddScoped<SignInManager<User>>();
+
+            // Register External Authentication Providers
             builder.Services.AddScoped<IExternalAuthProvider, GoogleAuthProvider>();
-            builder.Services.AddScoped<IExternalAuthProvider, MicrosoftAuthProvider>();
             builder.Services.AddScoped<IExternalAuthProvider, FacebookAuthProvider>();
+            builder.Services.AddScoped<IExternalAuthProvider, MicrosoftAuthProvider>();
             builder.Services.AddScoped<IExternalAuthProvider, TwitterAuthProvider>();
+
+            builder.Services.AddIdentity<User, IdentityRole>() // Registers Identity services (User + Role management)
+            .AddEntityFrameworkStores<ApplicationDbContext>() //Configures Identity to use Entity Framework Core with ApplicationDbContext
+            .AddDefaultTokenProviders(); //Enables password reset, email confirmation, 2FA tokens
+
+
         }
         public static void AddTheSwagger(this WebApplicationBuilder builder)
         {

@@ -17,12 +17,16 @@ namespace BankDirectoryApi.Application.Services.ExternalAuthProviders
 
     public class MicrosoftAuthProvider : ExternalAuthProviderBase, IExternalAuthProvider
     {
+        private readonly string Name = "Microsoft";
         public MicrosoftAuthProvider(UserManager<User> userManager, HttpClient httpClient)
             : base(userManager, httpClient)
         {
         }
-
-        public async Task<(bool Success, User? User, AuthenticationDTO? Response)> ValidateAndGetUserAsync(string accessToken)
+        public string GetProviderName()
+        {
+            return Name;
+        }
+        public async Task<(bool Success, User? User, AuthResponseDTO? Response)> ValidateAndGetUserAsync(string accessToken)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -30,14 +34,14 @@ namespace BankDirectoryApi.Application.Services.ExternalAuthProviders
             var response = await _httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
-                return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Microsoft access token." } } });
+                return (false, null, new AuthResponseDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Microsoft access token." } } });
             }
 
             var content = await response.Content.ReadAsStringAsync();
             var microsoftUser = JsonSerializer.Deserialize<MicrosoftUserDTO>(content);
             if(microsoftUser is null)
             {
-                return (false, null, new AuthenticationDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Microsoft User." } } });
+                return (false, null, new AuthResponseDTO { Success = false, Errors = new[] { new IdentityError { Description = "Invalid Microsoft User." } } });
             }
             return await ValidateUserAsync(microsoftUser.Mail, microsoftUser.GivenName, microsoftUser.Surname);
         }

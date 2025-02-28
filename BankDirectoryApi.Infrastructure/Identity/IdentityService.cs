@@ -8,7 +8,6 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using BankDirectoryApi.Domain.Entities; // Assuming your User entity is here
-using BankDirectoryApi.Infrastructure.Identity.Settings;
 using BankDirectoryApi.Infrastructure.Identity;
 using Microsoft.Extensions.Configuration;
 using BankDirectoryApi.Common.Helpers; // Your JWT settings
@@ -60,6 +59,10 @@ namespace YourProject.Infrastructure.Identity
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        public string GenerateJwtRefreshToken(User user)
+        {
+            return Guid.NewGuid().ToString();  // Simple refresh token generation logic
         }
     }
 }
