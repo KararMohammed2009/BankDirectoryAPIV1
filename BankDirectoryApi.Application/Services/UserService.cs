@@ -23,7 +23,28 @@ namespace BankDirectoryApi.Application.Services
         }
         public async Task<ExternalLoginResponseDTO> ExternalLogin(ExternalLoginRequestDTO request)
         {
-            throw new NotImplementedException();
+            var externalLoginInfo = await _signInManager.GetExternalLoginInfoAsync();
+            if (externalLoginInfo == null)
+            {
+                return Unauthorized("External login failed");
+            }
+
+            var user = await _userManager.FindByLoginAsync(externalLoginInfo.LoginProvider, externalLoginInfo.ProviderKey);
+            if (user == null)
+            {
+                user = new ApplicationUser { UserName = externalLoginInfo.ProviderKey };
+                var result = await _userManager.CreateAsync(user);
+                if (!result.Succeeded)
+                {
+                    return BadRequest("Failed to create user");
+                }
+            }
+
+            await _userManager.AddLoginAsync(user, externalLoginInfo);
+
+            var jwtToken = await _tokenService.GenerateJwtToken(user);
+
+            return Ok(new { token = jwtToken });
         }
     }
 }
