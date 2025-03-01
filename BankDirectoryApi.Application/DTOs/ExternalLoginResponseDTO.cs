@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BankDirectoryApi.Application.DTOs.Auth
+namespace BankDirectoryApi.Application.DTOs
 {
-    public class ExternalAuthDTO
+    public class ExternalLoginResponseDTO
     {
-        public string IdToken { get; set; }
     }
 }

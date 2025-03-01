@@ -20,6 +20,7 @@ builder.AddTheSwagger();
 builder.AddJwtAuth();
 builder.AddLimitRate();
 builder.AddTheCors();
+builder.AddTheAuthentication();
 
 var app = builder.Build();
 

@@ -7,7 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using BankDirectoryApi.Domain.Entities; // Assuming your User entity is here
+using BankDirectoryApi.Domain.Entities; // Assuming your IdentityUser entity is here
 using BankDirectoryApi.Infrastructure.Identity;
 using Microsoft.Extensions.Configuration;
 using BankDirectoryApi.Common.Helpers; // Your JWT settings
@@ -16,16 +16,16 @@ namespace YourProject.Infrastructure.Identity
 {
     public class IdentityService : IIdentityService
     {
-        private readonly UserManager<User> _userManager;
+        private readonly UserManager<IdentityUser> _userManager;
         private readonly IConfiguration _configuration;
 
-        public IdentityService(UserManager<User> userManager, IConfiguration configuration)
+        public IdentityService(UserManager<IdentityUser> userManager, IConfiguration configuration)
         {
             _userManager = userManager;
             _configuration = configuration;
         }
 
-        public async Task<string> GenerateJwtToken(User user)
+        public async Task<string> GenerateJwtToken(IdentityUser user)
         {
             var claims = new List<Claim>
             {
@@ -60,7 +60,7 @@ namespace YourProject.Infrastructure.Identity
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-        public string GenerateJwtRefreshToken(User user)
+        public string GenerateJwtRefreshToken(IdentityUser user)
         {
             return Guid.NewGuid().ToString();  // Simple refresh token generation logic
         }

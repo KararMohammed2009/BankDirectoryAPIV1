@@ -14,35 +14,57 @@ using BankDirectoryApi.Common.Extensions;
 using BankDirectoryApi.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using BankDirectoryApi.Infrastructure.Repositories;
-using BankDirectoryApi.Application.Services.ExternalAuthProviders;
-using YourProject.Application.Services;
 using YourProject.Infrastructure.Identity;
 using BankDirectoryApi.Domain.Entities;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace BankDirectoryApi.API.Extensions
 {
     public static class ServiceExtensions
     {
+        public static void AddTheAuthentication(this WebApplicationBuilder builder)
+        {
+           
+
+            // Configure authentication for external providers
+            builder.Services.AddAuthentication()
+                .AddGoogle(options =>
+                {
+                    options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+                    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+                })
+                .AddFacebook(options =>
+                {
+                    options.AppId = builder.Configuration["Authentication:Facebook:AppId"];
+                    options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
+                })
+                .AddMicrosoftAccount(options =>
+                {
+                    options.ClientId = builder.Configuration["Authentication:Microsoft:ClientId"];
+                    options.ClientSecret = builder.Configuration["Authentication:Microsoft:ClientSecret"];
+                })
+                .AddTwitter(options =>
+                {
+                    options.ConsumerKey = builder.Configuration["Authentication:Twitter:ConsumerKey"];
+                    options.ConsumerSecret = builder.Configuration["Authentication:Twitter:ConsumerSecret"];
+                });
+        }
+
         public static void AddTheUserServices(this WebApplicationBuilder builder)
         {
-            // Register UserService
-            builder.Services.AddScoped<IUserService, UserService>();
+           
 
             // Register Identity Services
             builder.Services.AddScoped<IIdentityService, IdentityService>();
 
             // Register ASP.NET Identity Managers
-            builder.Services.AddScoped<UserManager<User>>();
-            builder.Services.AddScoped<SignInManager<User>>();
+            builder.Services.AddScoped<UserManager<IdentityUser>>();
+            builder.Services.AddScoped<SignInManager<IdentityUser>>();
 
-            // Register External Authentication Providers
-            builder.Services.AddScoped<IExternalAuthProvider, GoogleAuthProvider>();
-            builder.Services.AddScoped<IExternalAuthProvider, FacebookAuthProvider>();
-            builder.Services.AddScoped<IExternalAuthProvider, MicrosoftAuthProvider>();
-            builder.Services.AddScoped<IExternalAuthProvider, TwitterAuthProvider>();
+         
 
-            builder.Services.AddIdentity<User, IdentityRole>() // Registers Identity services (User + Role management)
+            builder.Services.AddIdentity<IdentityUser, IdentityRole>() // Registers Identity services (User + Role management)
             .AddEntityFrameworkStores<ApplicationDbContext>() //Configures Identity to use Entity Framework Core with ApplicationDbContext
             .AddDefaultTokenProviders(); //Enables password reset, email confirmation, 2FA tokens
 

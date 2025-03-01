@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Application.DTOs
 {
-    public class UserDTO
+    public class ExternalLoginRequestDTO
     {
     }
 }

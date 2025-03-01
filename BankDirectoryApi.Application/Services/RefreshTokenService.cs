@@ -6,17 +6,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BankDirectoryApi.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
 
 namespace BankDirectoryApi.Application.Services
 {
     public class RefreshTokenService : IRefreshTokenService
     {
         private readonly IRefreshTokenRepository _refreshTokenRepository;
-        private readonly IUserService _userService;
-        public RefreshTokenService(IRefreshTokenRepository refreshTokenRepository, IUserService userService)
+        private readonly UserManager<IdentityUser> _userManager;
+        public RefreshTokenService(IRefreshTokenRepository refreshTokenRepository, UserManager<IdentityUser> userManager)
         {
             _refreshTokenRepository = refreshTokenRepository;
-            _userService = userService;
+            _userManager = userManager;
         }
         public async Task<IEnumerable<RefreshToken>> GetAllRefreshTokensAsync()
         {
@@ -31,7 +33,7 @@ namespace BankDirectoryApi.Application.Services
 
         public async Task AddRefreshTokenAsync(RefreshToken RefreshToken)
         {
-            var user = await _userService.GetUserByIdAsync(RefreshToken.UserId);
+            var user = await _userManager.FindByIdAsync(RefreshToken.UserId);
 
             if (user == null)
             {
