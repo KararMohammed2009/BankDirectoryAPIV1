@@ -18,6 +18,8 @@ using YourProject.Infrastructure.Identity;
 using BankDirectoryApi.Domain.Entities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using BankDirectoryApi.Application.Interfaces.Auth;
+using BankDirectoryApi.Application.Services.ExternalAuthProviders;
 
 namespace BankDirectoryApi.API.Extensions
 {
@@ -53,7 +55,8 @@ namespace BankDirectoryApi.API.Extensions
 
         public static void AddTheUserServices(this WebApplicationBuilder builder)
         {
-           
+            // Register UserService
+            builder.Services.AddScoped<IUserService, UserService>();
 
             // Register Identity Services
             builder.Services.AddScoped<IIdentityService, IdentityService>();
@@ -62,7 +65,12 @@ namespace BankDirectoryApi.API.Extensions
             builder.Services.AddScoped<UserManager<IdentityUser>>();
             builder.Services.AddScoped<SignInManager<IdentityUser>>();
 
-         
+            // Register External Authentication Providers
+            builder.Services.AddScoped<IExternalAuthProvider, GoogleAuthProvider>();
+            builder.Services.AddScoped<IExternalAuthProvider, FacebookAuthProvider>();
+            builder.Services.AddScoped<IExternalAuthProvider, MicrosoftAuthProvider>();
+            builder.Services.AddScoped<IExternalAuthProvider, TwitterAuthProvider>();
+
 
             builder.Services.AddIdentity<IdentityUser, IdentityRole>() // Registers Identity services (User + Role management)
             .AddEntityFrameworkStores<ApplicationDbContext>() //Configures Identity to use Entity Framework Core with ApplicationDbContext
@@ -70,6 +78,7 @@ namespace BankDirectoryApi.API.Extensions
 
 
         }
+      
         public static void AddTheSwagger(this WebApplicationBuilder builder)
         {
 
