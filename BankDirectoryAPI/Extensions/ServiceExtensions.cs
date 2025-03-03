@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using BankDirectoryApi.Application.Interfaces.Auth;
 using BankDirectoryApi.Application.Services.ExternalAuthProviders;
+using BankDirectoryApi.Infrastructure.Data;
 
 namespace BankDirectoryApi.API.Extensions
 {
@@ -179,7 +180,7 @@ namespace BankDirectoryApi.API.Extensions
         public static void AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
             // Register database context
-            services.AddDbContext<ApplicationDbContext>(options =>
+            services.AddDbContext<Infrastructure.Identity.IdentityDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
             // Register repositories, for example:

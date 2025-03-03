@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Infrastructure.Identity
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class IdentityDbContext : Microsoft.AspNetCore.Identity.EntityFrameworkCore.IdentityDbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        public IdentityDbContext(DbContextOptions<IdentityDbContext> options)
             : base(options) { }
 
         // Add DbSet properties for other entities
