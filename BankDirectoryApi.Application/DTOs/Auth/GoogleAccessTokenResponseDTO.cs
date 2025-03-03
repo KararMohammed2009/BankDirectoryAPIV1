@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Application.DTOs.Auth
 {
-    public class MicrosoftUserDTO
+    internal class GoogleAccessTokenResponseDTO
     {
-        public string Mail { get; set; }
-        public string GivenName { get; set; }
-        public string Surname { get; set; }
+        public string AccessToken { get; set; }
     }
 }

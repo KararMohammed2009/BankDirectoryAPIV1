@@ -7,7 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Identity\Settings\" />
+    <Compile Remove="Identity\Settings\**" />
+    <EmbeddedResource Remove="Identity\Settings\**" />
+    <None Remove="Identity\Settings\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Migrations\" />
   </ItemGroup>
 

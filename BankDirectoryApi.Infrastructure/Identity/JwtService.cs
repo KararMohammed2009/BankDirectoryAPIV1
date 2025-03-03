@@ -10,19 +10,23 @@ using System.Threading.Tasks;
 using BankDirectoryApi.Domain.Entities; // Assuming your IdentityUser entity is here
 using BankDirectoryApi.Infrastructure.Identity;
 using Microsoft.Extensions.Configuration;
-using BankDirectoryApi.Common.Helpers; // Your JWT settings
+using BankDirectoryApi.Common.Helpers;
+using BankDirectoryApi.Domain.Interfaces; // Your JWT settings
 
 namespace YourProject.Infrastructure.Identity
 {
-    public class IdentityService : IIdentityService
+    public class JwtService : IJwtService
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IConfiguration _configuration;
+        private readonly IRefreshTokenRepository _refreshTokenRepository;
 
-        public IdentityService(UserManager<IdentityUser> userManager, IConfiguration configuration)
+        public JwtService(UserManager<IdentityUser> userManager, 
+            IConfiguration configuration,IRefreshTokenRepository refreshTokenRepository)
         {
             _userManager = userManager;
             _configuration = configuration;
+            _refreshTokenRepository = refreshTokenRepository;
         }
 
         public async Task<string> GenerateJwtToken(IdentityUser user)
@@ -60,9 +64,23 @@ namespace YourProject.Infrastructure.Identity
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-        public string GenerateJwtRefreshToken(IdentityUser user)
+        public async Task<string> GenerateJwtRefreshToken(IdentityUser user)
         {
-            return Guid.NewGuid().ToString();  // Simple refresh token generation logic
+            var refreshToken = Guid.NewGuid().ToString();  // Simple refresh token generation logic
+            //todo: Implement a more secure refresh token generation logic
+            //todo: Store the refresh token in a secure place (e.g., database)
+            await _refreshTokenRepository.AddAsync(new RefreshToken
+            {
+                UserId = user.Id,
+                Token = refreshToken,
+                CreationDate = DateTime.UtcNow,
+                ExpirationDate=DateTime.UtcNow.AddHours(24),
+                IsUsed = false,
+                IsInvalidated = false,
+                IsRevoked = false,
+
+            });
+            return refreshToken;
         }
     }
 }

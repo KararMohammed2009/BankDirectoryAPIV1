@@ -56,10 +56,10 @@ namespace BankDirectoryApi.API.Extensions
         public static void AddTheUserServices(this WebApplicationBuilder builder)
         {
             // Register UserService
-            builder.Services.AddScoped<IUserService, UserService>();
+            //builder.Services.AddScoped<IUserService, UserService>();
 
             // Register Identity Services
-            builder.Services.AddScoped<IIdentityService, IdentityService>();
+            builder.Services.AddScoped<IJwtService, JwtService>();
 
             // Register ASP.NET Identity Managers
             builder.Services.AddScoped<UserManager<IdentityUser>>();
@@ -67,9 +67,7 @@ namespace BankDirectoryApi.API.Extensions
 
             // Register External Authentication Providers
             builder.Services.AddScoped<IExternalAuthProvider, GoogleAuthProvider>();
-            builder.Services.AddScoped<IExternalAuthProvider, FacebookAuthProvider>();
-            builder.Services.AddScoped<IExternalAuthProvider, MicrosoftAuthProvider>();
-            builder.Services.AddScoped<IExternalAuthProvider, TwitterAuthProvider>();
+            builder.Services.AddScoped<GoogleAuthProvider>();
 
 
             builder.Services.AddIdentity<IdentityUser, IdentityRole>() // Registers Identity services (User + Role management)

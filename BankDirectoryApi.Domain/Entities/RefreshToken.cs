@@ -18,8 +18,8 @@ namespace BankDirectoryApi.Domain.Entities
         public DateTime? RevokingDate { get; set; }   // When the token was revoked (if applicable)
         public string IPAddress { get; set; }       // Optional: Store IP address for security
         public string UserAgent { get; set; }       // Optional: Store the user-agent for security
-
-
+        public bool IsInvalidated { get; set; }
+        public bool IsUsed { get; set; }
         // Navigation Property
         public IdentityUser User { get; set; } = null!;
     }
