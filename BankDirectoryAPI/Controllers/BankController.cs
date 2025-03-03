@@ -18,6 +18,7 @@ namespace BankDirectoryApi.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllBanks()
         {
+          
             var banks = await _bankService.GetAllBanksAsync();
             return Ok(banks);
         }
@@ -38,6 +39,7 @@ namespace BankDirectoryApi.API.Controllers
         [HttpPost]
         public async Task<IActionResult> AddBank([FromBody] BankDTO bankdto)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             await _bankService.AddBankAsync(bankdto);
             return CreatedAtAction(nameof(GetBankById), new { id = bankdto.Id }, bankdto);
         }

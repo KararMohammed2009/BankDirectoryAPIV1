@@ -21,11 +21,20 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using BankDirectoryApi.Application.Interfaces.Auth;
 using BankDirectoryApi.Application.Services.ExternalAuthProviders;
 using BankDirectoryApi.Infrastructure.Data;
+using FluentValidation;
+using BankDirectoryApi.API.Validators;
+using FluentValidation.AspNetCore;
 
 namespace BankDirectoryApi.API.Extensions
 {
     public static class ServiceExtensions
     {
+        public static void AddTheValidators(this WebApplicationBuilder builder)
+        {
+            // Register FluentValidation validators
+            builder.Services.AddValidatorsFromAssemblyContaining<BankDTOValidator>();
+            builder.Services.AddFluentValidationAutoValidation().AddFluentValidationClientsideAdapters();
+        }
         public static void AddTheAuthentication(this WebApplicationBuilder builder)
         {
            
@@ -183,11 +192,15 @@ namespace BankDirectoryApi.API.Extensions
             services.AddDbContext<Infrastructure.Identity.IdentityDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
+            services.AddDbContext<Infrastructure.Data.ApplicationDbContext>(options =>
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+
             // Register repositories, for example:
             services.AddScoped<IBankRepository, BankRepository>();
             services.AddScoped<IBranchRepository, BranchRepository>();
             services.AddScoped<IATMRepository, ATMRepository>();
             services.AddScoped<ICardRepository, CardRepository>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         }
     }
 }

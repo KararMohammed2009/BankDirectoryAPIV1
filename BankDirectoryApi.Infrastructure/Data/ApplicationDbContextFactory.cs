@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using BankDirectoryApi.Infrastructure.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using System.IO;
@@ -14,7 +15,7 @@ namespace BankDirectoryApi.Infrastructure.Data
                 .AddJsonFile("appsettings.json")
                 .Build();
 
-            var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
+            var optionsBuilder = new DbContextOptionsBuilder<IdentityDbContext>();
             var connectionString = configuration.GetConnectionString("DefaultConnection");
 
             optionsBuilder.UseSqlServer(connectionString);

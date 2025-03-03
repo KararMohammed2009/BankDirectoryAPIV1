@@ -21,6 +21,7 @@ builder.AddJwtAuth();
 builder.AddLimitRate();
 builder.AddTheCors();
 builder.AddTheAuthentication();
+builder.AddTheValidators();
 
 var app = builder.Build();
 
