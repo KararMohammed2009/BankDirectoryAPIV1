@@ -107,6 +107,10 @@ namespace BankDirectoryApi.API.Extensions
                                     .AllowAnyHeader());
             });
         }
+        public static void UseTheCors(this WebApplication app)
+        {
+            app.UseCors("AllowAll");
+        }
         public static void AddJwtAuth(this WebApplicationBuilder builder)
         {
             // Add JWT Authentication and use authentication and authorization

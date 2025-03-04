@@ -12,6 +12,7 @@ namespace BankDirectoryApi.Application.DTOs
       
         public int Id { get; set; }
         [Required(ErrorMessage = "Bank name is required.")]
+        [RegularExpression(@"^[a-zA-Z0-9\s]+$", ErrorMessage = "Invalid characters in bank name.")] // Prevents scripts
         [StringLength(100, ErrorMessage = "Bank name can't exceed 100 characters.")]
         public string Name { get; set; }
         [Required(ErrorMessage = "Address is required.")]
