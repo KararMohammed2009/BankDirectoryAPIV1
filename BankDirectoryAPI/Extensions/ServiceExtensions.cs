@@ -24,11 +24,31 @@ using BankDirectoryApi.Infrastructure.Data;
 using FluentValidation;
 using BankDirectoryApi.API.Validators;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Asp.Versioning;
 
 namespace BankDirectoryApi.API.Extensions
 {
     public static class ServiceExtensions
     {
+        public static void AddTheVersioning(this WebApplicationBuilder builder)
+        {
+            builder.Services.AddApiVersioning(options =>
+            {
+                // Automatically assume default version if unspecified in requests
+                options.AssumeDefaultVersionWhenUnspecified = true;
+
+                // Set the default version to 1.0
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+
+                // Allow reporting the available API versions to clients via the response headers
+                options.ReportApiVersions = true;
+
+                // Read the version from the URL path (e.g., /api/v1/)
+                options.ApiVersionReader = new UrlSegmentApiVersionReader();
+            });
+        }
         public static void AddTheValidators(this WebApplicationBuilder builder)
         {
             // Register FluentValidation validators

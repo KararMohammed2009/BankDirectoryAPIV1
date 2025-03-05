@@ -1,11 +1,13 @@
-﻿using BankDirectoryApi.Application.DTOs;
+﻿using Asp.Versioning;
+using BankDirectoryApi.Application.DTOs;
 using BankDirectoryApi.Application.Interfaces;
 using BankDirectoryApi.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BankDirectoryApi.API.Controllers
 {
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/Bank")]
     [ApiController]
     public class BankController : Controller
     {

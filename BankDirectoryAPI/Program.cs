@@ -22,7 +22,7 @@ builder.AddLimitRate();
 builder.AddTheCors();
 builder.AddTheAuthentication();
 builder.AddTheValidators();
-
+builder.AddTheVersioning();
 var app = builder.Build();
 
 app.UseTheSwagger();
