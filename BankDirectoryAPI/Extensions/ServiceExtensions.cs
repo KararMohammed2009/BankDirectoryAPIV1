@@ -27,6 +27,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Asp.Versioning;
+using BankDirectoryApi.Common.Services;
 
 namespace BankDirectoryApi.API.Extensions
 {
@@ -207,6 +208,10 @@ namespace BankDirectoryApi.API.Extensions
             services.AddScoped<IBranchService, BranchService>();
             services.AddScoped<IATMService, ATMService>();
             services.AddScoped<ICardService, CardService>();
+            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+            // Register Common Services
+            services.AddScoped<IDateTimeProvider, DateTimeProvider>();
+            services.AddScoped<IGuidProvider, GuidProvider>();
         }
 
 
