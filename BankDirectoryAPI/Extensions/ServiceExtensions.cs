@@ -97,6 +97,7 @@ namespace BankDirectoryApi.API.Extensions
             builder.Services.AddScoped<SignInManager<IdentityUser>>();
 
             // Register External Authentication Providers
+            builder.Services.AddScoped<HttpClient>();
             builder.Services.AddScoped<IExternalAuthProvider, GoogleAuthProvider>();
             builder.Services.AddScoped<GoogleAuthProvider>();
 

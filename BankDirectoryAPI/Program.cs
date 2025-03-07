@@ -23,6 +23,7 @@ builder.AddTheCors();
 builder.AddTheAuthentication();
 builder.AddTheValidators();
 builder.AddTheVersioning();
+builder.AddTheUserServices();
 var app = builder.Build();
 
 app.UseTheSwagger();
@@ -35,3 +36,4 @@ app.UseRateLimitLoggingMiddleware();
 app.UseHttpsRedirection();
 app.MapControllers();
 app.Run();
+public partial class Program { }

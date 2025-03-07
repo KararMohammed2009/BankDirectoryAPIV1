@@ -16,6 +16,7 @@ namespace BankDirectoryApi.API.Controllers
             _cardService = CardService;
         }
 
+        [Route("GetAllCardes")]
         [HttpGet]
         public async Task<IActionResult> GetAllCardes()
         {

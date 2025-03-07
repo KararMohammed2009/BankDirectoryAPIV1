@@ -10,22 +10,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="14.0.0" />
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
     <PackageReference Include="FluentAssertions" Version="8.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-    <PackageReference Include="Moq" Version="4.20.72" />
-    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit" Version="2.5.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\BankDirectoryApi.Application\BankDirectoryApi.Application.csproj" />
-    <ProjectReference Include="..\BankDirectoryApi.Domain\BankDirectoryApi.Domain.csproj" />
-    <ProjectReference Include="..\BankDirectoryAPI\BankDirectoryApi.API.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\BankDirectoryApi.Infrastructure\BankDirectoryApi.Infrastructure.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\BankDirectoryApi\BankDirectoryApi.API.csproj" />
+	</ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
