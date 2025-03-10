@@ -11,15 +11,12 @@ using System.Text;
 using BankDirectoryApi.API.Middleware;
 using AspNetCoreRateLimit;
 using BankDirectoryApi.Common.Extensions;
-using BankDirectoryApi.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using BankDirectoryApi.Infrastructure.Repositories;
-using YourProject.Infrastructure.Identity;
 using BankDirectoryApi.Domain.Entities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using BankDirectoryApi.Application.Interfaces.Auth;
-using BankDirectoryApi.Application.Services.ExternalAuthProviders;
 using BankDirectoryApi.Infrastructure.Data;
 using FluentValidation;
 using BankDirectoryApi.API.Validators;
@@ -28,6 +25,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Asp.Versioning;
 using BankDirectoryApi.Common.Services;
+using BankDirectoryApi.Application.Services.Auth.ExternalAuthProviders;
+using BankDirectoryApi.Application.Services.Auth;
 
 namespace BankDirectoryApi.API.Extensions
 {

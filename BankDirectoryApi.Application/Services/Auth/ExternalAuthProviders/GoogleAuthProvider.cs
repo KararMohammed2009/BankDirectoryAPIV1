@@ -1,8 +1,6 @@
 ﻿using BankDirectoryApi.Application.DTOs.Auth;
-using BankDirectoryApi.Application.Interfaces;
 using BankDirectoryApi.Application.Interfaces.Auth;
 using BankDirectoryApi.Domain.Entities;
-using BankDirectoryApi.Infrastructure.Identity;
 using Google.Apis.Auth;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.BearerToken;
@@ -21,7 +19,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace BankDirectoryApi.Application.Services.ExternalAuthProviders
+namespace BankDirectoryApi.Application.Services.Auth.ExternalAuthProviders
 {
     public class GoogleAuthProvider : ExternalAuthProviderBase, IExternalAuthProvider
     {

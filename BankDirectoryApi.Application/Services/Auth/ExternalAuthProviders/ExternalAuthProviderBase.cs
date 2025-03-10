@@ -1,6 +1,6 @@
 ﻿using BankDirectoryApi.Application.DTOs.Auth;
+using BankDirectoryApi.Application.Interfaces.Auth;
 using BankDirectoryApi.Domain.Entities;
-using BankDirectoryApi.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -11,7 +11,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BankDirectoryApi.Application.Services.ExternalAuthProviders
+namespace BankDirectoryApi.Application.Services.Auth.ExternalAuthProviders
 {
     public abstract class ExternalAuthProviderBase
     {
@@ -83,8 +83,8 @@ namespace BankDirectoryApi.Application.Services.ExternalAuthProviders
             }
 
             //  Generate JWT token for the authenticated user
-            var token = await _jwtService.GenerateJwtTokenAsync(user);
-            var refreshToken = await _jwtService.GenerateJwtRefreshTokenAsync(user);
+            var token = await _jwtService.GenerateAccessTokenAsync(user);
+            var refreshToken = await _jwtService.GenerateRefreshTokenAsync(user);
             if(token == null || refreshToken == null)
             {
                 return (false, new[] { new IdentityError { Description = "Failed to generate JWT tokens." } }, null, null);
