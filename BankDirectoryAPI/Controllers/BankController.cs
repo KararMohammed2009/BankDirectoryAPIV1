@@ -9,10 +9,10 @@ namespace BankDirectoryApi.API.Controllers
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/Bank")]
     [ApiController]
-    public class BankController : Controller
+    public class UserController : Controller
     {
         private readonly IBankService _bankService;
-        public BankController(IBankService bankService)
+        public UserController(IBankService bankService)
         {
             _bankService = bankService;
         }

@@ -35,7 +35,7 @@ namespace BankDirectoryApi.Application.Services.ExternalAuthProviders
 
         }
    
-        public async Task<(bool Success, IEnumerable<IdentityError>? errors, IdentityUser? User, AuthResponseDTO? Response)> 
+        public async Task<(bool Success, IEnumerable<IdentityError>? errors, IdentityUser? User, AuthDTO? Response)> 
             ManageExternalLogin(string code)
         {
             var accessTokenResult = await GetAccessToken(code);

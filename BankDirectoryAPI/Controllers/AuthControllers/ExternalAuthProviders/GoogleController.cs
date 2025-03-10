@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 
-namespace BankDirectoryApi.API.Controllers.ExternalAuthProviders
+namespace BankDirectoryApi.API.Controllers.AuthControllers.ExternalAuthProviders
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -18,8 +18,8 @@ namespace BankDirectoryApi.API.Controllers.ExternalAuthProviders
         [HttpGet("ExternalLogin")]
         public async Task<IActionResult> ExternalLogin(string code)
         {
-            var response =await _googleAuthProvider.ManageExternalLogin(code);
-            if(!response.Success)
+            var response = await _googleAuthProvider.ManageExternalLogin(code);
+            if (!response.Success)
             {
                 return BadRequest(response.errors);
             }

@@ -29,7 +29,7 @@ namespace BankDirectoryApi.Application.Services.ExternalAuthProviders
             _jwtService = jwtService;
         }
 
-        protected async Task<(bool Success, IEnumerable<IdentityError>? errors, IdentityUser? User, AuthResponseDTO? Response)>
+        protected async Task<(bool Success, IEnumerable<IdentityError>? errors, IdentityUser? User, AuthDTO? Response)>
             HandleExternalUserSignIn(
             string id, string? email, string? firstName, string providerName, string accessToken)
         {
@@ -83,13 +83,13 @@ namespace BankDirectoryApi.Application.Services.ExternalAuthProviders
             }
 
             //  Generate JWT token for the authenticated user
-            var token = await _jwtService.GenerateJwtToken(user);
-            var refreshToken = await _jwtService.GenerateJwtRefreshToken(user);
+            var token = await _jwtService.GenerateJwtTokenAsync(user);
+            var refreshToken = await _jwtService.GenerateJwtRefreshTokenAsync(user);
             if(token == null || refreshToken == null)
             {
                 return (false, new[] { new IdentityError { Description = "Failed to generate JWT tokens." } }, null, null);
             }
-            return (true,null, user, new AuthResponseDTO
+            return (true,null, user, new AuthDTO
             {
                 Token = token,
                 RefreshToken = refreshToken,
