@@ -1,4 +1,5 @@
 ﻿using BankDirectoryApi.Application.DTOs.Auth;
+using BankDirectoryApi.Application.Interfaces;
 using BankDirectoryApi.Application.Interfaces.Auth;
 using BankDirectoryApi.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -18,20 +19,20 @@ namespace BankDirectoryApi.Application.Services.Auth.ExternalAuthProviders
         protected readonly UserManager<IdentityUser> _userManager;
         protected readonly HttpClient _httpClient;
         protected readonly IConfiguration _configration;
-        protected readonly IJwtService _jwtService;
+        protected readonly IUserService _userService;
 
         protected ExternalAuthProviderBase(UserManager<IdentityUser> userManager,
-            HttpClient httpClient,IConfiguration configuration,IJwtService jwtService)
+            HttpClient httpClient,IConfiguration configuration,IUserService userService)
         {
             _userManager = userManager;
             _httpClient = httpClient;
             _configration = configuration;
-            _jwtService = jwtService;
+            _userService = userService;
         }
 
         protected async Task<(bool Success, IEnumerable<IdentityError>? errors, IdentityUser? User, AuthDTO? Response)>
             HandleExternalUserSignIn(
-            string id, string? email, string? firstName, string providerName, string accessToken)
+            string id, string? email, string? firstName, string providerName, string accessToken,ClientInfo clientInfo)
         {
             if (string.IsNullOrEmpty(email))
             {
@@ -83,16 +84,16 @@ namespace BankDirectoryApi.Application.Services.Auth.ExternalAuthProviders
             }
 
             //  Generate JWT token for the authenticated user
-            var token = await _jwtService.GenerateAccessTokenAsync(user);
-            var refreshToken = await _jwtService.GenerateRefreshTokenAsync(user);
-            if(token == null || refreshToken == null)
+            var tokens =await _userService.GenerateAndStoreTokensAsync(user, clientInfo);
+           
+            if(tokens.accessToken == null || tokens.refreshToken == null)
             {
                 return (false, new[] { new IdentityError { Description = "Failed to generate JWT tokens." } }, null, null);
             }
             return (true,null, user, new AuthDTO
             {
-                Token = token,
-                RefreshToken = refreshToken,
+                AccessToken = tokens.accessToken,
+                RefreshToken = tokens.refreshToken,
             });
         }
     }

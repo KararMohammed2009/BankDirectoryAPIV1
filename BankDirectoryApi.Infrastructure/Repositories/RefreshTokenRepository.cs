@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using BankDirectoryApi.Common.Services;
+using System.Linq.Expressions;
 
 namespace BankDirectoryApi.Infrastructure.Repositories
 {
@@ -21,62 +22,66 @@ namespace BankDirectoryApi.Infrastructure.Repositories
             _context = context;
             _dateTimeProvider = dateTimeProvider;
         }
-        public async Task<RefreshToken?> GetByTokenAndInsureValidityAsync(string token)
+        private  Expression<Func<RefreshToken, bool>> IsValidToken()
         {
-            return await _context.RefreshTokens.Where(rt =>
-            rt.Token == token
-            && rt.IsRevoked == false && rt.IsInvalidated == false && rt.IsUsed == false
-            && rt.ExpirationDate > _dateTimeProvider.UtcNow
-            ).FirstOrDefaultAsync();
+            return rt => !rt.IsRevoked
+                      && !rt.IsUsed
+                      && rt.ExpirationDate > _dateTimeProvider.UtcNow;
         }
-        public async Task<IEnumerable< RefreshToken>?> GetByUserIdAndInsureValidityAsync(string userId)
+
+
+        public async Task<bool?> RevokeAllRefreshTokensAsync(string userId, string sessionId, string RevokedByIp)
         {
-            return await _context.RefreshTokens.Where(rt =>
-            rt.UserId == userId
-            && rt.IsRevoked == false && rt.IsInvalidated == false && rt.IsUsed == false
-            && rt.ExpirationDate > _dateTimeProvider.UtcNow
-            ).ToListAsync();
-        }
-        public async Task<bool?> InvalidateRefreshTokenAsync(string token)
-        {
-            var refreshToken = await _context.RefreshTokens
-                .FirstOrDefaultAsync(rt=>rt.Token == token); // without filtering
-            if (refreshToken == null) return null;
-            refreshToken.IsInvalidated = true;
-            _context.RefreshTokens.Update(refreshToken);
+            var refreshTokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId && rt.SessionId == sessionId)
+                .Where(IsValidToken()).ToListAsync();
+            refreshTokens.ForEach(rt => {
+                rt.IsRevoked = true;
+                rt.RevokedByIp = RevokedByIp;
+            });
             await _context.SaveChangesAsync();
             return true;
         }
-        public async Task<bool?> RevokeRefreshTokenAsync(string token)
+        public async Task<bool?> RevokeAllRefreshTokensAsync(string userId,string RevokedByIp)
         {
-            var refreshToken = await GetByTokenAndInsureValidityAsync(token);
-            if (refreshToken == null) return null;
-            refreshToken.IsRevoked = true;
-            _context.RefreshTokens.Update(refreshToken);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-        public async Task<bool?> UseRefreshTokenAsync(string token)
-        {
-            var refreshToken = await GetByTokenAndInsureValidityAsync(token);
-            if (refreshToken == null) return null;
-            refreshToken.IsUsed = true;
-            _context.RefreshTokens.Update(refreshToken);
+            var refreshTokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId)
+                .Where(IsValidToken()).ToListAsync();
+            refreshTokens.ForEach(rt =>
+            {
+                rt.IsRevoked = true;
+                rt.RevokedByIp = RevokedByIp;
+            });
             await _context.SaveChangesAsync();
             return true;
         }
         public async Task<bool?> RevokeAllRefreshTokensAsync(string userId)
-        { 
-            var refreshTokens = await GetByUserIdAndInsureValidityAsync(userId);
-            if (refreshTokens == null) return null;
-            foreach (var refreshToken in refreshTokens)
+        {
+            var refreshTokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId)
+                .Where(IsValidToken()).ToListAsync();
+            refreshTokens.ForEach(rt =>
             {
-                refreshToken.IsRevoked = true;
-                _context.RefreshTokens.Update(refreshToken);
-            }
+                rt.IsRevoked = true;
+            });
             await _context.SaveChangesAsync();
             return true;
         }
+        public async Task<bool?> RotateRefreshTokenAsync(string oldTokenHash,RefreshToken newToken)
+        {
+            var refreshToken = await _context.RefreshTokens.Where(rt=>
+            rt.TokenHash == oldTokenHash).Where(IsValidToken()).FirstOrDefaultAsync();
+            if (refreshToken == null) return null;
+            newToken.UserId = refreshToken.UserId;
+            _context.RefreshTokens.Add(newToken);
+
+            refreshToken.IsUsed = true;
+            refreshToken.ReplacedByTokenHash = newToken.TokenHash;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+      
+
     }
 
 }

@@ -18,6 +18,9 @@ namespace BankDirectoryApi.API.Middleware
         {
             // Extract User ID from JWT claims
             var userId = context.User?.FindFirst("sub")?.Value; // 'sub' is usually the user ID in JWT
+            // Extract client IP and user-agent from the request
+            var clientIp = context.Connection?.RemoteIpAddress?.ToString();
+            var userAgent = context.Request?.Headers["User-Agent"].ToString();
 
             if (!string.IsNullOrEmpty(userId))
             {
@@ -28,7 +31,16 @@ namespace BankDirectoryApi.API.Middleware
             {
                 // Default if no user found (e.g., unauthenticated users)
                 context.Items["ClientId"] = "anonymous";
-                _logger.LogWarning("Client ID missing from JWT, using 'anonymous'");
+            }
+            if (!string.IsNullOrEmpty(clientIp))
+            {
+                // Store in HttpContext for rate limiting and logging and other purposes
+                context.Items["ClientIp"] = clientIp;
+            }
+            if (!string.IsNullOrEmpty(userAgent))
+            {
+                // Store in HttpContext for rate limiting and logging and other purposes
+                context.Items["UserAgent"] = userAgent;
             }
 
             await _next(context);

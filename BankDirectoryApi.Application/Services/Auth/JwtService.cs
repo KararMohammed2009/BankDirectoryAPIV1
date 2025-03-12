@@ -22,17 +22,16 @@ namespace BankDirectoryApi.Application.Services.Auth
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IConfiguration _configuration;
-        private readonly IRefreshTokenRepository _refreshTokenRepository;
+       
         private readonly IDateTimeProvider _dateTimeProvider;
         private readonly IHashService _hashService;
 
         public JwtService(UserManager<IdentityUser> userManager, 
-            IConfiguration configuration,IRefreshTokenRepository refreshTokenRepository
+            IConfiguration configuration
             ,IDateTimeProvider dateTimeProvider,IHashService hashService)
         {
             _userManager = userManager;
             _configuration = configuration;
-            _refreshTokenRepository = refreshTokenRepository;
             _dateTimeProvider = dateTimeProvider;
             _hashService = hashService;
         }
@@ -73,7 +72,8 @@ namespace BankDirectoryApi.Application.Services.Auth
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-        public async Task<string?> GenerateRefreshTokenAsync(IdentityUser user)
+        public async Task<(string? RefreshToken,string? HashedRefreshToken)> 
+            GenerateRefreshTokenAsync(IdentityUser user)
         {
             byte[] randomBytes = new byte[64]; // Adjust length as needed
             using (var rng = RandomNumberGenerator.Create())
@@ -82,21 +82,10 @@ namespace BankDirectoryApi.Application.Services.Auth
             }
             var refreshToken =  Convert.ToBase64String(randomBytes);
             var hashedRefreshToken = _hashService.GetHash(refreshToken);
-            await _refreshTokenRepository.AddAsync(new RefreshToken
-            {
-                UserId = user.Id,
-                Token = hashedRefreshToken,
-                CreationDate = _dateTimeProvider.UtcNow,
-                ExpirationDate= _dateTimeProvider.UtcNow.AddMonths(1),
-                IsUsed = false,
-                IsInvalidated = false,
-                IsRevoked = false,
-
-            });
-            return refreshToken;
+            return (refreshToken,hashedRefreshToken);
         }
       
-        public async Task<bool?> ValidateTokenAsync(string token)
+        public async Task<bool?> ValidateAccessTokenAsync(string accessToken)
         {
             var jwtSecret = JwtHelper.GetJwtSecretKey(_configuration);
             var jwtIssuer = JwtHelper.GetJwtIssuer(_configuration);
@@ -117,7 +106,7 @@ namespace BankDirectoryApi.Application.Services.Auth
                     ValidAudience = jwtAudience
                 };
 
-                var validatedToken = await tokenHandler.ValidateTokenAsync(token, validationParameters);
+                var validatedToken = await tokenHandler.ValidateTokenAsync(accessToken, validationParameters);
 
                 return validatedToken.IsValid;
             }
@@ -137,6 +126,16 @@ namespace BankDirectoryApi.Application.Services.Auth
                 Console.WriteLine($"An unexpected error occured during token validation: {ex.Message}");
                 return false;
             }
+        }
+        public string GenerateNewSessionIdAsync()
+        {
+            byte[] randomBytes = new byte[64]; // Adjust length as needed
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomBytes);
+            }
+            return Convert.ToBase64String(randomBytes);
+
         }
     }
 }

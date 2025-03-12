@@ -7,7 +7,8 @@ namespace BankDirectoryApi.Application.Interfaces.Auth
     public interface IJwtService
     {
         Task<string?> GenerateAccessTokenAsync(IdentityUser user);
-        Task<string?> GenerateRefreshTokenAsync(IdentityUser user);
-        Task<bool?> ValidateTokenAsync(string token);
+        Task<(string? RefreshToken, string? HashedRefreshToken)> GenerateRefreshTokenAsync(IdentityUser user);
+        Task<bool?> ValidateAccessTokenAsync(string accessToken);
+        string GenerateNewSessionIdAsync();
     }
 }

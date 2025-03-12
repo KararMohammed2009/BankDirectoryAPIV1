@@ -18,6 +18,7 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers.ExternalAuthProviders
         [HttpGet("ExternalLogin")]
         public async Task<IActionResult> ExternalLogin(string code)
         {
+            
             var response = await _googleAuthProvider.ManageExternalLogin(code);
             if (!response.Success)
             {

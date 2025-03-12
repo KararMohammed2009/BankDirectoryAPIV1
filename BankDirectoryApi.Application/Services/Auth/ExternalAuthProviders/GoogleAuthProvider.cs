@@ -1,4 +1,5 @@
 ﻿using BankDirectoryApi.Application.DTOs.Auth;
+using BankDirectoryApi.Application.Interfaces;
 using BankDirectoryApi.Application.Interfaces.Auth;
 using BankDirectoryApi.Domain.Entities;
 using Google.Apis.Auth;
@@ -27,14 +28,14 @@ namespace BankDirectoryApi.Application.Services.Auth.ExternalAuthProviders
         public string ProviderName => "Google";
         public GoogleAuthProvider(
             UserManager<IdentityUser> userManager,
-            HttpClient httpClient,IConfiguration configuration,IJwtService jwtService)
-            : base(userManager, httpClient,configuration,jwtService)
+            HttpClient httpClient,IConfiguration configuration,IUserService userService)
+            : base(userManager, httpClient,configuration ,userService)
         {
 
         }
    
         public async Task<(bool Success, IEnumerable<IdentityError>? errors, IdentityUser? User, AuthDTO? Response)> 
-            ManageExternalLogin(string code)
+            ManageExternalLogin(string code,ClientInfo clientInfo)
         {
             var accessTokenResult = await GetAccessToken(code);
             if (!accessTokenResult.Success)
@@ -57,7 +58,7 @@ namespace BankDirectoryApi.Application.Services.Auth.ExternalAuthProviders
            
             return await HandleExternalUserSignIn(
                 userResult.User.Sub,userResult.User.Email, userResult.User.Name,
-                ProviderName, accessTokenResult.AccessToken);
+                ProviderName, accessTokenResult.AccessToken,clientInfo);
            
 
         }
