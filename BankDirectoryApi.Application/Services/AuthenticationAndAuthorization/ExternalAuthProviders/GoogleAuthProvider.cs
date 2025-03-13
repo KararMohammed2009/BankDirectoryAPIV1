@@ -1,6 +1,6 @@
 ﻿using BankDirectoryApi.Application.DTOs.Auth;
-using BankDirectoryApi.Application.Interfaces;
-using BankDirectoryApi.Application.Interfaces.Auth;
+using BankDirectoryApi.Application.Interfaces.AuthenticationAndAuthorization.ExternalAuthProviders;
+using BankDirectoryApi.Application.Interfaces.UserManagement;
 using BankDirectoryApi.Domain.Entities;
 using Google.Apis.Auth;
 using Google.Apis.Auth.OAuth2;

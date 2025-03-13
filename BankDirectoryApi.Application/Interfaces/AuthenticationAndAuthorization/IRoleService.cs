@@ -1,4 +1,4 @@
-﻿using BankDirectoryApi.Application.DTOs;
+﻿using BankDirectoryApi.Application.DTOs.Generic;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BankDirectoryApi.Application.Interfaces
+namespace BankDirectoryApi.Application.Interfaces.AuthenticationAndAuthorization
 {
     public interface IRoleService
     {
@@ -15,7 +15,7 @@ namespace BankDirectoryApi.Application.Interfaces
         public Task<Result<bool>> RemoveRoleAsync(string userId, string role);
         public Task<Result<IEnumerable<string>>> GetRolesAsync(string userId);
         public Task<Result<IEnumerable<string>>> GetAllRolesAsync();
-        public Task<Result<string>> RoleExistsAsync(string role);
+        public Task<Result<bool>> RoleExistsAsync(string role);
         public Task<Result<string>> CreateRoleAsync(string role);
         public Task<Result<string>> DeleteRoleAsync(string role);
 

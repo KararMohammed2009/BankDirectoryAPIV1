@@ -1,15 +1,17 @@
-﻿using BankDirectoryApi.Application.DTOs;
-using BankDirectoryApi.Application.DTOs.Auth;
+﻿using BankDirectoryApi.Application.DTOs.Auth;
+using BankDirectoryApi.Application.DTOs.Generic;
+using BankDirectoryApi.Application.DTOs.UserManagement;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BankDirectoryApi.Application.Interfaces
+namespace BankDirectoryApi.Application.Interfaces.AuthenticationAndAuthorization
 {
-    public interface IAuthenticationService
+    public interface IAuthenticationService<T> where T : class
     {
         public Task<Result<AuthDTO>> RegisterAsync(RegisterUserDTO model, ClientInfo clientInfo);
         public Task<Result<AuthDTO>> LoginAsync(LoginUserDTO model, ClientInfo clientInfo);

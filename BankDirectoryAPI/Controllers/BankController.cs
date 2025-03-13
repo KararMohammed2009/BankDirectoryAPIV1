@@ -1,5 +1,5 @@
 ﻿using Asp.Versioning;
-using BankDirectoryApi.Application.DTOs;
+using BankDirectoryApi.Application.DTOs.Core;
 using BankDirectoryApi.Application.Interfaces;
 using BankDirectoryApi.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;

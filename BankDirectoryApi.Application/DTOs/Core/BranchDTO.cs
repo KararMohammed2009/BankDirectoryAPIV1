@@ -7,9 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BankDirectoryApi.Application.DTOs
+namespace BankDirectoryApi.Application.DTOs.Core
 {
-    public class BranchDTO: IValidatableObject
+    public class BranchDTO : IValidatableObject
     {
         public int Id { get; set; }
         public int BankId { get; set; } // Foreign Key
@@ -18,7 +18,7 @@ namespace BankDirectoryApi.Application.DTOs
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (string.IsNullOrEmpty(FullName) || FullName.Length >1000)
+            if (string.IsNullOrEmpty(FullName) || FullName.Length > 1000)
             {
                 yield return new ValidationResult("FullName length must be < 1000.", new[] { "FullName" });
             }

@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using BankDirectoryApi.Application.DTOs;
+using BankDirectoryApi.Application.DTOs.Core;
 using BankDirectoryApi.Domain.Entities;
 using System;
 using System.Collections.Generic;

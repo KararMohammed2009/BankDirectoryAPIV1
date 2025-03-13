@@ -27,6 +27,7 @@ using Asp.Versioning;
 using BankDirectoryApi.Common.Services;
 using BankDirectoryApi.Application.Services.Auth.ExternalAuthProviders;
 using BankDirectoryApi.Application.Services.Auth;
+using BankDirectoryApi.Application.Interfaces.AuthenticationAndAuthorization.ExternalAuthProviders;
 
 namespace BankDirectoryApi.API.Extensions
 {

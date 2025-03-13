@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using BankDirectoryApi.Domain.Entities;
 using FluentAssertions;
-using BankDirectoryApi.Application.DTOs;
+using BankDirectoryApi.Application.DTOs.Core;
 namespace BankDirectoryApi.UnitTests.Services
 {
     public class BankServiceTests

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BankDirectoryApi.Application.DTOs.Auth
+namespace BankDirectoryApi.Application.DTOs.Communications
 {
     public class EmailConfirmationDTO
     {

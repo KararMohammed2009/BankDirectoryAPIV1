@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using BankDirectoryApi.Application.DTOs;
 using BankDirectoryApi.Domain.Interfaces;
 using BankDirectoryApi.Domain.Entities;
 using System;
@@ -8,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BankDirectoryApi.Application.Interfaces;
+using BankDirectoryApi.Application.DTOs.Core;
 
 namespace BankDirectoryApi.Application.Services
 {

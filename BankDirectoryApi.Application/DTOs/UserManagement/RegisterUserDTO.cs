@@ -4,20 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BankDirectoryApi.Application.DTOs.Auth
+namespace BankDirectoryApi.Application.DTOs.UserManagement
 {
-
-    public class UpdateUserDTO
+    public class RegisterUserDTO
     {
-        public string UserId { get; set; }
         public string UserName { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
-        public IEnumerable<string> RolesNames { get; set; }
+        public IEnumerable<string> Roles { get; set; }
         public string PhoneNumber { get; set; }
         public bool TwoFactorEnabled { get; set; }
 
 
     }
-
 }

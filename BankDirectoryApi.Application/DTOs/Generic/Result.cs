@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BankDirectoryApi.Application.DTOs
+namespace BankDirectoryApi.Application.DTOs.Generic
 {
     public class Result<T>
     {
@@ -33,5 +33,5 @@ namespace BankDirectoryApi.Application.DTOs
 
 }
 
-    
+
 

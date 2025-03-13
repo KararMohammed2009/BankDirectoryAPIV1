@@ -2,8 +2,11 @@
 using Azure.Core;
 using BankDirectoryApi.Application.DTOs;
 using BankDirectoryApi.Application.DTOs.Auth;
-using BankDirectoryApi.Application.Interfaces;
+using BankDirectoryApi.Application.DTOs.Communications;
+using BankDirectoryApi.Application.DTOs.UserManagement;
 using BankDirectoryApi.Application.Interfaces.Auth;
+using BankDirectoryApi.Application.Interfaces.AuthenticationAndAuthorization.ExternalAuthProviders;
+using BankDirectoryApi.Application.Interfaces.UserManagement;
 using BankDirectoryApi.Common.Services;
 using BankDirectoryApi.Domain.Entities;
 using BankDirectoryApi.Domain.Interfaces;
@@ -17,7 +20,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BankDirectoryApi.Application.Services
+namespace BankDirectoryApi.Application.Services.UserManagement
 {
     public class UserService : IUserService
     {
@@ -31,10 +34,10 @@ namespace BankDirectoryApi.Application.Services
         private readonly IConfiguration _configuration;
         private readonly IDateTimeProvider _dateTimeProvider;
         public UserService(SignInManager<IdentityUser> signInManager,
-            UserManager<IdentityUser> userManager , 
+            UserManager<IdentityUser> userManager,
             IExternalAuthProvider externalAuthProvider,
-            IJwtService jwtService,IMapper mapper
-            ,IRefreshTokenRepository refreshTokenRepository,IHashService hashService , 
+            IJwtService jwtService, IMapper mapper
+            , IRefreshTokenRepository refreshTokenRepository, IHashService hashService,
             IConfiguration configuration, IDateTimeProvider dateTimeProvider)
         {
             _signInManager = signInManager;
@@ -52,21 +55,21 @@ namespace BankDirectoryApi.Application.Services
            , ClientInfo clientInfo)
         {
             var accessToken = await _jwtService.GenerateAccessTokenAsync(user);
-           
+
             var refreshTokenResult = await GenerateRefreshTokenAsync(user, clientInfo);
-            if(refreshTokenResult.refreshTokenEntity == null || string.IsNullOrEmpty(refreshTokenResult.refreshToken)) return (null, null);
+            if (refreshTokenResult.refreshTokenEntity == null || string.IsNullOrEmpty(refreshTokenResult.refreshToken)) return (null, null);
             await _refreshTokenRepository.AddAsync(refreshTokenResult.refreshTokenEntity);
 
             return (accessToken, refreshTokenResult.refreshToken);
         }
-        private async Task<(RefreshToken? refreshTokenEntity,string? refreshToken)> GenerateRefreshTokenAsync(
+        private async Task<(RefreshToken? refreshTokenEntity, string? refreshToken)> GenerateRefreshTokenAsync(
             IdentityUser user
            , ClientInfo clientInfo)
         {
-            
+
             var refreshTokenPair = await _jwtService.GenerateRefreshTokenAsync(user);
             if (string.IsNullOrEmpty(refreshTokenPair.RefreshToken)
-                || string.IsNullOrEmpty(refreshTokenPair.HashedRefreshToken)) return (null,null);
+                || string.IsNullOrEmpty(refreshTokenPair.HashedRefreshToken)) return (null, null);
 
             var refreshTokenLifetimeDays = _configuration["JwtSettings:RefreshTokenLifetimeDays"];
             if (string.IsNullOrEmpty(refreshTokenLifetimeDays)) throw new InvalidOperationException(
@@ -85,9 +88,9 @@ namespace BankDirectoryApi.Application.Services
             };
 
 
-            return (refreshTokenEntity,refreshTokenPair.RefreshToken);
+            return (refreshTokenEntity, refreshTokenPair.RefreshToken);
         }
-        public async Task<AuthDTO?> RegisterAsync(RegisterUserDTO model , ClientInfo clientInfo)
+        public async Task<AuthDTO?> RegisterAsync(RegisterUserDTO model, ClientInfo clientInfo)
         {
             var user = _mapper.Map<RegisterUserDTO, IdentityUser>(model);
 
@@ -136,7 +139,7 @@ namespace BankDirectoryApi.Application.Services
             if (string.IsNullOrEmpty(user.Id)) return false;
             var oldUser = await _userManager.FindByIdAsync(user.Id);
             if (user == null) return false;
-           
+
             var result = await _userManager.UpdateAsync(user);
             return result.Succeeded;
         }
@@ -148,7 +151,7 @@ namespace BankDirectoryApi.Application.Services
             var result = await _userManager.AddToRoleAsync(user, role);
             return result.Succeeded;
         }
-        public async Task<bool?> ForgotPasswordAsync(ForgotPasswordDTO model )
+        public async Task<bool?> ForgotPasswordAsync(ForgotPasswordDTO model)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null) return false;
@@ -166,7 +169,7 @@ namespace BankDirectoryApi.Application.Services
 
             var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
             if (!result.Succeeded) return null;
-            await _refreshTokenRepository.RevokeAllRefreshTokensAsync(user.Id,clientInfo.IpAddress);
+            await _refreshTokenRepository.RevokeAllRefreshTokensAsync(user.Id, clientInfo.IpAddress);
             var tokens = await GenerateAndStoreTokensAsync(user, clientInfo);
             return new AuthDTO
             {
@@ -181,7 +184,7 @@ namespace BankDirectoryApi.Application.Services
 
             var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
             if (!result.Succeeded) return null;
-            await _refreshTokenRepository.RevokeAllRefreshTokensAsync(user.Id,clientInfo.IpAddress);
+            await _refreshTokenRepository.RevokeAllRefreshTokensAsync(user.Id, clientInfo.IpAddress);
             var tokens = await GenerateAndStoreTokensAsync(user, clientInfo);
             return new AuthDTO
             {
@@ -190,26 +193,7 @@ namespace BankDirectoryApi.Application.Services
             };
         }
 
-        public async Task<bool?> ConfirmEmailAsync(EmailConfirmationDTO model)
-        {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null) return false;
-
-            var result = await _userManager.ConfirmEmailAsync(user, model.Token);
-            return result.Succeeded;
-        }
-
-        public async Task<bool?> ResendConfirmationEmailAsync(string email)
-        {
-            var user = await _userManager.FindByEmailAsync(email);
-            if (user == null) return false;
-
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            // TODO: Send token via email (implement email service)
-            Console.WriteLine($"Email confirmation token for {email}: {token}");
-
-            return true;
-        }
+       
         public async Task<bool?> DeleteUserAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
@@ -238,31 +222,31 @@ namespace BankDirectoryApi.Application.Services
         public async Task<AuthDTO?> GenerateAccessTokenFromRefreshTokenAsync(string userId,
             string refreshToken, ClientInfo clientInfo)
         {
-            var user =await _userManager.FindByIdAsync(userId);
+            var user = await _userManager.FindByIdAsync(userId);
             if (user == null) return null;
             var refreshTokenEntity = await GenerateRefreshTokenAsync(user, clientInfo);
-                if(refreshTokenEntity.refreshTokenEntity == null ) return null;
+            if (refreshTokenEntity.refreshTokenEntity == null) return null;
             var accessToken = await _jwtService.GenerateAccessTokenAsync(user);
             if (string.IsNullOrEmpty(accessToken)) return null;
             var res = await _refreshTokenRepository.RotateRefreshTokenAsync(
                 _hashService.GetHash(refreshToken), refreshTokenEntity.refreshTokenEntity);
-          
+
             return new AuthDTO
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshTokenEntity.refreshToken,
             };
         }
-        public async Task<bool?> Logout(string userId,string SessionId, ClientInfo clientInfo)//Token Blacklisting
+        public async Task<bool?> Logout(string userId, string SessionId, ClientInfo clientInfo)//Token Blacklisting
         {
-            
+
             await _refreshTokenRepository.RevokeAllRefreshTokensAsync(
                 userId, SessionId, clientInfo.IpAddress);
             return true;
         }
         public async Task<AuthDTO?> ExternalLoginAsync(string code, ClientInfo clientInfo)
         {
-            var externalLoginInfo = await _externalAuthProvider.ManageExternalLogin(code,clientInfo);
+            var externalLoginInfo = await _externalAuthProvider.ManageExternalLogin(code, clientInfo);
             if (!externalLoginInfo.Success) return null;
             return externalLoginInfo.Response;
         }

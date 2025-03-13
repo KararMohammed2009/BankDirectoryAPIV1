@@ -5,11 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BankDirectoryApi.Application.DTOs
+namespace BankDirectoryApi.Application.DTOs.Core
 {
     public class BankDTO
     {
-      
+
         public int Id { get; set; }
         [Required(ErrorMessage = "Bank name is required.")]
         [RegularExpression(@"^[a-zA-Z0-9\s]+$", ErrorMessage = "Invalid characters in bank name.")] // Prevents scripts
