@@ -30,7 +30,7 @@ namespace BankDirectoryApi.Infrastructure.Repositories
         }
 
 
-        public async Task<bool?> RevokeAllRefreshTokensAsync(string userId, string sessionId, string RevokedByIp)
+        public async Task<bool> RevokeAllRefreshTokensAsync(string userId, string sessionId, string? RevokedByIp)
         {
             var refreshTokens = await _context.RefreshTokens
                 .Where(rt => rt.UserId == userId && rt.SessionId == sessionId)
@@ -42,7 +42,7 @@ namespace BankDirectoryApi.Infrastructure.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
-        public async Task<bool?> RevokeAllRefreshTokensAsync(string userId,string RevokedByIp)
+        public async Task<bool> RevokeAllRefreshTokensAsync(string userId,string RevokedByIp)
         {
             var refreshTokens = await _context.RefreshTokens
                 .Where(rt => rt.UserId == userId)
@@ -55,7 +55,7 @@ namespace BankDirectoryApi.Infrastructure.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
-        public async Task<bool?> RevokeAllRefreshTokensAsync(string userId)
+        public async Task<bool> RevokeAllRefreshTokensAsync(string userId)
         {
             var refreshTokens = await _context.RefreshTokens
                 .Where(rt => rt.UserId == userId)
@@ -67,11 +67,11 @@ namespace BankDirectoryApi.Infrastructure.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
-        public async Task<bool?> RotateRefreshTokenAsync(string oldTokenHash,RefreshToken newToken)
+        public async Task<bool> RotateRefreshTokenAsync(string oldTokenHash,RefreshToken newToken)
         {
             var refreshToken = await _context.RefreshTokens.Where(rt=>
             rt.TokenHash == oldTokenHash).Where(IsValidToken()).FirstOrDefaultAsync();
-            if (refreshToken == null) return null;
+            if (refreshToken == null) return false;
             newToken.UserId = refreshToken.UserId;
             _context.RefreshTokens.Add(newToken);
 

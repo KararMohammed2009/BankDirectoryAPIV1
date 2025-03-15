@@ -1,0 +1,16 @@
+﻿using BankDirectoryApi.Common.Exceptions;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace BankDirectoryApi.Infrastructure.Exceptions
+{
+    public class ExternalServiceErrorException : CustomExceptionBase
+    {
+        public ExternalServiceErrorException(string message = "External service error.")
+            : base(message)
+        { }
+    }
+}

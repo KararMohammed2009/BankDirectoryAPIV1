@@ -9,10 +9,10 @@ namespace BankDirectoryApi.Domain.Interfaces
 {
     public interface IRefreshTokenRepository : IRepository<RefreshToken>
     {
-        public Task<bool?> RevokeAllRefreshTokensAsync(string userId, string sessionId ,string RevokedByIp ); // eg. user logs out
-        public Task<bool?> RevokeAllRefreshTokensAsync(string userId, string RevokedByIp); // eg. user change password
-        public Task<bool?> RevokeAllRefreshTokensAsync(string userId);
-        public Task<bool?> RotateRefreshTokenAsync(string oldTokenHash, RefreshToken newToken); // eg. user request for new accessToken
+        public Task<bool> RevokeAllRefreshTokensAsync(string userId, string sessionId ,string? RevokedByIp ); // eg. user logs out
+        public Task<bool> RevokeAllRefreshTokensAsync(string userId, string RevokedByIp); // eg. user change password
+        public Task<bool> RevokeAllRefreshTokensAsync(string userId);
+        public Task<bool> RotateRefreshTokenAsync(string oldTokenHash, RefreshToken newToken); // eg. user request for new accessToken
 
 
     }

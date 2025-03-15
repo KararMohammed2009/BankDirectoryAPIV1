@@ -1,4 +1,4 @@
-using BankDirectoryApi.Application.Interfaces;
+using BankDirectoryApi.Application.Interfaces.Main;
 using BankDirectoryApi.Application.Services;
 using BankDirectoryApi.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;

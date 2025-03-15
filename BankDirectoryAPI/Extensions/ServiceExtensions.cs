@@ -1,8 +1,4 @@
-﻿
-
-using BankDirectoryApi.Application.Interfaces;
-using BankDirectoryApi.Domain.Interfaces;
-using BankDirectoryApi.Application.Services;
+﻿using BankDirectoryApi.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using BankDirectoryApi.Application.Mappings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,7 +12,6 @@ using BankDirectoryApi.Infrastructure.Repositories;
 using BankDirectoryApi.Domain.Entities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using BankDirectoryApi.Application.Interfaces.Auth;
 using BankDirectoryApi.Infrastructure.Data;
 using FluentValidation;
 using BankDirectoryApi.API.Validators;
@@ -25,9 +20,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Asp.Versioning;
 using BankDirectoryApi.Common.Services;
-using BankDirectoryApi.Application.Services.Auth.ExternalAuthProviders;
-using BankDirectoryApi.Application.Services.Auth;
-using BankDirectoryApi.Application.Interfaces.AuthenticationAndAuthorization.ExternalAuthProviders;
+using BankDirectoryApi.Application.Services.Main;
+using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization;
+using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.ExternalAuthProviders;
+using BankDirectoryApi.Application.Interfaces.Main;
+using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
+using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.ExternalAuthProviders;
+using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt;
 
 namespace BankDirectoryApi.API.Extensions
 {
@@ -90,7 +89,7 @@ namespace BankDirectoryApi.API.Extensions
             //builder.Services.AddScoped<IUserService, UserService>();
 
             // Register Identity Services
-            builder.Services.AddScoped<IJwtService, JwtService>();
+            builder.Services.AddScoped<IJwtService, JwtTokenGenerator>();
 
             // Register ASP.NET Identity Managers
             builder.Services.AddScoped<UserManager<IdentityUser>>();
@@ -179,7 +178,7 @@ namespace BankDirectoryApi.API.Extensions
         public static void UseJwtAuth(this WebApplication app)
         {
             // Use JWT authentication and authorization
-            app.UseMiddleware<JwtClientIdMiddleware>(); // Extracts Client ID from JWT
+            app.UseMiddleware<ClientParametersExtractorMiddleware>(); // Extracts Client ID from JWT
             app.UseAuthentication();
             app.UseAuthorization();
         }

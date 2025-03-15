@@ -1,5 +1,4 @@
-﻿using BankDirectoryApi.Application.Services;
-using BankDirectoryApi.Domain.Interfaces;
+﻿using BankDirectoryApi.Domain.Interfaces;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -10,6 +9,7 @@ using AutoMapper;
 using BankDirectoryApi.Domain.Entities;
 using FluentAssertions;
 using BankDirectoryApi.Application.DTOs.Core;
+using BankDirectoryApi.Application.Services.Main;
 namespace BankDirectoryApi.UnitTests.Services
 {
     public class BankServiceTests
