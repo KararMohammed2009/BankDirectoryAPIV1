@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization
 {
-    public interface ISessionHandler
+    public interface ISessionService
     {
         public string GenerateNewSessionIdAsync();
 

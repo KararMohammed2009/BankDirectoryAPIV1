@@ -9,10 +9,10 @@ namespace BankDirectoryApi.API.Middleware
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<ClientParametersExtractorMiddleware> _logger;
-        private readonly ITokenParser _tokenParser;
+        private readonly ITokenParserService _tokenParser;
 
         public ClientParametersExtractorMiddleware(RequestDelegate
-            next, ILogger<ClientParametersExtractorMiddleware> logger,ITokenParser tokenParser)
+            next, ILogger<ClientParametersExtractorMiddleware> logger,ITokenParserService tokenParser)
         {
             _next = next;
             _logger = logger;

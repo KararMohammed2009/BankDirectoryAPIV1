@@ -14,14 +14,14 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.ExternalAuthProviders
 {
-    public abstract class ExternalAuthProviderBase
+    public abstract class ExternalAuthProviderServiceBase
     {
         protected readonly UserManager<IdentityUser> _userManager;
         protected readonly HttpClient _httpClient;
         protected readonly IConfiguration _configration;
         protected readonly IUserService _userService;
 
-        protected ExternalAuthProviderBase(UserManager<IdentityUser> userManager,
+        protected ExternalAuthProviderServiceBase(UserManager<IdentityUser> userManager,
             HttpClient httpClient,IConfiguration configuration,IUserService userService)
         {
             _userManager = userManager;

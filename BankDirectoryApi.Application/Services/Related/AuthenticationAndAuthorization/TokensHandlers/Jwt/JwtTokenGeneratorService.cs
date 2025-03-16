@@ -9,38 +9,43 @@ using BankDirectoryApi.Common.Services;
 using System.Security.Cryptography;
 using BankDirectoryApi.Application.Exceptions;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers;
+using BankDirectoryApi.Common.Exceptions;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt
 {
-    public class JwtTokenGenerator : ITokenGenerator
+    public class JwtTokenGeneratorService : ITokenGeneratorService
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IConfiguration _configuration;
         private readonly IDateTimeProvider _dateTimeProvider;
+        private readonly IGuidProvider _guidProvider;
 
-        public JwtTokenGenerator(UserManager<IdentityUser> userManager, 
+        public JwtTokenGeneratorService(UserManager<IdentityUser> userManager, 
             IConfiguration configuration
-            ,IDateTimeProvider dateTimeProvider)
+            ,IDateTimeProvider dateTimeProvider,
+            IGuidProvider guidProvider)
         {
             _userManager = userManager;
             _configuration = configuration;
             _dateTimeProvider = dateTimeProvider;
+            _guidProvider = guidProvider;
         }
 
         public async Task<string> GenerateAccessTokenAsync(IdentityUser user)
         {
-            if (user == null || string.IsNullOrEmpty(user.UserName)
-                    || string.IsNullOrEmpty(user.Email))
-            {
-                throw new TokenHandlingException("Invalid User or null");
-            }
             try
             {
-                
+
+                if (user == null || string.IsNullOrEmpty(user.UserName)
+                    || string.IsNullOrEmpty(user.Email))
+            {
+                throw new NotFoundException();
+            }
+              
                 var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, _guidProvider.NewGuid().ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(ClaimTypes.Email, user.Email)
@@ -70,9 +75,13 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
 
                 return new JwtSecurityTokenHandler().WriteToken(token);
             }
+            catch (NotFoundException ex)
+            {
+                throw new JwtTokenGeneratorServiceException("Invalid User",ex);
+            }
             catch (Exception ex)
             {
-                throw new TokenHandlingException("Generate Jwt AccessToken Failed",ex);
+                throw new JwtTokenGeneratorServiceException("Generate Jwt AccessToken Failed", ex);
             }
         }
        

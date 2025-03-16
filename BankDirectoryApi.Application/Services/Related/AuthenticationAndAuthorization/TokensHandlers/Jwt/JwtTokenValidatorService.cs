@@ -10,13 +10,13 @@ using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthoriza
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt
 {
-    public class JwtTokenValidator : ITokenValidator
+    public class JwtTokenValidatorService : ITokenValidatorService
     {
 
         private readonly IConfiguration _configuration;
        
 
-        public JwtTokenValidator(
+        public JwtTokenValidatorService(
             IConfiguration configuration)
         {
             _configuration = configuration;
@@ -33,7 +33,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
             var tokenHandler = new JwtSecurityTokenHandler();
 
-          
+            
                 var validationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
@@ -51,7 +51,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             }
             catch (Exception ex) 
             {
-                throw new TokenHandlingException("Validate Jwt AccessToken Failed", ex);
+                throw new JwtTokenValidatorServiceException("Validate Jwt AccessToken Failed", ex);
             }
             
         }

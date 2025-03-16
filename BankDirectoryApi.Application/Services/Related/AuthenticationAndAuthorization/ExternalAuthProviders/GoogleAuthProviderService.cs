@@ -22,11 +22,11 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.ExternalAuthProviders
 {
-    public class GoogleAuthProvider : ExternalAuthProviderBase, IExternalAuthProvider
+    public class GoogleAuthProviderService : ExternalAuthProviderServiceBase, IExternalAuthProviderService
     {
 
         public string ProviderName => "Google";
-        public GoogleAuthProvider(
+        public GoogleAuthProviderService(
             UserManager<IdentityUser> userManager,
             HttpClient httpClient,IConfiguration configuration,IUserService userService)
             : base(userManager, httpClient,configuration ,userService)

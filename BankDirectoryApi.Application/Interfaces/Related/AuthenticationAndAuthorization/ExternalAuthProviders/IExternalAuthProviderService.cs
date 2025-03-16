@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.ExternalAuthProviders
 {
-    public interface IExternalAuthProvider
+    public interface IExternalAuthProviderService
     {
         Task<(bool Success, IEnumerable<IdentityError>? errors, IdentityUser? User, AuthDTO? Response)> ManageExternalLogin(string code, ClientInfo clientInfo);
         string ProviderName { get; }

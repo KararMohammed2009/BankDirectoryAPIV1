@@ -26,7 +26,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
-        private readonly IExternalAuthProvider _externalAuthProvider;
+        private readonly IExternalAuthProviderService _externalAuthProvider;
         private readonly IJwtService _jwtService;
         private readonly IMapper _mapper;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
@@ -35,7 +35,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
         private readonly IDateTimeProvider _dateTimeProvider;
         public UserService(SignInManager<IdentityUser> signInManager,
             UserManager<IdentityUser> userManager,
-            IExternalAuthProvider externalAuthProvider,
+            IExternalAuthProviderService externalAuthProvider,
             IJwtService jwtService, IMapper mapper
             , IRefreshTokenRepository refreshTokenRepository, IHashService hashService,
             IConfiguration configuration, IDateTimeProvider dateTimeProvider)

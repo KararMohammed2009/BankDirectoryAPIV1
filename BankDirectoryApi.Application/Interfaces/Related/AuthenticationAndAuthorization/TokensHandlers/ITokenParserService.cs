@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers
 {
-    public interface ITokenParser
+    public interface ITokenParserService
     {
         string GetUserIdAsync(string accessToken);
     }

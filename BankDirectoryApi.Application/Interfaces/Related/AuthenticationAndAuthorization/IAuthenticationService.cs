@@ -15,11 +15,11 @@ namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAutho
     public interface IAuthenticationService 
     {
 
-         Task<Result<AuthDTO>> RegisterAsync(RegisterUserDTO model, ClientInfo clientInfo);
-         Task<Result<AuthDTO>> LoginAsync(LoginUserDTO model, ClientInfo clientInfo);
-         Task<Result<AuthDTO>> ExternalLoginAsync(string code, ClientInfo clientInfo);
-         Task<Result<bool>> LogoutAsync(string userId, string sessionId, ClientInfo clientInfo);
-         Task<Result<AuthDTO>> GenerateAccessTokenFromRefreshTokenAsync(string userId, string refreshToken, ClientInfo clientInfo);
-        Task <Result<bool>> ValidateAccessToken(string accessToken);
+         Task<AuthDTO> RegisterAsync(RegisterUserDTO model, ClientInfo clientInfo);
+         Task<AuthDTO> LoginAsync(LoginUserDTO model, ClientInfo clientInfo);
+         Task<AuthDTO> ExternalLoginAsync(string code, ClientInfo clientInfo);
+         Task<bool> LogoutAsync(string userId, string sessionId, ClientInfo clientInfo);
+         Task<AuthDTO> GenerateAccessTokenFromRefreshTokenAsync(string userId, string refreshToken, ClientInfo clientInfo);
+        Task <bool> ValidateAccessToken(string accessToken);
     }
 }

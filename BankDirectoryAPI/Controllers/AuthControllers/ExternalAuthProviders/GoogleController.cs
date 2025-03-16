@@ -10,8 +10,8 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers.ExternalAuthProviders
     [ApiController]
     public class GoogleController : ControllerBase
     {
-        private readonly GoogleAuthProvider _googleAuthProvider;
-        public GoogleController(GoogleAuthProvider googleAuthProvider)
+        private readonly GoogleAuthProviderService _googleAuthProvider;
+        public GoogleController(GoogleAuthProviderService googleAuthProvider)
         {
             _googleAuthProvider = googleAuthProvider;
         }

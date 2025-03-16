@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers
 {
-    public interface ITokenGenerator
+    public interface ITokenValidatorService
     {
-        Task<string> GenerateAccessTokenAsync(IdentityUser user);
+        Task<bool> ValidateAccessTokenAsync(string accessToken);
     }
 }
