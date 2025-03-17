@@ -10,28 +10,32 @@ using System.Security.Cryptography;
 using BankDirectoryApi.Application.Exceptions;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers;
 using BankDirectoryApi.Common.Exceptions;
+using BankDirectoryApi.Application.DTOs.Related.UserManagement;
+using BankDirectoryApi.Application.Interfaces.Related.UserManagement;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt
 {
     public class JwtTokenGeneratorService : ITokenGeneratorService
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly IUserService _userService;
         private readonly IConfiguration _configuration;
         private readonly IDateTimeProvider _dateTimeProvider;
         private readonly IGuidProvider _guidProvider;
 
-        public JwtTokenGeneratorService(UserManager<IdentityUser> userManager, 
+        public JwtTokenGeneratorService(
             IConfiguration configuration
             ,IDateTimeProvider dateTimeProvider,
-            IGuidProvider guidProvider)
+            IGuidProvider guidProvider,
+            IUserService userService)
         {
-            _userManager = userManager;
+            
             _configuration = configuration;
             _dateTimeProvider = dateTimeProvider;
             _guidProvider = guidProvider;
+            _userService = userService;
         }
 
-        public async Task<string> GenerateAccessTokenAsync(IdentityUser user)
+        public async Task<string> GenerateAccessTokenAsync(UserDTO user)
         {
             try
             {
@@ -50,8 +54,8 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                 new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(ClaimTypes.Email, user.Email)
             };
-                var roles = await _userManager.GetRolesAsync(user);
-                foreach (var role in roles)
+
+                foreach (var role in user.Roles)
                 {
                     claims.Add(new Claim(ClaimTypes.Role, role));
                 }

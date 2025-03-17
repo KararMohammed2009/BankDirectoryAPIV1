@@ -1,73 +1,60 @@
 ﻿using AutoMapper;
-using BankDirectoryApi.Application.DTOs.Generic;
 using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.Application.DTOs.Related.UserManagement;
 using BankDirectoryApi.Application.Exceptions;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.ExternalAuthProviders;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers;
+using BankDirectoryApi.Application.Interfaces.Related.UserManagement;
 using BankDirectoryApi.Common.Exceptions;
-using Microsoft.AspNetCore.Identity;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization
 {
     public class AuthenticationService:IAuthenticationService
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IExternalAuthProviderService _externalAuthProvider;
         private readonly IMapper _mapper;
         private readonly IRefreshTokenService _refreshTokenService;
         private readonly ITokenGeneratorService _tokenGenerator;
         private readonly ITokenValidatorService _tokenValidator;
+        private readonly IUserService _userService;
 
         public AuthenticationService(
-            UserManager<IdentityUser> userManager,
-            SignInManager<IdentityUser> signInManager,
             IRefreshTokenService refreshTokenService,
             IMapper mapper, IExternalAuthProviderService externalAuthProvider
             ,ITokenGeneratorService tokenGenerator,
-            ITokenValidatorService tokenValidator)
+            ITokenValidatorService tokenValidator,
+            IUserService userService)
              
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
             _mapper = mapper;
             _refreshTokenService = refreshTokenService;
             _externalAuthProvider = externalAuthProvider;
             _tokenGenerator = tokenGenerator;
             _tokenValidator = tokenValidator;
+            _userService = userService;
 
         }
-        public async Task<(string? accessToken, string? refreshToken)> GenerateAndStoreTokensAsync(
-        IdentityUser user
-       , ClientInfo clientInfo)
-        {
-            var accessToken = await _tokenGenerator.GenerateAccessTokenAsync(user);
-
-            var refreshTokenResult = await _refreshTokenService.GenerateRefreshTokenEntityAsync(user.Id, clientInfo);
-           
-            await _refreshTokenService.StoreRefreshTokenAsync(refreshTokenResult.refreshTokenEntity);
-
-            return (accessToken, refreshTokenResult.refreshToken);
-        }
-        
+   
         public async Task<AuthDTO> RegisterAsync(RegisterUserDTO model, ClientInfo clientInfo)
         {
             try
             {
-                var user = _mapper.Map<RegisterUserDTO, IdentityUser>(model);
-            if (user == null) throw new Exception("Cannot map RegisterUserDTO to IdentityUser");
-            
-                var result = await _userManager.CreateAsync(user, model.Password);
-                if (!result.Succeeded) 
-                    throw new Exception("Cannot create user by userManager");
 
-                var tokens = await GenerateAndStoreTokensAsync(user, clientInfo);
+                if (model == null) throw new ValidationException("RegisterUserDTO is required");
+                var user = await _userService.CreateUserAsync(model);
+                if (user == null) 
+                    throw new Exception("Cannot create user by UserService");
+                var accessToken = await _tokenGenerator.GenerateAccessTokenAsync(user);
+
+                var refreshTokenResult = await _refreshTokenService.GenerateRefreshTokenEntityAsync(user.Id, clientInfo);
+
+               await _refreshTokenService.StoreRefreshTokenAsync(refreshTokenResult.refreshTokenEntity);
+              
                 return  new AuthDTO
                 {
-                    AccessToken = tokens.accessToken,
-                    RefreshToken = tokens.refreshToken,
+                    AccessToken = accessToken,
+                    RefreshToken = refreshTokenResult.refreshToken,
                 };
             }
             catch (Exception ex)
@@ -84,20 +71,24 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                 if (string.IsNullOrEmpty(model.Email)) throw new ValidationException("Email is required");
                 if (string.IsNullOrEmpty(model.Password)) throw new ValidationException("Password is required");
 
-                var user = await _userManager.FindByEmailAsync(model.Email);
+                var user = await _userService.GetUserByEmailAsync(model.Email);
                 if (user == null)
-                    throw new ValidationException("Cannot find email by userManager");
+                    throw new ValidationException("Cannot find email by UserService");
 
-                var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
+                var result = await _userService.CheckPasswordSignInAsync(user, model.Password, false);
 
-                if (!result.Succeeded)
+                if (!result)
                     throw new AuthenticationException("Invalid credentials");
 
-                var tokens = await GenerateAndStoreTokensAsync(user, clientInfo);
+                var accessToken = await _tokenGenerator.GenerateAccessTokenAsync(user);
+
+                var refreshTokenResult = await _refreshTokenService.GenerateRefreshTokenEntityAsync(user.Id, clientInfo);
+
+                await _refreshTokenService.StoreRefreshTokenAsync(refreshTokenResult.refreshTokenEntity);
                 return new AuthDTO
                 {
-                    AccessToken = tokens.accessToken,
-                    RefreshToken = tokens.refreshToken,
+                    AccessToken = accessToken,
+                    RefreshToken = refreshTokenResult.refreshToken,
                 };
             }
             catch (Exception ex)
@@ -113,8 +104,8 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                 if (string.IsNullOrEmpty(userId)) throw new ValidationException("User id is required");
                 if (string.IsNullOrEmpty(refreshToken)) throw new ValidationException("Refresh token is required");
 
-                var user = await _userManager.FindByIdAsync(userId);
-                if (user == null) throw new ValidationException("Cannot find user by userManager");
+                var user = await _userService.GetUserByIdAsync(userId);
+                if (user == null) throw new ValidationException("Cannot find user by UserService");
 
                 var refreshTokenEntity = await _refreshTokenService.GenerateRefreshTokenEntityAsync(user.Id, clientInfo);
 

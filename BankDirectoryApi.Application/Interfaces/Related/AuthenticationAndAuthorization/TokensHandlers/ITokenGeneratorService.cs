@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using BankDirectoryApi.Application.DTOs.Related.UserManagement;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,6 @@ namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAutho
 {
     public interface ITokenGeneratorService
     {
-        Task<string> GenerateAccessTokenAsync(IdentityUser user);
+        Task<string> GenerateAccessTokenAsync(UserDTO user);
     }
 }

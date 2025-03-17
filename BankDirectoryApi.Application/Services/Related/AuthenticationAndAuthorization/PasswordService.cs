@@ -15,7 +15,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
-        private readonly IRefreshTokenRepository _authenticationService;
+        private readonly IAuthenticationService _authenticationService;
         public PasswordService(UserManager<IdentityUser> userManager, 
             IRefreshTokenRepository refreshTokenRepository,IAuthenticationService authenticationService)
         {
