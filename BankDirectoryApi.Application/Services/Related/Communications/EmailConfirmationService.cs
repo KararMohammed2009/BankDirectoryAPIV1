@@ -1,45 +1,44 @@
-﻿using BankDirectoryApi.Application.DTOs.Generic;
-using BankDirectoryApi.Application.DTOs.Related.Communications;
+﻿using BankDirectoryApi.Application.DTOs.Related.Communications;
+using BankDirectoryApi.Application.Exceptions;
 using BankDirectoryApi.Application.Interfaces.Related.Communications;
-using BankDirectoryApi.Common.Exceptions;
-using BankDirectoryApi.Infrastructure.Exceptions;
-using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using BankDirectoryApi.Application.Interfaces.Related.UserManagement;
 
 namespace BankDirectoryApi.Application.Services.Related.Communications
 {
     public class EmailConfirmationService :IEmailConfirmationService
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        public EmailConfirmationService(UserManager<IdentityUser> userManager)
+        private readonly IUserService _userService;
+        public EmailConfirmationService(IUserService userService)
         {
-            _userManager = userManager;
+            _userService = userService;
         }
-        public async Task<Result<bool>> ConfirmEmailAsync(EmailConfirmationDTO model)
+        public async Task<bool> ConfirmEmailAsync(EmailConfirmationDTO model)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null) throw new NotFoundException("User not found");
-            var result = await _userManager.ConfirmEmailAsync(user, model.Token);
-            if(result.Succeeded) throw new InvalidOperationCustomException("Email confirmation failed");
-            return Result<bool>.SuccessResult(true);
+            try
+            {
+                if (model == null) throw new Exception("Model is required");
+                var result = await _userService.ConfirmEmailAsync(model.Email, model.Token);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new EmailConfirmationServiceException("Email confirmation failed", ex);
+            } 
         }
 
-        public async Task<Result<bool>> ResendConfirmationEmailAsync(string email)
+       public async Task<bool> ResendConfirmationEmailAsync(string email)
         {
-           
-            var user = await _userManager.FindByEmailAsync(email);
-            if (user == null) throw new NotFoundException("User not found");
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            if (token == null) throw new InvalidOperationCustomException("Token generation failed");
-           
-                // TODO: Send token via email (implement email service)
-          
-
-            return Result<bool>.SuccessResult(true);
+            try
+            {
+                if (string.IsNullOrEmpty(email)) throw new Exception("Email is required");
+                var token = await _userService.GenerateEmailConfirmationTokenAsync(email);
+                // TODO: Send email with token to user email address 
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new EmailConfirmationServiceException("Resend confirmation email failed", ex);
+            }
         }
     }
 }

@@ -41,32 +41,36 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
         {
             try
             {
+                if (string.IsNullOrEmpty(userId)) throw new Exception("UserId is required");
                 var identityUser = await _userManager.FindByIdAsync(userId);
+                if (identityUser == null) throw new Exception($"Get User by Id ({userId}) failed by UserManager<IdentityUser>");
                 return _mapper.Map<UserDTO>(identityUser);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                throw new UserServiceException($"Get User by Id ({userId}) failed by UserManager<IdentityUser>", ex);
+                throw new UserServiceException($"Get User by Id failed", ex);
             }
         }
         public async Task<UserDTO> GetUserByEmailAsync(string email)
         {
             try
             {
+                if (string.IsNullOrEmpty(email)) throw new Exception("Email is required");
                 var identityUser = await _userManager.FindByEmailAsync(email);
+                if (identityUser == null) throw new Exception($"Get User by Email({email}) failed by UserManager<IdentityUser>");
                 return _mapper.Map<UserDTO>(identityUser);
             }
             catch (Exception ex)
             {
-                throw new UserServiceException($"Get User by Email({email}) failed by UserManager<IdentityUser>", ex);
+                throw new UserServiceException($"Get User by Email failed", ex);
             }
         }
         public async Task<UserDTO> UpdateUserAsync(UpdateUserDTO user)
         {
             try
             {
-              
-                var identityUser = _mapper.Map<IdentityUser>(user); 
+                if (user == null) throw new Exception("User is required");
+                var identityUser = _mapper.Map<IdentityUser>(user);
                 var updateResult = await _userManager.UpdateAsync(identityUser);
                 if (!updateResult.Succeeded)
                 {
@@ -109,23 +113,25 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
         {
             try
             {
+                if (string.IsNullOrEmpty(userId)) throw new Exception("UserId is required");
                 var identityUser = await _userManager.FindByIdAsync(userId);
-                if(identityUser  == null) throw new Exception($"Cannot find user by id({userId})");
-                var result =await _userManager.DeleteAsync(identityUser);
-                if(!result.Succeeded) throw new Exception($"Failed to delete user(id = {userId}) by UserManager<IdentityUser>");
+                if (identityUser == null) throw new Exception($"Cannot find user by id({userId}) by UserManager<IdentityUser>");
+                var result = await _userManager.DeleteAsync(identityUser);
+                if (!result.Succeeded) throw new Exception($"Failed to delete user(id = {userId}) by UserManager<IdentityUser>");
                 return true;
             }
             catch (Exception ex)
             {
-                throw new UserServiceException("Delete User failed",ex);
+                throw new UserServiceException("Delete User failed", ex);
             }
         }
-        public async Task<UserDTO> CreateUserAsync(RegisterUserDTO model)
+        public async Task<UserDTO> CreateUserAsync(RegisterUserDTO user)
         {
             try
             {
-                var identityUser = _mapper.Map<IdentityUser>(model);
-                var result = await _userManager.CreateAsync(identityUser, model.Password);
+                if (user == null) throw new Exception("Model is required");
+                var identityUser = _mapper.Map<IdentityUser>(user);
+                var result = await _userManager.CreateAsync(identityUser, user.Password);
                 if (!result.Succeeded)
                 {
                     throw new Exception("Failed to create user by UserManager<IdentityUser>");
@@ -137,22 +143,56 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 throw new UserServiceException("Create User failed", ex);
             }
         }
-        public async Task<bool> CheckPasswordSignInAsync(UserDTO user, string password, bool lockoutOnFailure)
+         public async Task<bool> ConfirmEmailAsync(string email, string token)
         {
             try
             {
-                var identityUser = _mapper.Map<IdentityUser>(user);
-                var result = await _signInManager.CheckPasswordSignInAsync(identityUser, password, lockoutOnFailure);
+                if (string.IsNullOrEmpty(email)) throw new Exception("Email is required");
+                if (string.IsNullOrEmpty(token)) throw new Exception("Token is required");
+                var identityUser = await _userManager.FindByEmailAsync(email);
+                if (identityUser == null) throw new Exception($"Cannot find user by email({email}) by UserManager<IdentityUser>");
+                var result = await _userManager.ConfirmEmailAsync(identityUser, token);
+                if (!result.Succeeded) throw new Exception("Email confirmation failed by UserManager<IdentityUser>");
                 return result.Succeeded;
-
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                throw new UserServiceException("Check Password Sign In failed", ex);
+                throw new UserServiceException("Confirm Email failed", ex);
             }
         }
-
-
+      
+        public async Task<bool> IsEmailConfirmedAsync(UserDTO user)
+        {
+            try
+            {
+                if (user == null) throw new Exception("User is required");
+                var identityUser = _mapper.Map<IdentityUser>(user);
+                return await _userManager.IsEmailConfirmedAsync(identityUser);
+            }
+            catch (Exception ex)
+            {
+                throw new UserServiceException("Is Email Confirmed failed", ex);
+            }
+        }
+        public async Task<string> GenerateEmailConfirmationTokenAsync(string email)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(email)) throw new Exception("Email is required");
+                var identityUser = await _userManager.FindByEmailAsync(email);
+                if (identityUser == null) throw new Exception($"Cannot find user by email({email}) by UserManager<IdentityUser>");
+                var result =  await _userManager.GenerateEmailConfirmationTokenAsync(identityUser);
+                if (result == null) throw new Exception("Email confirmation token generation failed by UserManager<IdentityUser>");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new UserServiceException("Generate Email Confirmation Token failed", ex);
+            }
+        }
+       
 
     }
 }
+
+

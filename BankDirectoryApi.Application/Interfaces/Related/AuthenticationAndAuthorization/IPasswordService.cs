@@ -1,5 +1,5 @@
-﻿using BankDirectoryApi.Application.DTOs.Generic;
-using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
+﻿using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
+using BankDirectoryApi.Application.DTOs.Related.UserManagement;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,8 +10,11 @@ namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAutho
 {
     public interface IPasswordService
     {
-        public Task<Result<bool>> ForgotPasswordAsync(ForgotPasswordDTO model);
-        public Task<Result<AuthDTO>> ResetPasswordAsync(ResetPasswordDTO model, ClientInfo clientInfo);
-        public Task<Result<AuthDTO>> ChangePasswordAsync(ChangePasswordDTO model, ClientInfo clientInfo);
+        
+        public Task<bool> CheckPasswordSignInAsync(UserDTO user, string password, bool lockoutOnFailure);
+        public Task<bool> ChangePasswordAsync(UserDTO user, string currentPassword, string newPassword);
+        public Task<bool> ResetPasswordAsync(UserDTO user, string token, string newPassword);
+        public Task<string> GeneratePasswordResetTokenAsync(string userId);
+        public Task<string> ForgotPasswordAsync(string email);
     }
 }
