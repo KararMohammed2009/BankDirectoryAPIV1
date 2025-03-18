@@ -35,29 +35,29 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             _userService = userService;
         }
 
-        public async Task<string> GenerateAccessTokenAsync(UserDTO user)
+        public async Task<string> GenerateAccessTokenAsync(string userId,string userName , string email,IEnumerable<string> roles)
         {
             try
             {
+                if (userId == null) throw new Exception("userId is null");
+                if (username == null) throw new Exception("userName is null");
+                if (email == null) throw new Exception("email is null");
 
-                if (user == null || string.IsNullOrEmpty(user.UserName)
-                    || string.IsNullOrEmpty(user.Email))
-            {
-                throw new NotFoundException();
-            }
-              
                 var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                new Claim(JwtRegisteredClaimNames.Sub, userId),
                 new Claim(JwtRegisteredClaimNames.Jti, _guidProvider.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.Email, user.Email)
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim(ClaimTypes.Name, username),
+                new Claim(ClaimTypes.Email, email)
             };
 
-                foreach (var role in user.Roles)
+                if (roles != null)
                 {
-                    claims.Add(new Claim(ClaimTypes.Role, role));
+                    foreach (var role in roles)
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, role));
+                    }
                 }
 
                 var jwtSecret = JwtHelper.GetJwtSecretKey(_configuration);
@@ -78,10 +78,6 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                 );
 
                 return new JwtSecurityTokenHandler().WriteToken(token);
-            }
-            catch (NotFoundException ex)
-            {
-                throw new JwtTokenGeneratorServiceException("Invalid User",ex);
             }
             catch (Exception ex)
             {

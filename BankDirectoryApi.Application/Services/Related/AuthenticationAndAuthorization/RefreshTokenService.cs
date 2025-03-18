@@ -5,14 +5,8 @@ using BankDirectoryApi.Common.Exceptions;
 using BankDirectoryApi.Common.Services;
 using BankDirectoryApi.Domain.Entities;
 using BankDirectoryApi.Domain.Interfaces;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization
 {

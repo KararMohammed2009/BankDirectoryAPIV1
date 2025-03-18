@@ -44,7 +44,10 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 if (string.IsNullOrEmpty(userId)) throw new Exception("UserId is required");
                 var identityUser = await _userManager.FindByIdAsync(userId);
                 if (identityUser == null) throw new Exception($"Get User by Id ({userId}) failed by UserManager<IdentityUser>");
-                return _mapper.Map<UserDTO>(identityUser);
+                var roles = await _userManager.GetRolesAsync(identityUser);
+                var userDTO = _mapper.Map<UserDTO>(identityUser);
+                userDTO.Roles = roles;
+                return userDTO;
             }
             catch (Exception ex)
             {
@@ -131,11 +134,20 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             {
                 if (user == null) throw new Exception("Model is required");
                 var identityUser = _mapper.Map<IdentityUser>(user);
+
                 var result = await _userManager.CreateAsync(identityUser, user.Password);
                 if (!result.Succeeded)
                 {
                     throw new Exception("Failed to create user by UserManager<IdentityUser>");
                 }
+              
+                  result =  await _userManager.AddToRolesAsync(identityUser,user.Roles);
+                if (!result.Succeeded)
+                {
+                    throw new Exception("Failed to assign user to given roles by UserManager<IdentityUser>");
+                }
+
+                
                 return _mapper.Map<UserDTO>(identityUser);
             }
             catch (Exception ex)

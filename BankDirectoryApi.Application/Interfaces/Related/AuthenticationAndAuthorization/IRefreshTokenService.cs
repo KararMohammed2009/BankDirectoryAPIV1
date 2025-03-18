@@ -11,7 +11,7 @@ namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAutho
 {
     public interface IRefreshTokenService
     {
-         (string RefreshToken, string HashedRefreshToken)GenerateRefreshTokenAsync();
+         (string RefreshToken, string HashedRefreshToken) GenerateRefreshTokenAsync();
         Task<(RefreshToken refreshTokenEntity, string refreshToken)> GenerateRefreshTokenEntityAsync( string userId , ClientInfo clientInfo);
         Task<RefreshToken> StoreRefreshTokenAsync( RefreshToken refreshToken );
         Task<bool> RotateRefreshTokenAsync(string oldRefreshToken, RefreshToken newRefreshToken);

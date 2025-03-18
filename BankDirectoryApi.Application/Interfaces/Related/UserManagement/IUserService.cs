@@ -17,12 +17,12 @@ namespace BankDirectoryApi.Application.Interfaces.Related.UserManagement
         public Task<IEnumerable<UserDTO>> GetAllUsersAsync();
         public Task<UserDTO> GetUserByIdAsync(string userId);
         public Task<UserDTO> GetUserByEmailAsync(string email);
-        public Task<UserDTO> UpdateUserAsync(UpdateUserDTO user);
+        public Task<UserDTO> UpdateUserAsync(UpdateUserDTO model);
         public Task<bool> DeleteUserAsync(string userId);
-        public Task<UserDTO> CreateUserAsync(RegisterUserDTO user);
+        public Task<UserDTO> CreateUserAsync(RegisterUserDTO model);
        
         public Task<bool> ConfirmEmailAsync(string email, string token);
-        public Task<bool> IsEmailConfirmedAsync(UserDTO user);
+        public Task<bool> IsEmailConfirmedAsync(UserDTO model);
         public Task<string> GenerateEmailConfirmationTokenAsync(string email);
 
 

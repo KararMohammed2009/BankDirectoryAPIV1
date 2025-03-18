@@ -24,6 +24,10 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         {
             try
             {
+                if (string.IsNullOrEmpty(userId))
+                {
+                    throw new Exception("User Id is required");
+                }
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
@@ -45,6 +49,10 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         {
             try
             {
+                if (string.IsNullOrEmpty(userId))
+                    throw new Exception("User Id is required");
+                if (string.IsNullOrEmpty(role))
+                    throw new Exception("Role name is required");
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                     throw new Exception($"User({userId}) not found by UserManager<IdentityUser>");
@@ -63,6 +71,8 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         {
             try
             {
+                if (string.IsNullOrEmpty(userId))
+                    throw new Exception("User Id is required");
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                     throw new Exception($"User({userId}) not found by UserManager<IdentityUser>");
@@ -95,6 +105,8 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         {
             try
             {
+                if (string.IsNullOrEmpty(role))
+                    throw new Exception("Role name is required");
                 var exists = await _roleManager.RoleExistsAsync(role);
                 return exists;
             }

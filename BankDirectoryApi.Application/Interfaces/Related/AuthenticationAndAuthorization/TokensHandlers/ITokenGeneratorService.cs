@@ -10,6 +10,7 @@ namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAutho
 {
     public interface ITokenGeneratorService
     {
-        Task<string> GenerateAccessTokenAsync(UserDTO user);
+        Task<string> GenerateAccessTokenAsync(string userId, string userName, string email, IEnumerable<string> roles);
+
     }
 }

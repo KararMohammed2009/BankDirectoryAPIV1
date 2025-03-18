@@ -1,16 +1,9 @@
 ﻿using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
-using BankDirectoryApi.Application.Interfaces.Auth;
+using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers;
 using BankDirectoryApi.Application.Interfaces.Related.UserManagement;
-using BankDirectoryApi.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Configuration.Provider;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.ExternalAuthProviders
 {
@@ -20,6 +13,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         protected readonly HttpClient _httpClient;
         protected readonly IConfiguration _configration;
         protected readonly IUserService _userService;
+        protected readonly ITokenGeneratorService _tokenGeneratorService;
 
         protected ExternalAuthProviderServiceBase(UserManager<IdentityUser> userManager,
             HttpClient httpClient,IConfiguration configuration,IUserService userService)
@@ -84,7 +78,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             }
 
             //  Generate JWT token for the authenticated user
-            var tokens =await _userService.GenerateAndStoreTokensAsync(user, clientInfo);
+            var accessToken = 
            
             if(tokens.accessToken == null || tokens.refreshToken == null)
             {
