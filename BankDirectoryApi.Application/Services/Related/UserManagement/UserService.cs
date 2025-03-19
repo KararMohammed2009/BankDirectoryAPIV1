@@ -4,6 +4,8 @@ using BankDirectoryApi.Application.Exceptions;
 using BankDirectoryApi.Application.Interfaces.Related.UserManagement;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Configuration.Provider;
+using System.Security.Claims;
 
 namespace BankDirectoryApi.Application.Services.Related.UserManagement
 {
@@ -132,22 +134,30 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
         {
             try
             {
+              
                 if (user == null) throw new Exception("Model is required");
-                var identityUser = _mapper.Map<IdentityUser>(user);
+               
+                var identityUser = await _userManager.FindByEmailAsync(user.Email);
+                if (identityUser != null)
+                {
+                    return _mapper.Map<UserDTO>(identityUser);
+                }
+
+                identityUser = _mapper.Map<IdentityUser>(user);
 
                 var result = await _userManager.CreateAsync(identityUser, user.Password);
                 if (!result.Succeeded)
                 {
                     throw new Exception("Failed to create user by UserManager<IdentityUser>");
                 }
-              
-                  result =  await _userManager.AddToRolesAsync(identityUser,user.Roles);
+
+                result = await _userManager.AddToRolesAsync(identityUser, user.Roles);
                 if (!result.Succeeded)
                 {
                     throw new Exception("Failed to assign user to given roles by UserManager<IdentityUser>");
                 }
 
-                
+
                 return _mapper.Map<UserDTO>(identityUser);
             }
             catch (Exception ex)
@@ -155,7 +165,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 throw new UserServiceException("Create User failed", ex);
             }
         }
-         public async Task<bool> ConfirmEmailAsync(string email, string token)
+        public async Task<bool> ConfirmEmailAsync(string email, string token)
         {
             try
             {
@@ -172,7 +182,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 throw new UserServiceException("Confirm Email failed", ex);
             }
         }
-      
+
         public async Task<bool> IsEmailConfirmedAsync(UserDTO user)
         {
             try
@@ -193,7 +203,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 if (string.IsNullOrEmpty(email)) throw new Exception("Email is required");
                 var identityUser = await _userManager.FindByEmailAsync(email);
                 if (identityUser == null) throw new Exception($"Cannot find user by email({email}) by UserManager<IdentityUser>");
-                var result =  await _userManager.GenerateEmailConfirmationTokenAsync(identityUser);
+                var result = await _userManager.GenerateEmailConfirmationTokenAsync(identityUser);
                 if (result == null) throw new Exception("Email confirmation token generation failed by UserManager<IdentityUser>");
                 return result;
             }
@@ -202,8 +212,47 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 throw new UserServiceException("Generate Email Confirmation Token failed", ex);
             }
         }
-       
 
+        public async Task<bool> AddLoginAsync(string id, string email, string name, string externalAccessToken, string providerName)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(id)) { throw new Exception("id is null"); }
+                if (!string.IsNullOrEmpty(email)) { throw new Exception("email is null"); }
+                if (!string.IsNullOrEmpty(name)) { throw new Exception("name is null"); }
+                if (!string.IsNullOrEmpty(externalAccessToken)) { throw new Exception("externalAccessToken is null"); }
+                if (!string.IsNullOrEmpty(providerName)) { throw new Exception("providerName is null"); }
+
+                var identityUser = await _userManager.FindByEmailAsync(email);
+                if (identityUser == null) throw new Exception("Email is required");
+                var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.NameIdentifier, id),
+                        new Claim(ClaimTypes.Email, email),
+                        new Claim(ClaimTypes.Name, name),
+                    };
+
+                // Create ClaimsIdentity
+                var identity = new ClaimsIdentity(claims, providerName);
+
+                // Create ClaimsPrincipal
+                var claimsPrincipal = new ClaimsPrincipal(identity);
+                var info = new ExternalLoginInfo(
+                                  claimsPrincipal,
+                                  providerName,
+                                  externalAccessToken,
+                                  email
+                              );
+                var result = await _userManager.AddLoginAsync(identityUser,info);
+                if (!result.Succeeded) throw new Exception("Add Login failed by UserManager<IdentityUser>");
+                return result.Succeeded;
+
+
+            }catch(Exception ex)
+            {
+                throw new UserServiceException("Add Login Failed", ex);
+            }
+        }
     }
 }
 

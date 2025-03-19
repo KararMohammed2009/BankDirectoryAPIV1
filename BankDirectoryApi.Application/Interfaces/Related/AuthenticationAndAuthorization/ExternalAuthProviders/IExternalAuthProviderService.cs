@@ -1,4 +1,5 @@
 ﻿using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
+using BankDirectoryApi.Application.DTOs.Related.UserManagement;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAutho
 {
     public interface IExternalAuthProviderService
     {
-        Task<(bool Success, IEnumerable<IdentityError>? errors, IdentityUser? User, AuthDTO? Response)> ManageExternalLogin(string code, ClientInfo clientInfo);
-        string ProviderName { get; }
+        Task<(UserDTO userDTO,string externalAccessToken)>
+             ManageExternalLogin(string code, ClientInfo clientInfo);
     }
 }

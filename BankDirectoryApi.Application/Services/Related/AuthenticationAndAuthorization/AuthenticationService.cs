@@ -135,9 +135,9 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             {
                 if (string.IsNullOrEmpty(userId))
                 {
-                    throw new ValidationException("User id is required");
+                    throw new Exception("User id is required");
                 }
-                if (string.IsNullOrEmpty(sessionId)) throw new ValidationException("Session id is required");
+                if (string.IsNullOrEmpty(sessionId)) throw new Exception("Session id is required");
 
                 await _refreshTokenService.RevokeAllRefreshTokensAsync(
                     userId, sessionId, clientInfo?.IpAddress);
@@ -153,10 +153,19 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         {
             try
             {
-                if (string.IsNullOrEmpty(code)) { throw new ValidationException("Code is required"); }
+                if (string.IsNullOrEmpty(code)) { throw new Exception("Code is required"); }
                 var externalLoginInfo = await _externalAuthProvider.ManageExternalLogin(code, clientInfo);
-                
-                return externalLoginInfo.Response;
+                var user = await _userService.GetUserByEmailAsync(externalLoginInfo.Email);
+                if (user == null) {
+                     user = await _userService.CreateUserAsync(new RegisterUserDTO
+                    {
+                        Email = externalLoginInfo.Email,
+                        UserName = externalLoginInfo.Email,
+                    });
+                }
+                await _userService.AddLoginAsync(user.Id,user.Email,user.UserName,externalLoginInfo.)
+               
+
             }
             catch (Exception ex)
             {

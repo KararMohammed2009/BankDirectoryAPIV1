@@ -35,12 +35,12 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             _userService = userService;
         }
 
-        public async Task<string> GenerateAccessTokenAsync(string userId,string userName , string email,IEnumerable<string> roles)
+        public async Task<string> GenerateAccessTokenAsync(string userId,string userName , string email,IEnumerable<string>? roles)
         {
             try
             {
                 if (userId == null) throw new Exception("userId is null");
-                if (username == null) throw new Exception("userName is null");
+                if (userName == null) throw new Exception("userName is null");
                 if (email == null) throw new Exception("email is null");
 
                 var claims = new List<Claim>
@@ -48,7 +48,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                 new Claim(JwtRegisteredClaimNames.Sub, userId),
                 new Claim(JwtRegisteredClaimNames.Jti, _guidProvider.NewGuid().ToString()),
                 new Claim(ClaimTypes.NameIdentifier, userId),
-                new Claim(ClaimTypes.Name, username),
+                new Claim(ClaimTypes.Name, userName),
                 new Claim(ClaimTypes.Email, email)
             };
 
