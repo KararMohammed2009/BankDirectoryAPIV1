@@ -149,22 +149,37 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                 throw new AuthenticationServiceException("Logout failed", ex);
             }
         }
-        public async Task<AuthDTO> ExternalLoginAsync(string code, ClientInfo clientInfo)
+        public async Task<AuthDTO> ExternalLoginAsync(string code,string providerName, ClientInfo clientInfo)
         {
             try
             {
                 if (string.IsNullOrEmpty(code)) { throw new Exception("Code is required"); }
                 var externalLoginInfo = await _externalAuthProvider.ManageExternalLogin(code, clientInfo);
-                var user = await _userService.GetUserByEmailAsync(externalLoginInfo.Email);
+                var user = await _userService.UserExistsByEmailAsync(externalLoginInfo.userDTO.Email);
                 if (user == null) {
                      user = await _userService.CreateUserAsync(new RegisterUserDTO
                     {
-                        Email = externalLoginInfo.Email,
-                        UserName = externalLoginInfo.Email,
+                        Email = externalLoginInfo.userDTO.UserName,
+                        UserName = externalLoginInfo.userDTO.Email,
                     });
                 }
-                await _userService.AddLoginAsync(user.Id,user.Email,user.UserName,externalLoginInfo.)
-               
+                await _userService.AddLoginAsync(user.Id, user.Email, user.UserName,
+                    externalLoginInfo.externalAccessToken, providerName);
+
+                var roles = await _roleService.GetRolesAsync(user.Id);
+                var accessToken = await _tokenGenerator.GenerateAccessTokenAsync
+                    (user.Id, user.UserName, user.Email, roles);
+
+                var refreshTokenResult = await
+                    _refreshTokenService.GenerateRefreshTokenEntityAsync(user.Id, clientInfo);
+
+                await _refreshTokenService.StoreRefreshTokenAsync(refreshTokenResult.refreshTokenEntity);
+                return new AuthDTO
+                {
+                    AccessToken = accessToken,
+                    RefreshToken = refreshTokenResult.refreshToken,
+                };
+
 
             }
             catch (Exception ex)

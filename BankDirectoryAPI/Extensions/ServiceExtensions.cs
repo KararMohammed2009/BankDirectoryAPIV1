@@ -1,23 +1,15 @@
 ﻿using BankDirectoryApi.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using BankDirectoryApi.Application.Mappings;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using BankDirectoryApi.API.Middleware;
 using AspNetCoreRateLimit;
 using BankDirectoryApi.Common.Extensions;
 using Microsoft.AspNetCore.Identity;
 using BankDirectoryApi.Infrastructure.Repositories;
-using BankDirectoryApi.Domain.Entities;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using BankDirectoryApi.Infrastructure.Data;
 using FluentValidation;
 using BankDirectoryApi.API.Validators;
 using FluentValidation.AspNetCore;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Asp.Versioning;
 using BankDirectoryApi.Common.Services;
 using BankDirectoryApi.Application.Services.Main;
@@ -27,6 +19,9 @@ using BankDirectoryApi.Application.Interfaces.Main;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.ExternalAuthProviders;
 using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt;
+using BankDirectoryApi.Application.Interfaces.Related.UserManagement;
+using BankDirectoryApi.Application.Services.Related.UserManagement;
+using BankDirectoryApi.Application.Interfaces.Related.Communications;
 
 namespace BankDirectoryApi.API.Extensions
 {
@@ -85,15 +80,19 @@ namespace BankDirectoryApi.API.Extensions
 
         public static void AddTheUserServices(this WebApplicationBuilder builder)
         {
-            // Register UserService
-            //builder.Services.AddScoped<IUserService, UserService>();
-
-            // Register Identity Services
-            builder.Services.AddScoped<IJwtService, JwtTokenGeneratorService>();
+            // Register User Services
+            builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IPasswordService, PasswordService>();
+            builder.Services.AddScoped<IRoleService, RoleService>();
+            builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+            builder.Services.AddScoped<ISessionService, SessionService>();
+            builder.Services.AddScoped<IEmailConfirmationService, IEmailConfirmationService>();
 
             // Register ASP.NET Identity Managers
             builder.Services.AddScoped<UserManager<IdentityUser>>();
             builder.Services.AddScoped<SignInManager<IdentityUser>>();
+            builder.Services.AddScoped<RoleManager<IdentityUser>>();
 
             // Register External Authentication Providers
             builder.Services.AddScoped<HttpClient>();

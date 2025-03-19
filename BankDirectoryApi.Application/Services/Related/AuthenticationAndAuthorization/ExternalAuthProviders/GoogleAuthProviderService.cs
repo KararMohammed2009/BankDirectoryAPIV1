@@ -29,7 +29,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                 var userResult = await GetUser(accessTokenResult);
                 return  (new UserDTO
                 {
-                  UserName=userResult.Name,
+                  UserName=userResult.Email,
                   Email=userResult.Email,
                   Id = userResult.Sub
                 },accessTokenResult);

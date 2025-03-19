@@ -62,7 +62,8 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             {
                 if (string.IsNullOrEmpty(email)) throw new Exception("Email is required");
                 var identityUser = await _userManager.FindByEmailAsync(email);
-                if (identityUser == null) throw new Exception($"Get User by Email({email}) failed by UserManager<IdentityUser>");
+                if (identityUser == null)
+                    throw new Exception($"Get User by Email({email}) failed by UserManager<IdentityUser>");
                 return _mapper.Map<UserDTO>(identityUser);
             }
             catch (Exception ex)
@@ -70,6 +71,38 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 throw new UserServiceException($"Get User by Email failed", ex);
             }
         }
+        public async Task<UserDTO> GetUserByUserNameAsync(string userName)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(userName)) throw new Exception("userName is required");
+                var identityUser = await _userManager.FindByNameAsync(userName);
+                if (identityUser == null)
+                    throw new Exception($"Get User by username({userName}) failed by UserManager<IdentityUser>");
+                return _mapper.Map<UserDTO>(identityUser);
+            }
+            catch (Exception ex)
+            {
+                throw new UserServiceException($"Get User by Email failed", ex);
+            }
+        }
+        public async Task<UserDTO?> UserExistsByEmailAsync(string email)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(email)) throw new Exception("Email is required");
+                var identityUser = await _userManager.FindByEmailAsync(email);
+                if (identityUser == null)
+                  return null;
+                return _mapper.Map<UserDTO>(identityUser);
+            }
+            catch (Exception ex)
+            {
+                throw new UserServiceException($"Get User by Email failed", ex);
+            }
+        }
+
+
         public async Task<UserDTO> UpdateUserAsync(UpdateUserDTO user)
         {
             try
