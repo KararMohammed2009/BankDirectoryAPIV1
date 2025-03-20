@@ -27,7 +27,7 @@ namespace BankDirectoryApi.API.Middleware
             {
                userId = _tokenParser.GetUserIdAsync(accessToken);
             }
-           
+            
             // Extract client IP and user-agent from the request
             var clientIp = context.Connection?.RemoteIpAddress?.ToString();
             var userAgent = context.Request?.Headers["User-Agent"].ToString();
