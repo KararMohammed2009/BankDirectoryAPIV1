@@ -6,6 +6,7 @@ namespace BankDirectoryApi.API.Helpers
     {
         public static ClientInfo GetClientInfo(HttpContext context)
         {
+
             return new ClientInfo
             {
                 IpAddress = context.Items["ClientIp"]?.ToString() ?? string.Empty,

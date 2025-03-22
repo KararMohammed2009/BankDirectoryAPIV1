@@ -286,6 +286,28 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 throw new UserServiceException("Add Login Failed", ex);
             }
         }
+        public async Task<bool> SetTwoFactorAuthenticationAsync(string userId, bool enabled)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(userId))
+                {
+                    throw new Exception("userId is required");
+                }
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null) throw new Exception($"Cannot find user by id({userId}) by UserManager<IdentityUser>");
+                var result =await  _userManager.SetTwoFactorEnabledAsync(user, enabled);
+                if (!result.Succeeded)
+                {
+                    throw new Exception($"Set Two Factor Enabled failed by UserManager<IdentityUser>");
+                }
+                return result.Succeeded;
+            }
+            catch (Exception ex)
+            {
+                throw new UserServiceException("Set Two Factor Authentication failed", ex);
+            }
+        }
     }
 }
 

@@ -1,5 +1,6 @@
 ﻿using BankDirectoryApi.Domain.Entities;
 using BankDirectoryApi.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Infrastructure.Data
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class ApplicationDbContext : MyIdentityDbContext
     {
         public DbSet<Bank> Banks { get; set; } = null!;
         public DbSet<ATM> ATMs { get; set; } = null!;
@@ -18,7 +19,7 @@ namespace BankDirectoryApi.Infrastructure.Data
         public DbSet<Branch> Branches { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
-        public ApplicationDbContext(DbContextOptions<IdentityDbContext> options)
+        public ApplicationDbContext(DbContextOptions<MyIdentityDbContext> options)
             : base(options) { }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -187,7 +187,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                 throw new AuthenticationServiceException("External login failed", ex);
             }
         }
-        public async Task<bool> ValidateAccessToken(string accessToken)
+        public async Task<bool> ValidateAccessTokenAsync(string accessToken)
         {
             try
             {
@@ -199,5 +199,6 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                 throw new AuthenticationServiceException("Validate access token failed", ex);
             }
         }
+        
     }
 }

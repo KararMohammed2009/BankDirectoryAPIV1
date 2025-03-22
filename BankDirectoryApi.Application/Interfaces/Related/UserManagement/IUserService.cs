@@ -26,7 +26,7 @@ namespace BankDirectoryApi.Application.Interfaces.Related.UserManagement
         public Task<bool> IsEmailConfirmedAsync(UserDTO model);
         public Task<string> GenerateEmailConfirmationTokenAsync(string email);
         public Task<bool> AddLoginAsync(string id,string email, string name,string externalAccessToken,string providerName);
-
+        public  Task<bool> SetTwoFactorAuthenticationAsync(string userId, bool enabled);
 
     }
 }

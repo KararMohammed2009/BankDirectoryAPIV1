@@ -18,10 +18,16 @@ using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorizati
 using BankDirectoryApi.Application.Interfaces.Main;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.ExternalAuthProviders;
-using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt;
 using BankDirectoryApi.Application.Interfaces.Related.UserManagement;
 using BankDirectoryApi.Application.Services.Related.UserManagement;
 using BankDirectoryApi.Application.Interfaces.Related.Communications;
+using BankDirectoryApi.Application.Services.Related.Communications;
+using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers;
+using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt;
+using BankDirectoryApi.Infrastructure.Identity;
+using System.IdentityModel.Tokens.Jwt;
+using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
+using BankDirectoryApi.API.Validators.Auth;
 
 namespace BankDirectoryApi.API.Extensions
 {
@@ -47,8 +53,16 @@ namespace BankDirectoryApi.API.Extensions
         public static void AddTheValidators(this WebApplicationBuilder builder)
         {
             // Register FluentValidation validators
+
+            #region Auth
+            builder.Services.AddValidatorsFromAssemblyContaining<LoginUserDtoValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<LogoutUserDtoValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserDtoValidator>();
+            #endregion
             builder.Services.AddValidatorsFromAssemblyContaining<BankDTOValidator>();
-            builder.Services.AddFluentValidationAutoValidation().AddFluentValidationClientsideAdapters();
+
+
+
         }
         public static void AddTheAuthentication(this WebApplicationBuilder builder)
         {
@@ -85,14 +99,16 @@ namespace BankDirectoryApi.API.Extensions
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IPasswordService, PasswordService>();
             builder.Services.AddScoped<IRoleService, RoleService>();
-            builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
             builder.Services.AddScoped<ISessionService, SessionService>();
-            builder.Services.AddScoped<IEmailConfirmationService, IEmailConfirmationService>();
+            builder.Services.AddScoped<IEmailConfirmationService, EmailConfirmationService>();
+            builder.Services.AddScoped<IHashService, HashService>();
+            builder.Services.AddScoped<ITokenGeneratorService, JwtTokenGeneratorService>();
+            builder.Services.AddScoped<ITokenValidatorService, JwtTokenValidatorService>();
+            builder.Services.AddScoped<ITokenParserService, JwtTokenParserService>();
+            builder.Services.AddScoped<JwtSecurityTokenHandler>();
 
-            // Register ASP.NET Identity Managers
-            builder.Services.AddScoped<UserManager<IdentityUser>>();
-            builder.Services.AddScoped<SignInManager<IdentityUser>>();
-            builder.Services.AddScoped<RoleManager<IdentityUser>>();
+
+       
 
             // Register External Authentication Providers
             builder.Services.AddScoped<HttpClient>();
@@ -103,7 +119,10 @@ namespace BankDirectoryApi.API.Extensions
             builder.Services.AddIdentity<IdentityUser, IdentityRole>() // Registers Identity services (User + Role management)
             .AddEntityFrameworkStores<ApplicationDbContext>() //Configures Identity to use Entity Framework Core with ApplicationDbContext
             .AddDefaultTokenProviders(); //Enables password reset, email confirmation, 2FA tokens
-
+                                         // Register ASP.NET Identity Managers
+            builder.Services.AddScoped<UserManager<IdentityUser>>();
+            builder.Services.AddScoped<SignInManager<IdentityUser>>();
+            builder.Services.AddScoped<RoleManager<IdentityRole>>();
 
         }
       
@@ -211,16 +230,17 @@ namespace BankDirectoryApi.API.Extensions
             // Register Common Services
             services.AddScoped<IDateTimeProvider, DateTimeProvider>();
             services.AddScoped<IGuidProvider, GuidProvider>();
+            services.AddHttpContextAccessor();  
         }
 
 
         public static void AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
             // Register database context
-            services.AddDbContext<Infrastructure.Identity.IdentityDbContext>(options =>
+            services.AddDbContext<MyIdentityDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddDbContext<Infrastructure.Data.ApplicationDbContext>(options =>
+            services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
             // Register repositories, for example:

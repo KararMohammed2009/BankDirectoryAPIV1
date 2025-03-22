@@ -1,37 +1,43 @@
 ﻿using Asp.Versioning;
+using BankDirectoryApi.API.Extensions;
 using BankDirectoryApi.API.Helpers;
+using BankDirectoryApi.API.Models;
 using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
-using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization;
+using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
+using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace BankDirectoryApi.API.Controllers.AuthControllers
 {
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/Login")]
+    [Route("api/v{version:apiVersion}/Auth/Login")]
     [ApiController]
     public class LoginController: ControllerBase
     {
-        private readonly AuthenticationService _authenticationService;
-        private readonly ClientInfo _clientInfo;
-        private readonly string _userId;
-        public LoginController(AuthenticationService authenticationService)
+        private readonly IAuthenticationService _authenticationService;
+
+        public LoginController(IAuthenticationService authenticationService)
         {
             _authenticationService = authenticationService;
-            _clientInfo = ClientInfoHelper.GetClientInfo(HttpContext);
-            _userId = UserHelper.GetUserId(HttpContext);
         }
 
-        [HttpGet("Login")]
-        public async Task<IActionResult> Login(LoginUserDTO model)
+        [HttpPost]
+        public async Task<IActionResult> Login([FromBody] LoginUserDTO model)
         {
-            var result = await  _authenticationService.LoginAsync(model, _clientInfo);
-            return Ok(result);
+            var _clientInfo = ClientInfoHelper.GetClientInfo(HttpContext);
+            var result = await _authenticationService.LoginAsync(model, _clientInfo);
+            return Ok(new ApiResponse<AuthDTO>(result,null, (int)HttpStatusCode.OK));
         }
-        [HttpGet("Logout")]
-        public async Task<IActionResult> Logout(string sessionId)
+        [Authorize]
+        [HttpPost("Logout")]
+        public async Task<IActionResult> Logout([FromBody] LogoutUserDTO model)
         {
-            var result = await _authenticationService.LogoutAsync(_userId,sessionId, _clientInfo);
-            return Ok(result);
+            var _userId = UserHelper.GetUserId(HttpContext);
+            var _clientInfo = ClientInfoHelper.GetClientInfo(HttpContext);
+            var result = await _authenticationService.LogoutAsync(_userId,model.SessionId, _clientInfo);
+            return Ok(new ApiResponse<bool>(result, null, (int)HttpStatusCode.OK));
         }
 
     }

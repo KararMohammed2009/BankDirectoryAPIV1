@@ -7,11 +7,16 @@ using Microsoft.IdentityModel.Tokens;
 using BankDirectoryApi;
 using System.Text;
 using BankDirectoryApi.Common.Extensions;
+using BankDirectoryApi.API.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers(
+    options =>
+    {
+        options.Filters.Add<CustomValidationFailureFilter>();
+    });
 builder.Services.AddApplicationMappers();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);

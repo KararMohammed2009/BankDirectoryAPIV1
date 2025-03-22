@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using BankDirectoryApi.Application.Exceptions;
+using System.Net;
 using System.Text.Json;
 namespace BankDirectoryApi.API.Middleware
 {
@@ -19,6 +20,14 @@ namespace BankDirectoryApi.API.Middleware
             {
                 await _next(context);
             }
+            catch (PasswordServiceException)
+            {
+
+            }
+            catch (UserServiceException)
+            {
+
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unhandled exception occurred");
@@ -29,6 +38,7 @@ namespace BankDirectoryApi.API.Middleware
         private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             context.Response.ContentType = "application/json";
+            
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
             var errorResponse = new

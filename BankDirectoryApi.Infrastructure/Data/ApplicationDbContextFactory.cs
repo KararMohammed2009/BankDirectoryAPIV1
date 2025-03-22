@@ -15,7 +15,7 @@ namespace BankDirectoryApi.Infrastructure.Data
                 .AddJsonFile("appsettings.json")
                 .Build();
 
-            var optionsBuilder = new DbContextOptionsBuilder<IdentityDbContext>();
+            var optionsBuilder = new DbContextOptionsBuilder<MyIdentityDbContext>();
             var connectionString = configuration.GetConnectionString("DefaultConnection");
 
             optionsBuilder.UseSqlServer(connectionString);

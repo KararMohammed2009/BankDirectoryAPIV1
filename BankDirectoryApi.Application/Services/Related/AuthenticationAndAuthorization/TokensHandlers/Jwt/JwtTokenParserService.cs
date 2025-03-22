@@ -14,10 +14,10 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
 {
     public class JwtTokenParserService : ITokenParserService
     {
-
-        public JwtTokenParserService()
+        private readonly JwtSecurityTokenHandler _jwtSecurityTokenHandler;
+        public JwtTokenParserService(JwtSecurityTokenHandler jwtSecurityTokenHandler)
         {
-
+            _jwtSecurityTokenHandler = jwtSecurityTokenHandler;
         }
 
         public string GetUserIdAsync(string accessToken)
@@ -29,8 +29,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                     throw new Exception("Access token null");
                 }
 
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var jwtToken = tokenHandler.ReadToken(accessToken) as JwtSecurityToken;
+                var jwtToken = _jwtSecurityTokenHandler.ReadToken(accessToken) as JwtSecurityToken;
 
                 if (jwtToken == null)
                 {

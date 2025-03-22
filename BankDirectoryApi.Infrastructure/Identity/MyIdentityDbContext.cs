@@ -1,4 +1,5 @@
 ﻿using BankDirectoryApi.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -9,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Infrastructure.Identity
 {
-    public class IdentityDbContext : Microsoft.AspNetCore.Identity.EntityFrameworkCore.IdentityDbContext
+    public class MyIdentityDbContext : IdentityDbContext<IdentityUser,IdentityRole,string>
     {
-        public IdentityDbContext(DbContextOptions<IdentityDbContext> options)
+        public MyIdentityDbContext(DbContextOptions<MyIdentityDbContext> options)
             : base(options) { }
 
         // Add DbSet properties for other entities

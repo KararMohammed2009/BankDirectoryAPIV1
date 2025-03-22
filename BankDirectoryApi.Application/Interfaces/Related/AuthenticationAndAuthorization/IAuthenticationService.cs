@@ -12,6 +12,7 @@ namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAutho
          Task<AuthDTO> ExternalLoginAsync(string code,string providerName, ClientInfo clientInfo);
          Task<bool> LogoutAsync(string userId, string sessionId, ClientInfo clientInfo);
          Task<AuthDTO> GenerateAccessTokenFromRefreshTokenAsync(string userId, string refreshToken, ClientInfo clientInfo);
-        Task<bool> ValidateAccessToken(string accessToken);
+         Task<bool> ValidateAccessTokenAsync(string accessToken);
+
     }
 }
