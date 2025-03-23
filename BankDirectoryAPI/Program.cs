@@ -26,6 +26,7 @@ builder.AddJwtAuth();
 builder.AddLimitRate();
 builder.AddTheCors();
 builder.AddTheAuthentication();
+builder.AddTheAuthorization();
 builder.AddTheValidators();
 builder.AddTheVersioning();
 builder.AddTheUserServices();

@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -27,6 +28,7 @@ namespace BankDirectoryApi.Application.Interfaces.Related.UserManagement
         public Task<string> GenerateEmailConfirmationTokenAsync(string email);
         public Task<bool> AddLoginAsync(string id,string email, string name,string externalAccessToken,string providerName);
         public  Task<bool> SetTwoFactorAuthenticationAsync(string userId, bool enabled);
+        public Task<Dictionary<string, string>> GetUserCalimsAsync(string userId);
 
     }
 }

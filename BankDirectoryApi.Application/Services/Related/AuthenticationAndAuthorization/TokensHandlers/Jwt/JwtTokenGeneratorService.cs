@@ -35,7 +35,9 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             _userService = userService;
         }
 
-        public async Task<string> GenerateAccessTokenAsync(string userId,string userName , string email,IEnumerable<string>? roles)
+        public async Task<string> GenerateAccessTokenAsync(string userId
+            ,string userName , string email, IEnumerable<string>? roles,
+            Dictionary<string,string>? userClaims)
         {
             try
             {
@@ -57,6 +59,14 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                     foreach (var role in roles)
                     {
                         claims.Add(new Claim(ClaimTypes.Role, role));
+                    }
+                }
+
+                if (userClaims != null)
+                {
+                    foreach (var claim in userClaims)
+                    {
+                        claims.Add(new Claim(claim.Key,claim.Value));
                     }
                 }
 

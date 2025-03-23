@@ -16,7 +16,7 @@ namespace BankDirectoryApi.API.Filters
                     .Select(x => new ApiError
                     {
                         Field = x.Key,
-                        Message = x.Value?.Errors.First().ErrorMessage ?? "Unknown error"
+                        Message = x.Value?.Errors.First().ErrorMessage ?? "Unknown error",
                     })
                     .ToList();
 

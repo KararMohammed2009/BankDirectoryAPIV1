@@ -9,7 +9,6 @@ using BankDirectoryApi.Infrastructure.Repositories;
 using BankDirectoryApi.Infrastructure.Data;
 using FluentValidation;
 using BankDirectoryApi.API.Validators;
-using FluentValidation.AspNetCore;
 using Asp.Versioning;
 using BankDirectoryApi.Common.Services;
 using BankDirectoryApi.Application.Services.Main;
@@ -26,7 +25,6 @@ using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthoriza
 using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt;
 using BankDirectoryApi.Infrastructure.Identity;
 using System.IdentityModel.Tokens.Jwt;
-using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.API.Validators.Auth;
 
 namespace BankDirectoryApi.API.Extensions
@@ -90,6 +88,16 @@ namespace BankDirectoryApi.API.Extensions
                     options.ConsumerKey = builder.Configuration["Authentication:Twitter:ConsumerKey"];
                     options.ConsumerSecret = builder.Configuration["Authentication:Twitter:ConsumerSecret"];
                 });
+        }
+        public static void AddTheAuthorization(this WebApplicationBuilder builder)
+        {
+           builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("CanAccessSomething", policy =>
+                    policy.RequireClaim("CanAccessSomething", "true")); 
+            });
+
+
         }
 
         public static void AddTheUserServices(this WebApplicationBuilder builder)

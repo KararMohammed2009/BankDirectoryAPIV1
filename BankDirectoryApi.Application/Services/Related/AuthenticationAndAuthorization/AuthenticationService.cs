@@ -50,9 +50,10 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
 
                 if (model == null) throw new Exception("RegisterUserDTO is required");
                 var user = await _userService.CreateUserAsync(model);
-
+                var userClaims = await _userService.GetUserCalimsAsync(user.Id);
                 var accessToken = await 
-                    _tokenGenerator.GenerateAccessTokenAsync(user.Id,user.UserName,user.Email,user.Roles);
+                    _tokenGenerator.GenerateAccessTokenAsync(user.Id,
+                    user.UserName,user.Email,user.Roles, userClaims);
 
                 var refreshTokenResult = await _refreshTokenService.GenerateRefreshTokenEntityAsync(user.Id, clientInfo);
 
@@ -79,10 +80,11 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
 
                 if (!result)
                     throw new Exception("Invalid credentials");
-                
-                var roles =await  _roleService.GetRolesAsync(model.UserId);
+
+                var roles = await _roleService.GetRolesAsync(model.UserId);
+                var claims = await _userService.GetUserCalimsAsync(model.UserId);
                 var accessToken = await _tokenGenerator.GenerateAccessTokenAsync
-                    (model.UserId,model.UserName,model.Email,roles);
+                    (model.UserId,model.UserName,model.Email,roles,claims);
 
                 var refreshTokenResult = await
                     _refreshTokenService.GenerateRefreshTokenEntityAsync(model.UserId, clientInfo);
@@ -110,9 +112,9 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                 var user = await _userService.GetUserByIdAsync(userId);
 
                 var refreshTokenEntity = await _refreshTokenService.GenerateRefreshTokenEntityAsync(user.Id, clientInfo);
-
+                var claims = await _userService.GetUserCalimsAsync(userId);
                 var accessToken = await _tokenGenerator.GenerateAccessTokenAsync(
-                    user.Id,user.UserName,user.Email,user.Roles);
+                    user.Id,user.UserName,user.Email,user.Roles,claims);
 
                 await _refreshTokenService.RotateRefreshTokenAsync(
                     refreshToken, refreshTokenEntity.refreshTokenEntity);
@@ -167,8 +169,9 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                     externalLoginInfo.externalAccessToken, providerName);
 
                 var roles = await _roleService.GetRolesAsync(user.Id);
+                var claims = await _userService.GetUserCalimsAsync(user.Id);
                 var accessToken = await _tokenGenerator.GenerateAccessTokenAsync
-                    (user.Id, user.UserName, user.Email, roles);
+                    (user.Id, user.UserName, user.Email, roles, claims );
 
                 var refreshTokenResult = await
                     _refreshTokenService.GenerateRefreshTokenEntityAsync(user.Id, clientInfo);

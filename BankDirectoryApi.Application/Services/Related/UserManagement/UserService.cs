@@ -308,6 +308,32 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 throw new UserServiceException("Set Two Factor Authentication failed", ex);
             }
         }
+        public async Task<Dictionary<string, string>> GetUserCalimsAsync(string userId)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(userId)) {
+                    throw new Exception("userId is required");
+                }
+                var identityUser = await _userManager.FindByIdAsync (userId);
+                if(identityUser ==null) throw new Exception($"Cannot find user by id({userId}) by UserManager<IdentityUser>");
+                var claims = await _userManager.GetClaimsAsync(identityUser);
+                Dictionary<string,string> result = new Dictionary<string,string>();
+                if(claims !=null && claims.Any())
+                {
+                    foreach(var claim in claims)
+                    {
+                        result.Add(claim.Type,claim.Value);
+                    }
+                }
+                return result;
+
+            }
+            catch (Exception ex)
+            {
+                throw new UserServiceException("Get User Calims failed", ex);
+            }
+        }
     }
 }
 
