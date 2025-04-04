@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
+using FluentResults;
 
 namespace BankDirectoryApi.Common.Services
 {
     public class GuidProvider:IGuidProvider
     {
-        public Guid NewGuid() => Guid.NewGuid();
+        public Result<Guid> NewGuid() => Result.Ok(Guid.NewGuid());
     }
 }

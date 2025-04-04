@@ -1,131 +1,169 @@
 ﻿
 using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
-using BankDirectoryApi.Application.Exceptions;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
+using BankDirectoryApi.Common.Extensions;
+using BankDirectoryApi.Infrastructure;
+using BankDirectoryApi.Infrastructure.Identity;
+using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization
 {
     public class PasswordService : IPasswordService
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly ILogger<PasswordService> _logger;
         public PasswordService(
-            UserManager<IdentityUser> userManager,
-            SignInManager<IdentityUser> signInManager)
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager
+            ,ILogger<PasswordService> logger)
         {
 
             _userManager = userManager;
             _signInManager = signInManager;
+            _logger = logger;
         }
 
 
-        public async Task<string> GeneratePasswordResetTokenAsync(string userId)
+        public async Task<Result<string>> GeneratePasswordResetTokenAsync(string userId)
         {
-            try
-            {
-                if (userId == null) throw new Exception("UserId is required");
-                var identityUser = await _userManager.FindByIdAsync(userId);
-                if (identityUser == null) throw new Exception($"Cannot find user by id({userId}) by UserManager<IdentityUser>");
-                var result = await _userManager.GeneratePasswordResetTokenAsync(identityUser);
-                if (result == null) throw new Exception("Password reset token generation failed by UserManager<IdentityUser>");
-                return result;
-            }
-            catch (Exception ex)
-            {
-                throw new PasswordServiceException("Generate Password Reset Token failed", ex);
-            }
+            
+                if (string.IsNullOrEmpty(userId)) 
+                return Result.Fail(new Error("userId is required").WithMetadata("StatusCode",HttpStatusCode.BadRequest));
+
+            var user = await IdentityExceptionHelper.Execute(()=>
+                _userManager.FindByIdAsync(userId),_logger);
+                if (user == null)
+                return Result.Fail(new Error($"Cannot find user by id({userId}) by UserManager<ApplicationUser>")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+
+            var result = await IdentityExceptionHelper.Execute(() => 
+            _userManager.GeneratePasswordResetTokenAsync(user),_logger);
+                if (string.IsNullOrEmpty(result)) 
+                return Result.Fail(new Error("Token generation failed by UserManager<ApplicationUser>")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+
+            return Result.Ok(result);
+         
         }
-        public async Task<bool> CheckPasswordSignInAsync(LoginUserDTO user, string password, bool lockoutOnFailure)
+        public async Task<Result<string>> CheckPasswordSignInAsync(LoginUserDTO model, string password, bool lockoutOnFailure)
         {
-            try
+            
+                ApplicationUser? user;
+                if (model == null)
+                return Result.Fail(new Error("model is required")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            if (string.IsNullOrEmpty(password))
+                return Result.Fail(new Error("Password is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+
+            if (!string.IsNullOrEmpty(model.Email))
             {
-                IdentityUser? identityUser;
-                if (user == null) throw new Exception("User is required");
-                if (string.IsNullOrEmpty(password)) throw new Exception("Password is required");
-                if (!string.IsNullOrEmpty(user.Email))
+                user = await IdentityExceptionHelper.Execute(() =>
+                _userManager.FindByEmailAsync(model.Email), _logger);
+                if (user == null)
+                    return Result.Fail(new Error($"Cannot find user by email({model.Email}) by UserManager<ApplicationUser>")
+                        .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            }
+            else if (!string.IsNullOrEmpty(model.UserName))
                 {
-                    identityUser = await _userManager.FindByEmailAsync(user.Email);
-                    if (identityUser == null) throw new Exception($"Cannot find user by email({user.Email}) by UserManager<IdentityUser>");
-                }
-                else if (!string.IsNullOrEmpty(user.UserName))
+                    user = await IdentityExceptionHelper.Execute(() => 
+                    _userManager.FindByNameAsync(model.UserName), _logger);
+                    if (user == null)
+                    return Result.Fail(new Error($"Cannot find user by Username({model.UserName}) by UserManager<ApplicationUser>")
+                      .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            }
+                else if (!string.IsNullOrEmpty(model.PhoneNumber))
                 {
-                    identityUser = await _userManager.FindByNameAsync(user.UserName);
-                    if (identityUser == null) throw new Exception($"Cannot find user by user name({user.UserName}) by UserManager<IdentityUser>");
-                }
-                else if (!string.IsNullOrEmpty(user.PhoneNumber))
-                {
-                    identityUser = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == user.PhoneNumber);
-                    if (identityUser == null) throw new Exception($"Cannot find user by phone number({user.PhoneNumber}) by UserManager<IdentityUser>");
-                }
+                    user = await IdentityExceptionHelper.Execute(() => 
+                    _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == model.PhoneNumber),_logger);
+                    if (user == null) 
+                    return  Result.Fail(new Error($"Cannot find user by PhoneNumber({model.PhoneNumber}) by UserManager<ApplicationUser>")
+                        .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            }
                 else
                 {
-                    throw new Exception("User Name or Email or Phone number is required");
-                }
-
-                var result = await _signInManager.CheckPasswordSignInAsync(identityUser, password, lockoutOnFailure);
-                return result.Succeeded;
-
+                   return Result.Fail(new Error("Either Email, UserName or PhoneNumber is required")
+                        .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
             }
-            catch (Exception ex)
+
+                var result = await IdentityExceptionHelper.Execute(() => 
+                _signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure),_logger);
+            if (!result.Succeeded)
             {
-                throw new PasswordServiceException("Check Password Sign In failed", ex);
+               return Result.Fail(new Error("Check Password SignIn failed by SignInManager<ApplicationUser>")
+                    .WithMetadata("StatusCode", HttpStatusCode.Unauthorized)).IncludeIdentityErrors(result);
             }
+            return Result.Ok(user.Id);
         }
-        public async Task<bool> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+        public async Task<Result<string>> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
         {
-            try
-            {
-                if (string.IsNullOrEmpty(userId)) throw new Exception("User Id is required");
-                if (string.IsNullOrEmpty(currentPassword)) throw new Exception("Current password is required");
-                if (string.IsNullOrEmpty(newPassword)) throw new Exception("New password is required");
-                var identityUser = await _userManager.FindByIdAsync(userId);
-                if (identityUser == null) throw new Exception($"Cannot find user by id({userId}) by UserManager<IdentityUser>");
-                var result = await _userManager.ChangePasswordAsync(identityUser, currentPassword, newPassword);
-                if (!result.Succeeded) throw new Exception("Change Password failed by UserManager<IdentityUser>");
-                return result.Succeeded;
-            }
-            catch (Exception ex)
-            {
-                throw new PasswordServiceException("Change Password failed", ex);
-            }
-        }
-        public async Task<bool> ResetPasswordAsync(string userId, string token, string newPassword)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(userId)) throw new Exception("User Id is required");
-                if (string.IsNullOrEmpty(token)) throw new Exception("Token is required");
-                if (string.IsNullOrEmpty(newPassword)) throw new Exception("New password is required");
-                var identityUser = await _userManager.FindByIdAsync(userId);
-                if (identityUser == null) throw new Exception($"Cannot find user by id({userId}) by UserManager<IdentityUser>");
-                var result = await _userManager.ResetPasswordAsync(identityUser, token, newPassword);
-                if (!result.Succeeded) throw new Exception("Reset Password failed by UserManager<IdentityUser>");
-                return result.Succeeded;
-            }
-            catch (Exception ex)
-            {
-                throw new PasswordServiceException("Reset Password failed", ex);
-            }
-        }
-        public async Task<string> ForgotPasswordAsync(string email)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(email)) throw new Exception("Email is required");
-                var identityUser = await _userManager.FindByEmailAsync(email);
-                if (identityUser == null) throw new Exception($"Cannot find user by email({email}) by UserManager<IdentityUser>");
-                var token = await _userManager.GeneratePasswordResetTokenAsync(identityUser);
-                if (token == null) throw new Exception("Token generation failed by UserManager<IdentityUser>");
-                return token;
 
-            }
-            catch (Exception ex)
-            {
-                throw new PasswordServiceException("Forgot Password failed", ex);
+            if (string.IsNullOrEmpty(userId)) 
+                return Result.Fail(new Error("User Id is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            if (string.IsNullOrEmpty(currentPassword)) 
+                return Result.Fail(new Error("Current password is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            if (string.IsNullOrEmpty(newPassword))
+                return Result.Fail(new Error("New password is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
 
-            }
+            var user = await IdentityExceptionHelper.Execute(() => 
+            _userManager.FindByIdAsync(userId),_logger);
+            if (user == null)
+               return Result.Fail(new Error($"Cannot find user by id({userId}) by UserManager<ApplicationUser>")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+
+            var result = await IdentityExceptionHelper.Execute(() => 
+            _userManager.ChangePasswordAsync(user, currentPassword, newPassword),_logger);
+            if (!result.Succeeded)
+                return Result.Fail(new Error("Change Password failed by UserManager<ApplicationUser>")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest)).IncludeIdentityErrors(result);
+            return Result.Ok(user.Id);
+
+        }
+        public async Task<Result<string>> ResetPasswordAsync(string userId, string token, string newPassword)
+        {
+          
+                if (string.IsNullOrEmpty(userId)) 
+                return Result.Fail(new Error("User Id is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            if (string.IsNullOrEmpty(token))
+                return Result.Fail(new Error("Token is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            if (string.IsNullOrEmpty(newPassword)) 
+                return Result.Fail(new Error("New password is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+
+                var user = await IdentityExceptionHelper.Execute(() => 
+                _userManager.FindByIdAsync(userId),_logger);
+                if (user == null) return
+                    Result.Fail(new Error($"Cannot find user by id({userId}) by UserManager<ApplicationUser>")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            var result = await IdentityExceptionHelper.Execute(() => 
+            _userManager.ResetPasswordAsync(user, token, newPassword),_logger);
+                if (!result.Succeeded)
+                return Result.Fail(new Error("Reset Password failed by UserManager<ApplicationUser>")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest)).IncludeIdentityErrors(result);
+            return Result.Ok(user.Id);
+
+        }
+        public async Task<Result<string>> ForgotPasswordAsync(string email)
+        {
+           
+                if (string.IsNullOrEmpty(email))
+                return Result.Fail(new Error("Email is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            var user = await IdentityExceptionHelper.Execute(() => 
+            _userManager.FindByEmailAsync(email), _logger);
+                if (user == null)
+                return Result.Fail(new Error($"Cannot find user by email({email}) by UserManager<ApplicationUser>")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            var token = await IdentityExceptionHelper.Execute(() => 
+            _userManager.GeneratePasswordResetTokenAsync(user), _logger);
+                if (string.IsNullOrEmpty(token))
+                return Result.Fail(new Error("Token generation failed by UserManager<ApplicationUser>")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            return Result.Ok(token);
+
+
         }
 
     }

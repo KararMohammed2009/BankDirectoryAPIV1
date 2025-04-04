@@ -1,5 +1,7 @@
 ﻿using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
+using BankDirectoryApi.Common.Classes;
 using BankDirectoryApi.Domain.Entities;
+using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -11,10 +13,10 @@ namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAutho
 {
     public interface IRefreshTokenService
     {
-         (string RefreshToken, string HashedRefreshToken) GenerateRefreshTokenAsync();
-        Task<(RefreshToken refreshTokenEntity, string refreshToken)> GenerateRefreshTokenEntityAsync( string userId , ClientInfo clientInfo);
-        Task<RefreshToken> StoreRefreshTokenAsync( RefreshToken refreshToken );
-        Task<bool> RotateRefreshTokenAsync(string oldRefreshToken, RefreshToken newRefreshToken);
-        Task<bool> RevokeAllRefreshTokensAsync(string userId,string sessionId,string? ipAddress);
+        Result<(string RefreshToken, string HashedRefreshToken)> GenerateRefreshTokenAsync();
+        Task<Result<(RefreshToken refreshTokenEntity, string refreshToken)>> GenerateRefreshTokenEntityAsync( string userId , ClientInfo clientInfo);
+        Task<Result<RefreshToken>> StoreRefreshTokenAsync( RefreshToken refreshToken );
+        Task<Result<RefreshToken>> RotateRefreshTokenAsync(string oldRefreshToken, RefreshToken newRefreshToken);
+        Task<Result<string>> RevokeAllRefreshTokensAsync(string userId,string sessionId,string? ipAddress);
     }
 }

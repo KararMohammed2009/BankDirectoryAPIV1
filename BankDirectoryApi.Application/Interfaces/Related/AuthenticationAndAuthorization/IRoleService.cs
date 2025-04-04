@@ -1,14 +1,17 @@
-﻿namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization
+﻿
+using FluentResults;
+
+namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization
 {
-    public interface IRoleService
+     interface IRoleService
     {
-        public Task<bool> AssignRoleAsync(string userId, string role);
-        public Task<bool> RemoveRoleAsync(string userId, string role);
-        public Task<IEnumerable<string>> GetRolesAsync(string userId);
-        public Task<IEnumerable<string>> GetAllRolesAsync();
-        public Task<bool> RoleExistsAsync(string role);
-        public Task<string> CreateRoleAsync(string role);
-        public Task<bool> DeleteRoleAsync(string role);
+         Task<Result<string>> AssignRoleAsync(string userId, string role);
+         Task<Result<string>> RemoveRoleAsync(string userId, string role);
+         Task<Result<List<string>>> GetRolesAsync(string userId);
+         Task<Result<List<string>>> GetAllRolesAsync(CancellationToken cancellationToken);
+         Task<Result<bool>> RoleExistsAsync(string role);
+         Task<Result<string>> CreateRoleAsync(string role);
+         Task<Result<string>> DeleteRoleAsync(string role);
 
     }
 }

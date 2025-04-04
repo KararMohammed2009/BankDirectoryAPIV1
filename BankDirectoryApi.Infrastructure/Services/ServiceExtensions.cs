@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 
 namespace BankDirectoryApi.Infrastructure.Services
 {
@@ -34,5 +35,6 @@ namespace BankDirectoryApi.Infrastructure.Services
             //services.AddScoped<IATMService, ATMService>();
             //services.AddScoped<ICardService, CardService>();
         }
+      
     }
 }

@@ -9,6 +9,8 @@ using BankDirectoryApi.Common.Services;
 using System.Security.Cryptography;
 using BankDirectoryApi.Application.Exceptions;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers;
+using FluentResults;
+using System.Net;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt
 {
@@ -20,36 +22,36 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             _jwtSecurityTokenHandler = jwtSecurityTokenHandler;
         }
 
-        public string GetUserIdAsync(string accessToken)
+        public Result<string> GetUserIdAsync(string accessToken)
         {
-            try
+            if (string.IsNullOrEmpty(accessToken))
             {
-                if (string.IsNullOrEmpty(accessToken))
-                {
-                    throw new Exception("Access token null");
-                }
-
-                var jwtToken = _jwtSecurityTokenHandler.ReadToken(accessToken) as JwtSecurityToken;
-
-                if (jwtToken == null)
-                {
-                    throw new Exception("Access token is invalid");
-                }
-
-                var userIdClaim = jwtToken.Claims.FirstOrDefault(claim => claim.Type
-                == JwtRegisteredClaimNames.Sub);
-
-                if (userIdClaim == null)
-                {
-                    throw new Exception("User ID claim not found in token");
-                }
-
-                return userIdClaim.Value;
+                return Result.Fail(new Error("accessToken is null or empty").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
             }
-            catch (Exception ex)
+
+            var jwtToken = _jwtSecurityTokenHandler.ReadToken(accessToken) as JwtSecurityToken;
+
+            if (jwtToken == null)
             {
-                throw new JwtTokenParserServiceException("Error while parsing token", ex);
+                return Result.Fail(new Error("accessToken is invalid").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
             }
+
+            var userIdClaim = jwtToken.Claims.FirstOrDefault(claim => claim.Type
+            == JwtRegisteredClaimNames.Sub);
+
+            if (userIdClaim == null )
+            {
+                return Result.Fail(new Error("Sub claim not found in accessToken")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            }
+            if (string.IsNullOrEmpty(userIdClaim.Value))
+            {
+                return Result.Fail(new Error("Sub claim in accessToken is empty")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            }
+
+            return Result.Ok(userIdClaim.Value);
+
         }
     }
 }

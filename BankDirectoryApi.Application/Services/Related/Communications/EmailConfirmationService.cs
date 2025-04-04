@@ -2,6 +2,8 @@
 using BankDirectoryApi.Application.Exceptions;
 using BankDirectoryApi.Application.Interfaces.Related.Communications;
 using BankDirectoryApi.Application.Interfaces.Related.UserManagement;
+using FluentResults;
+using System.Net;
 
 namespace BankDirectoryApi.Application.Services.Related.Communications
 {
@@ -12,33 +14,39 @@ namespace BankDirectoryApi.Application.Services.Related.Communications
         {
             _userService = userService;
         }
-        public async Task<bool> ConfirmEmailAsync(EmailConfirmationDTO model)
+        public async Task<Result<string>> ConfirmEmailAsync(EmailConfirmationDTO model)
         {
-            try
+           
+                if (model == null) 
+                return Result.Fail(new Error("model is required")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            var result = await _userService.ConfirmEmailAsync(model.Email, model.Token);
+            if (result.IsFailed)
             {
-                if (model == null) throw new Exception("Model is required");
-                var result = await _userService.ConfirmEmailAsync(model.Email, model.Token);
-                return result;
+                return Result.Fail(new Error("Confirm Email failed by UserService")
+                 .WithMetadata("StatusCode", HttpStatusCode.InternalServerError))
+                    .WithErrors(result.Errors);
             }
-            catch (Exception ex)
-            {
-                throw new EmailConfirmationServiceException("Email confirmation failed", ex);
-            } 
+            return Result.Ok(model.Email);
         }
 
-       public async Task<bool> ResendConfirmationEmailAsync(string email)
+       public async Task<Result<string>> ResendConfirmationEmailAsync(string email)
         {
-            try
+            
+                if (string.IsNullOrEmpty(email))
+                return Result.Fail(new Error("email is required")
+                  .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+
+            var token = await _userService.GenerateEmailConfirmationTokenAsync(email);
+            if (token.IsFailed)
             {
-                if (string.IsNullOrEmpty(email)) throw new Exception("Email is required");
-                var token = await _userService.GenerateEmailConfirmationTokenAsync(email);
+                return Result.Fail(new Error("Resend Confirmation Email failed by UserService")
+                 .WithMetadata("StatusCode", HttpStatusCode.InternalServerError))
+                    .WithErrors(token.Errors);
+            }
                 // TODO: Send email with token to user email address 
-                return true;
-            }
-            catch (Exception ex)
-            {
-                throw new EmailConfirmationServiceException("Resend confirmation email failed", ex);
-            }
+                return Result.Ok(email);
+           
         }
     }
 }

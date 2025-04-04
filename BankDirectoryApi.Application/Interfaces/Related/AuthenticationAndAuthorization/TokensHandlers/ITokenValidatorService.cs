@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using FluentResults;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,6 @@ namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAutho
 {
     public interface ITokenValidatorService
     {
-        Task<bool> ValidateAccessTokenAsync(string accessToken);
+        Task<Result<bool>> ValidateAccessTokenAsync(string accessToken);
     }
 }

@@ -46,18 +46,19 @@ namespace BankDirectoryApi.UnitTests.Services
         public async Task GetBanksAsync_ShouldReturnIEnumerableOfBankDTO_WhenBanksExists()
         {
             // Arrange
+            var cancellationToken = CancellationToken.None;
             IEnumerable<Bank> banks = new List<Bank> { new Bank { Id = 1, Name = "Test Bank 1" },
             new Bank { Id = 2, Name = "Test Bank 2" }};
             IEnumerable<BankDTO> banksDtos = new List<BankDTO> {
                 new BankDTO { Id = 1, Name = "Test Bank 1" }, new BankDTO { Id = 2, Name = "Test Bank 2" } };
 
-            _bankRepositoryMock.Setup(repo => repo.GetAllAsync())
+            _bankRepositoryMock.Setup(repo => repo.GetAllAsync(cancellationToken))
                                .ReturnsAsync(banks);
             _iMapperMock.Setup(m => m.Map<IEnumerable<BankDTO>>(banks))
                 .Returns(banksDtos);  // Ensure AutoMapper returns the expected DTO
 
             // Act
-            var result = await _bankService.GetAllBanksAsync();
+            var result = await _bankService.GetAllBanksAsync(cancellationToken);
 
             // Assert
             result.Should().NotBeNull();

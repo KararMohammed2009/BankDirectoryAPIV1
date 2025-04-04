@@ -7,6 +7,7 @@ using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthoriza
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers;
 using BankDirectoryApi.Application.Interfaces.Related.UserManagement;
 using BankDirectoryApi.Common.Exceptions;
+using FluentResults;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization
 {
@@ -43,7 +44,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
 
         }
    
-        public async Task<AuthDTO> RegisterAsync(RegisterUserDTO model, ClientInfo clientInfo)
+        public async Task<Result<AuthDTO>> RegisterAsync(RegisterUserDTO model, ClientInfo clientInfo)
         {
             try
             {

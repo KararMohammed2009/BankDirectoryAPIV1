@@ -7,6 +7,9 @@ using BankDirectoryApi.Common.Helpers;
 using BankDirectoryApi.Common.Services;
 using BankDirectoryApi.Application.Exceptions;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers;
+using FluentResults;
+using System.Net;
+using BankDirectoryApi.Common.Extensions;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt
 {
@@ -14,24 +17,31 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
     {
 
         private readonly IConfiguration _configuration;
-       
+        private readonly JwtSecurityTokenHandler _jwtSecurityTokenHandler;
 
         public JwtTokenValidatorService(
-            IConfiguration configuration)
+            IConfiguration configuration, JwtSecurityTokenHandler jwtSecurityTokenHandler)
         {
             _configuration = configuration;
+            _jwtSecurityTokenHandler = jwtSecurityTokenHandler;
         }
 
-      
-        public async Task<bool> ValidateAccessTokenAsync(string accessToken)
+
+        public async Task<Result<bool>> ValidateAccessTokenAsync(string accessToken)
         {
-            try
-            {
-                var jwtSecret = JwtHelper.GetJwtSecretKey(_configuration);
+
+            var jwtSecret = JwtHelper.GetJwtSecretKey(_configuration);
             var jwtIssuer = JwtHelper.GetJwtIssuer(_configuration);
             var jwtAudience = JwtHelper.GetJwtAudience(_configuration);
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
-            var tokenHandler = new JwtSecurityTokenHandler();
+            if (!jwtSecret.IsSuccess || !jwtIssuer.IsSuccess || jwtAudience.IsSuccess)
+            {
+                return Result.Fail(new Error("").WithMetadata("StatusCode", HttpStatusCode.InternalServerError))
+                    .WithErrors(jwtSecret.Errors)
+                    .WithErrors(jwtIssuer.Errors)
+                    .WithErrors(jwtAudience.Errors);
+            }
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret.Value));
+            
 
             
                 var validationParameters = new TokenValidationParameters
@@ -41,18 +51,16 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                     ValidateIssuer = true, 
                     ValidateAudience = true, 
                     ClockSkew = TimeSpan.Zero,
-                    ValidIssuer = jwtIssuer,
-                    ValidAudience = jwtAudience
+                    ValidIssuer = jwtIssuer.Value,
+                    ValidAudience = jwtAudience.Value
                 };
 
-                var validatedToken = await tokenHandler.ValidateTokenAsync(accessToken, validationParameters);
-
-                return validatedToken.IsValid;
-            }
-            catch (Exception ex) 
-            {
-                throw new JwtTokenValidatorServiceException("Validate Jwt AccessToken Failed", ex);
-            }
+                var validatedToken = await _jwtSecurityTokenHandler.ValidateTokenAsync(accessToken, validationParameters);
+            if (validatedToken == null)
+                return Result.Fail(new Error("Validate accessToken failed by JwtSecurityTokenHandler")
+                    .WithMetadata("StatusCode", HttpStatusCode.InternalServerError));
+                return Result.Ok(validatedToken.IsValid);
+           
             
         }
         

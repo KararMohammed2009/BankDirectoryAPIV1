@@ -18,10 +18,10 @@ namespace BankDirectoryApi.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllBanks()
+        public async Task<IActionResult> GetAllBanks(BankFilterDTO model,CancellationToken cancellationToken)
         {
           
-            var banks = await _bankService.GetAllBanksAsync();
+            var banks = await _bankService.GetAllBanksAsync(model,cancellationToken);
             return Ok(banks);
         }
         [HttpGet("{id}")]

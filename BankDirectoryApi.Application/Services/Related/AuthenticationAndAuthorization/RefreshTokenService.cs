@@ -1,12 +1,11 @@
 ﻿using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
-using BankDirectoryApi.Application.Exceptions;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
-using BankDirectoryApi.Common.Exceptions;
 using BankDirectoryApi.Common.Services;
 using BankDirectoryApi.Domain.Entities;
 using BankDirectoryApi.Domain.Interfaces;
+using FluentResults;
 using Microsoft.Extensions.Configuration;
-using System.Security.Cryptography;
+using System.Net;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization
 {
@@ -17,113 +16,128 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         private readonly IDateTimeProvider _dateTimeProvider;
         private readonly ISessionService _sessionHandler;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
+        private readonly IRandomNumberProvider _randomNumberProvider;
         public RefreshTokenService(IHashService hashService, IConfiguration configuration,
             IDateTimeProvider dateTimeProvider,ISessionService sessionHandler,
-            IRefreshTokenRepository refreshTokenRepository)
+            IRefreshTokenRepository refreshTokenRepository,
+            IRandomNumberProvider randomNumberProvider)
         {
             _hashService = hashService;
             _configuration = configuration;
             _dateTimeProvider = dateTimeProvider;
             _sessionHandler = sessionHandler;
             _refreshTokenRepository = refreshTokenRepository;
+            _randomNumberProvider = randomNumberProvider;
         }
-        public (string RefreshToken, string HashedRefreshToken) GenerateRefreshTokenAsync()
+        public Result<(string RefreshToken, string HashedRefreshToken)> GenerateRefreshTokenAsync()
         {
-            try
+           
+          var randomNumberResult = _randomNumberProvider.GetBase64RandomNumber(64);
+            if (randomNumberResult.IsFailed)
             {
-                byte[] randomBytes = new byte[64]; // Adjust length as needed
-                using (var rng = RandomNumberGenerator.Create())
-                {
-                    rng.GetBytes(randomBytes);
-                }
-                var refreshToken = Convert.ToBase64String(randomBytes);
-                var hashedRefreshToken = _hashService.GetHash(refreshToken);
-                if (hashedRefreshToken == null || refreshToken ==null) {
-                    throw new Exception();
-                }
-                return (refreshToken, hashedRefreshToken);
+                return Result.Fail(new Error("Generate RefreshToken failed")
+                    .WithMetadata("StatusCode", HttpStatusCode.InternalServerError))
+                    .WithErrors(randomNumberResult.Errors);
             }
-            catch(HashServiceException ex)
+            var refreshToken = randomNumberResult.Value;
+            var hashedRefreshTokenResult = _hashService.GetHash(refreshToken);
+            if (hashedRefreshTokenResult.IsFailed)
             {
-                throw;
+             return Result.Fail(new Error("Generate RefreshToken failed")
+                    .WithMetadata("StatusCode", HttpStatusCode.InternalServerError))
+                    .WithErrors(hashedRefreshTokenResult.Errors);
             }
-            catch (Exception ex)
-            {
-                throw new RefreshTokenServiceException("Error in generating refresh token", ex);
-            }
+            return Result.Ok((refreshToken, hashedRefreshTokenResult.Value));
         }
-        public async Task<(RefreshToken refreshTokenEntity, string refreshToken)> GenerateRefreshTokenEntityAsync(
-            string userId
-           , ClientInfo clientInfo)
+        public async Task<Result<(RefreshToken refreshTokenEntity, string refreshToken)>>
+            GenerateRefreshTokenEntityAsync(string userId, ClientInfo clientInfo)
         {
-            try
-            {
-                var refreshTokenPair = GenerateRefreshTokenAsync();
+           if(string.IsNullOrEmpty(userId))
+                return Result.Fail(new Error("Generate RefreshToken Entity failed : userId is null")
+                    .WithMetadata("StatusCode",HttpStatusCode.BadRequest));
 
+             var refreshTokenPairResult = GenerateRefreshTokenAsync();
+            if (refreshTokenPairResult.IsFailed)
+                return Result.Fail(refreshTokenPairResult.Errors);
 
-                var refreshTokenLifetimeDays = _configuration["JwtSettings:RefreshTokenLifetimeDays"];
-                if (string.IsNullOrEmpty(refreshTokenLifetimeDays))
-                    throw new Exception(
-                    "configration[JwtSettings:RefreshTokenLifetimeDays] is null");
-                var dateNow = _dateTimeProvider.UtcNow;
+            var refreshTokenLifetimeDays = _configuration["JwtSettings:RefreshTokenLifetimeDays"];
+
+          
+
+            if (string.IsNullOrEmpty(refreshTokenLifetimeDays))
+               return Result.Fail(new Error("Generate RefreshToken Entity failed : Refresh token lifetime days is null")
+                    .WithMetadata("StatusCode", HttpStatusCode.InternalServerError));
+            
+
+            var dateNowResult = _dateTimeProvider.UtcNow;
                 var refreshTokenEntity = new RefreshToken
                 {
-                    TokenHash = refreshTokenPair.HashedRefreshToken,
+                    TokenHash = refreshTokenPairResult.Value.HashedRefreshToken,
                     UserId = userId,
-                    ExpirationDate = dateNow.AddDays(double.Parse(refreshTokenLifetimeDays)),
-                    CreationDate = dateNow,
+                    ExpirationDate = dateNowResult.Value.AddDays(double.Parse(refreshTokenLifetimeDays)),
+                    CreationDate = dateNowResult.Value,
                     IsRevoked = false,
                     IsUsed = false,
-                    SessionId = _sessionHandler.GenerateNewSessionIdAsync(),
+                    SessionId = _sessionHandler.GenerateNewSessionIdAsync().Value,
                     UserAgent = clientInfo?.UserAgent ?? string.Empty,
                     CreatedByIp = clientInfo?.IpAddress ?? string.Empty,
                 };
-
-                if(refreshTokenEntity == null)
-                {
-                    throw new Exception("Refresh token entity is null");
-                }
-              
-                return (refreshTokenEntity, refreshTokenPair.RefreshToken);
-            }
-            catch (Exception ex)
-            {
-                throw new RefreshTokenServiceException("Error in generating refresh token entity", ex);
-            }
+                return Result.Ok((refreshTokenEntity, refreshTokenPairResult.Value.RefreshToken));
+            
+            
         }
-        public async Task<RefreshToken> StoreRefreshTokenAsync(RefreshToken refreshToken)
+        public async Task<Result<RefreshToken>> StoreRefreshTokenAsync(RefreshToken refreshToken)
         {
-            if (refreshToken == null) throw new RefreshTokenServiceException("RefreshToken is null");
+            if (refreshToken == null)
+            {
+                return Result.Fail(new Error("Store RefreshToken failed : Refresh token is null")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            }
             await _refreshTokenRepository.AddAsync(refreshToken);
-            return refreshToken;
+            return  Result.Ok(refreshToken);
         }
-        public async Task<bool> RotateRefreshTokenAsync(string oldRefreshToken, RefreshToken newRefreshToken)
+        public async Task<Result<RefreshToken>> RotateRefreshTokenAsync(string oldRefreshToken, RefreshToken newRefreshToken)
         {
-            if(oldRefreshToken == null)
+            if(string.IsNullOrEmpty(oldRefreshToken))
             {
-                throw new RefreshTokenServiceException("Old refresh token is null");
+             return Result.Fail(new Error("Rotate RefreshToken failed : Old refresh token is null")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
             }
             if (newRefreshToken == null)
             {
-                throw new RefreshTokenServiceException("New refresh token is null");
+               return Result.Fail(new Error("Rotate RefreshToken failed : New refresh token is null")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
             }
-            return await _refreshTokenRepository.RotateRefreshTokenAsync(
-                _hashService.GetHash(oldRefreshToken)
-                , newRefreshToken);
+
+
+            var hashedOldRefreshTokenResult = _hashService.GetHash(oldRefreshToken);
+            if (!hashedOldRefreshTokenResult.IsSuccess)
+            {
+                return Result.Fail(new Error("Rotate RefreshToken failed : Hashing old refresh token failed")
+                    .WithMetadata("StatusCode", HttpStatusCode.InternalServerError))
+                    .WithErrors(hashedOldRefreshTokenResult.Errors);
+            }
+            await _refreshTokenRepository.RotateRefreshTokenAsync(
+                hashedOldRefreshTokenResult.Value, newRefreshToken);
+
+                return Result.Ok(newRefreshToken);
 
         }
-        public async Task<bool> RevokeAllRefreshTokensAsync(string userId, string sessionId, string? ipAddress)
+        public async Task<Result<string>> RevokeAllRefreshTokensAsync(string userId, string sessionId, string? ipAddress)
         {
-            if(userId == null)
+            if(string.IsNullOrEmpty(userId))
             {
-                throw new RefreshTokenServiceException("User id is null");
+                return Result.Fail(new Error("Revoke All Refresh Tokens failed : userId is null")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
             }
-            if (sessionId == null)
+            if (string.IsNullOrEmpty(sessionId))
             {
-                throw new RefreshTokenServiceException("Session id is null");
+               return Result.Fail(new Error("Revoke All Refresh Tokens failed : sessionId is null")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
             }
           
-            return await _refreshTokenRepository.RevokeAllRefreshTokensAsync(userId,sessionId,ipAddress);
+             await _refreshTokenRepository.RevokeAllRefreshTokensAsync(userId,sessionId,ipAddress);
+            return Result.Ok(userId);
 
         }
     }

@@ -1,5 +1,6 @@
 ﻿
 using BankDirectoryApi.Application.DTOs.Related.UserManagement;
+using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -12,23 +13,23 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Application.Interfaces.Related.UserManagement
 {
-    public interface IUserService
+     public interface IUserService
     {
 
-        public Task<IEnumerable<UserDTO>> GetAllUsersAsync();
-        public Task<UserDTO> GetUserByIdAsync(string userId);
-        public Task<UserDTO> GetUserByEmailAsync(string email);
-        public Task<UserDTO> GetUserByUserNameAsync(string userName);
-        public Task<UserDTO?> UserExistsByEmailAsync(string email);
-        public Task<UserDTO> UpdateUserAsync(UpdateUserDTO model);
-        public Task<bool> DeleteUserAsync(string userId);
-        public Task<UserDTO> CreateUserAsync(RegisterUserDTO model);
-        public Task<bool> ConfirmEmailAsync(string email, string token);
-        public Task<bool> IsEmailConfirmedAsync(UserDTO model);
-        public Task<string> GenerateEmailConfirmationTokenAsync(string email);
-        public Task<bool> AddLoginAsync(string id,string email, string name,string externalAccessToken,string providerName);
-        public  Task<bool> SetTwoFactorAuthenticationAsync(string userId, bool enabled);
-        public Task<Dictionary<string, string>> GetUserCalimsAsync(string userId);
+         Task<Result<List<UserDTO>>> GetAllUsersAsync(UserFilterDTO model,CancellationToken cancellationToken);
+         Task<Result<UserDTO>> GetUserByIdAsync(string userId);
+         Task<Result<UserDTO>> GetUserByEmailAsync(string email);
+         Task<Result<UserDTO>> GetUserByUserNameAsync(string userName);
+         Task<Result<UserDTO>> UserExistsByEmailAsync(string email);
+         Task<Result<UserDTO>> UpdateUserAsync(UpdateUserDTO model);
+         Task<Result<string>> DeleteUserAsync(string userId);
+         Task<Result<UserDTO>> CreateUserAsync(RegisterUserDTO model);
+         Task<Result<string>> ConfirmEmailAsync(string email, string token);
+         Task<Result<bool>> IsEmailConfirmedAsync(UserDTO model);
+         Task<Result<string>> GenerateEmailConfirmationTokenAsync(string email);
+         Task<Result<string>> AddLoginAsync(string id,string email, string name,string externalAccessToken,string providerName);
+          Task<Result<string>> SetTwoFactorAuthenticationAsync(string userId, bool enabled);
+         Task<Result<Dictionary<string, string>>> GetUserCalimsAsync(string userId);
 
     }
 }

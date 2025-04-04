@@ -10,7 +10,8 @@ namespace BankDirectoryApi.Application.Interfaces.Main
 {
     public interface IBankService
     {
-        Task<IEnumerable<BankDTO>> GetAllBanksAsync();
+        Task<IEnumerable<BankDTO>> GetAllBanksAsync(CancellationToken cancellationToken);
+        Task<IEnumerable<BankDTO>> GetAllBanksAsync(BankFilterDTO model,CancellationToken cancellationToken);
         Task<BankDTO?> GetBankByIdAsync(int id);
         Task<BankWithBranchesDTO?> GetBankWithBranchesAsync(int id);
         Task AddBankAsync(BankDTO bank);

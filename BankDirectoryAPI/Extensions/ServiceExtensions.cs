@@ -231,9 +231,6 @@ namespace BankDirectoryApi.API.Extensions
         {
             // Register application-layer services
             services.AddScoped<IBankService, BankService>();
-            services.AddScoped<IBranchService, BranchService>();
-            services.AddScoped<IATMService, ATMService>();
-            services.AddScoped<ICardService, CardService>();
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
             // Register Common Services
             services.AddScoped<IDateTimeProvider, DateTimeProvider>();

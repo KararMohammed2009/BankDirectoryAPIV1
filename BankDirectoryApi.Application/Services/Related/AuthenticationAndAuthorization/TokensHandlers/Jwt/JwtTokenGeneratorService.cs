@@ -12,12 +12,13 @@ using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthoriza
 using BankDirectoryApi.Common.Exceptions;
 using BankDirectoryApi.Application.DTOs.Related.UserManagement;
 using BankDirectoryApi.Application.Interfaces.Related.UserManagement;
+using FluentResults;
+using System.Net;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt
 {
     public class JwtTokenGeneratorService : ITokenGeneratorService
     {
-        private readonly IUserService _userService;
         private readonly IConfiguration _configuration;
         private readonly IDateTimeProvider _dateTimeProvider;
         private readonly IGuidProvider _guidProvider;
@@ -25,76 +26,77 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         public JwtTokenGeneratorService(
             IConfiguration configuration
             ,IDateTimeProvider dateTimeProvider,
-            IGuidProvider guidProvider,
-            IUserService userService)
+            IGuidProvider guidProvider)
         {
             
             _configuration = configuration;
             _dateTimeProvider = dateTimeProvider;
             _guidProvider = guidProvider;
-            _userService = userService;
         }
 
-        public async Task<string> GenerateAccessTokenAsync(string userId
-            ,string userName , string email, IEnumerable<string>? roles,
-            Dictionary<string,string>? userClaims)
+        public Result<string> GenerateAccessToken(string userId
+            , string userName, string email, IEnumerable<string>? roles,
+            Dictionary<string, string>? userClaims)
         {
-            try
-            {
-                if (userId == null) throw new Exception("userId is null");
-                if (userName == null) throw new Exception("userName is null");
-                if (email == null) throw new Exception("email is null");
 
-                var claims = new List<Claim>
+            if (userId == null) return Result.Fail(new Error("userId is null")
+                .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            if (userName == null) return
+                    Result.Fail(new Error("userName is null")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            if (email == null)
+                return Result.Fail(new Error("email is null")
+                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+
+            var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, userId),
-                new Claim(JwtRegisteredClaimNames.Jti, _guidProvider.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, _guidProvider.NewGuid().Value.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, userId),
                 new Claim(ClaimTypes.Name, userName),
-                new Claim(ClaimTypes.Email, email)
+                new Claim(ClaimTypes.Email, email),
             };
 
-                if (roles != null)
-                {
-                    foreach (var role in roles)
-                    {
-                        claims.Add(new Claim(ClaimTypes.Role, role));
-                    }
-                }
-
-                if (userClaims != null)
-                {
-                    foreach (var claim in userClaims)
-                    {
-                        claims.Add(new Claim(claim.Key,claim.Value));
-                    }
-                }
-
-                var jwtSecret = JwtHelper.GetJwtSecretKey(_configuration);
-                var jwtIssuer = JwtHelper.GetJwtIssuer(_configuration);
-                var jwtAudience = JwtHelper.GetJwtAudience(_configuration);
-                var jwtExpirationHours = JwtHelper.GetJwtExpirationHours(_configuration);
-
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
-                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-                var expires = _dateTimeProvider.UtcNow.AddHours(jwtExpirationHours);
-
-                var token = new JwtSecurityToken(
-                    jwtIssuer,
-                    jwtAudience,
-                    claims,
-                    expires: expires,
-                    signingCredentials: creds
-                );
-
-                return new JwtSecurityTokenHandler().WriteToken(token);
-            }
-            catch (Exception ex)
+            if (roles != null)
             {
-                throw new JwtTokenGeneratorServiceException("Generate Jwt AccessToken Failed", ex);
+                foreach (var role in roles)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role));
+                }
             }
+
+            if (userClaims != null)
+            {
+                foreach (var claim in userClaims)
+                {
+                    claims.Add(new Claim(claim.Key, claim.Value));
+                }
+            }
+
+            var jwtSecret = JwtHelper.GetJwtSecretKey(_configuration).Value;
+            var jwtIssuer = JwtHelper.GetJwtIssuer(_configuration).Value;
+            var jwtAudience = JwtHelper.GetJwtAudience(_configuration).Value;
+            var jwtExpirationHours = JwtHelper.GetJwtExpirationHours(_configuration).Value;
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var expires = _dateTimeProvider.UtcNow.Value.AddHours(jwtExpirationHours);
+
+            var token = new JwtSecurityToken(
+                jwtIssuer,
+                jwtAudience,
+                claims,
+                expires: expires,
+                signingCredentials: creds
+            );
+
+            var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
+            if (string.IsNullOrEmpty(jwtToken))
+                return Result.Fail(new Error("Generate JWT Access Token Failed")
+                    .WithMetadata("StatusCode", HttpStatusCode.InternalServerError));
+            return Result.Ok(jwtToken);
         }
-       
-        
+
+
     }
 }

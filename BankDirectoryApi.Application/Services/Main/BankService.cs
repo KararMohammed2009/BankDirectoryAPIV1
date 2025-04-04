@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using BankDirectoryApi.Application.DTOs.Core;
 using BankDirectoryApi.Application.Interfaces.Main;
+using BankDirectoryApi.Domain.Classes.Specifications;
+using BankDirectoryApi.Common.Helpers;
 
 namespace BankDirectoryApi.Application.Services.Main
 {
@@ -20,9 +22,26 @@ namespace BankDirectoryApi.Application.Services.Main
             _bankRepository = bankRepository;
             _mapper = mapper;
         }
-        public async Task<IEnumerable<BankDTO>> GetAllBanksAsync()
+        public async Task<IEnumerable<BankDTO>> GetAllBanksAsync(BankFilterDTO model,
+            CancellationToken cancellationToken)
         {
-            var banks =  await _bankRepository.GetAllAsync();
+            var spec = new Specification<Bank>()
+            {
+                Criteria = ExpressionFilterHelper.CreateFilter<Bank>(model),
+                Orderings = OrderingHelper.GetOrderings<Bank>(model.OrderingInfo),
+                IsPagingEnabled = model.PaginationInfo != null,
+                PageNumber = model.PaginationInfo?.PageNumber,
+                PageSize = model.PaginationInfo?.PageSize,
+                AsNoTracking = true,
+            };
+           
+            var banks = await _bankRepository.GetAllAsync(spec,cancellationToken);
+            return _mapper.Map<IEnumerable<BankDTO>>(banks);
+        }
+        public async Task<IEnumerable<BankDTO>> GetAllBanksAsync(CancellationToken cancellationToken)
+        {
+           
+            var banks = await _bankRepository.GetAllAsync(cancellationToken);
             return _mapper.Map<IEnumerable<BankDTO>>(banks);
         }
         public async Task<BankDTO?> GetBankByIdAsync(int id)

@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using FluentResults;
 
 namespace BankDirectoryApi.Common.Services
 {
     public interface IHashService
     {
-        string GetHash(string key);
-        bool VerifyHash(string key, string hash);
+        Result<string> GetHash(string key);
+        Result<bool> VerifyHash(string key, string hash);
     }
 }

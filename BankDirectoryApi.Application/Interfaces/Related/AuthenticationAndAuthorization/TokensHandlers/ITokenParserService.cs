@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using FluentResults;
 
 namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers
 {
     public interface ITokenParserService
     {
-        string GetUserIdAsync(string accessToken);
+        Result<string> GetUserIdAsync(string accessToken);
     }
 }

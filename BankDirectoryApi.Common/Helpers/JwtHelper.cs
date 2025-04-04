@@ -1,27 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using FluentResults;
 using Microsoft.Extensions.Configuration;
 
 namespace BankDirectoryApi.Common.Helpers
 {
     public static class JwtHelper
     {
-        public static string GetJwtSecretKey(IConfiguration configuration)
+        public static Result<string> GetJwtSecretKey(IConfiguration configuration)
         {
-            var secretKey = Environment.GetEnvironmentVariable("BankDirectoryApi_JWT_SECRET")
-                            ?? configuration["JwtSettings:SecretKey"];
+            
+                var secretKey = Environment.GetEnvironmentVariable("BankDirectoryApi_JWT_SECRET")
+                                ?? configuration["JwtSettings:SecretKey"];
 
-            if (string.IsNullOrEmpty(secretKey))
-            {
-                throw new InvalidOperationException("JWT Secret Key is not configured!");
-            }
+                if (string.IsNullOrEmpty(secretKey))
+                {
+                    throw new InvalidOperationException("JWT Secret Key is not configured!");
+                }
 
-            return secretKey;
+                return Result.Ok(secretKey);
+            
         }
-        public static string GetJwtIssuer(IConfiguration configuration)
+        public static Result<string> GetJwtIssuer(IConfiguration configuration)
         {
             var issuer = Environment.GetEnvironmentVariable("BankDirectoryApi_JWT_ISSUER")
                             ?? configuration["JwtSettings:Issuer"];
@@ -31,9 +35,9 @@ namespace BankDirectoryApi.Common.Helpers
                 throw new InvalidOperationException("JWT Issuer is not configured!");
             }
 
-            return issuer;
+            return Result.Ok(issuer);
         }
-        public static string GetJwtAudience(IConfiguration configuration)
+        public static Result<string> GetJwtAudience(IConfiguration configuration)
         {
             var audience = Environment.GetEnvironmentVariable("BankDirectoryApi_JWT_AUDIENCE")
                             ?? configuration["JwtSettings:Audience"];
@@ -43,9 +47,9 @@ namespace BankDirectoryApi.Common.Helpers
                 throw new InvalidOperationException("JWT Audience is not configured!");
             }
 
-            return audience;
+            return Result.Ok(audience);
         }
-        public static int GetJwtExpirationHours(IConfiguration configuration)
+        public static Result<int> GetJwtExpirationHours(IConfiguration configuration)
         {
             var expirationHoursString = Environment.GetEnvironmentVariable("BankDirectoryApi_JWT_EXPIRATIONHOURS")
                             ?? configuration["JwtSettings:ExpirationHours"];
@@ -57,10 +61,10 @@ namespace BankDirectoryApi.Common.Helpers
             int expirationHours;
             if(!int.TryParse(expirationHoursString, out expirationHours))
             {
-                expirationHours = 0;
+                return Result.Fail(new Error("Error in Parsing JWT ExpirationHours").WithMetadata("StatusCode", HttpStatusCode.InternalServerError));
             }
             
-            return expirationHours;
+            return Result.Ok(expirationHours);
         }
     }
 }
