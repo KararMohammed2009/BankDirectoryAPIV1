@@ -1,17 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using BankDirectoryApi.Common.Helpers;
 using BankDirectoryApi.Common.Services;
-using System.Security.Cryptography;
-using BankDirectoryApi.Application.Exceptions;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers;
-using BankDirectoryApi.Common.Exceptions;
-using BankDirectoryApi.Application.DTOs.Related.UserManagement;
-using BankDirectoryApi.Application.Interfaces.Related.UserManagement;
 using FluentResults;
 using System.Net;
 

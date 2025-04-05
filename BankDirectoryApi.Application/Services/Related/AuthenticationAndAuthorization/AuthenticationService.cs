@@ -46,11 +46,11 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
    
         public async Task<Result<AuthDTO>> RegisterAsync(RegisterUserDTO model, ClientInfo clientInfo)
         {
-            try
-            {
+            
 
-                if (model == null) throw new Exception("RegisterUserDTO is required");
-                var user = await _userService.CreateUserAsync(model);
+                if (model == null) 
+                return Result.Fail(new Error("Model is null").e("Status"));
+            var user = await _userService.CreateUserAsync(model);
                 var userClaims = await _userService.GetUserCalimsAsync(user.Id);
                 var accessToken = await 
                     _tokenGenerator.GenerateAccessTokenAsync(user.Id,
@@ -65,11 +65,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                     AccessToken = accessToken,
                     RefreshToken = refreshTokenResult.refreshToken,
                 };
-            }
-            catch (Exception ex)
-            {
-                throw new AuthenticationServiceException("Register user failed", ex);
-            }
+           
         }
 
         public async Task<AuthDTO> LoginAsync(LoginUserDTO model, ClientInfo clientInfo)

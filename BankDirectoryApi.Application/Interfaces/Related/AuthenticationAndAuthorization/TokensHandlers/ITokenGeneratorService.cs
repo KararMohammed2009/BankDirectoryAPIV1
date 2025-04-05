@@ -1,18 +1,10 @@
-﻿using BankDirectoryApi.Application.DTOs.Related.UserManagement;
-using FluentResults;
-using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
+﻿using FluentResults;
 
 namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers
 {
     public interface ITokenGeneratorService
     {
-        Task<Result<string>> GenerateAccessToken(string userId, string userName, string email, 
+        Result<string> GenerateAccessToken(string userId, string userName, string email, 
             IEnumerable<string>? roles,
             Dictionary<string, string>? userClaims);
 
