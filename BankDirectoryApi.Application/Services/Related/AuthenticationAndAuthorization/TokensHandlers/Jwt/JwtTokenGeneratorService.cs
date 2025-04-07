@@ -7,7 +7,7 @@ using BankDirectoryApi.Common.Helpers;
 using BankDirectoryApi.Common.Services;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers;
 using FluentResults;
-using System.Net;
+using BankDirectoryApi.Common.Errors;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt
 {
@@ -34,13 +34,13 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         {
 
             if (userId == null) return Result.Fail(new Error("userId is null")
-                .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+                .WithMetadata("StatusCode", CommonErrors.MissingRequiredField));
             if (userName == null) return
                     Result.Fail(new Error("userName is null")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+                    .WithMetadata("StatusCode", CommonErrors.MissingRequiredField));
             if (email == null)
                 return Result.Fail(new Error("email is null")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+                    .WithMetadata("StatusCode", CommonErrors.MissingRequiredField));
 
             var claims = new List<Claim>
             {
@@ -87,7 +87,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
             if (string.IsNullOrEmpty(jwtToken))
                 return Result.Fail(new Error("Generate JWT Access Token Failed")
-                    .WithMetadata("StatusCode", HttpStatusCode.InternalServerError));
+                    .WithMetadata("StatusCode", CommonErrors.UnexpectedError));
             return Result.Ok(jwtToken);
         }
 

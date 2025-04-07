@@ -1,16 +1,15 @@
 ﻿using AutoMapper;
 using BankDirectoryApi.Application.DTOs.Related.UserManagement;
-using BankDirectoryApi.Application.Exceptions;
 using BankDirectoryApi.Application.Interfaces.Related.UserManagement;
+using BankDirectoryApi.Common.Errors;
 using BankDirectoryApi.Common.Extensions;
+using BankDirectoryApi.Common.Helpers;
 using BankDirectoryApi.Infrastructure;
 using BankDirectoryApi.Infrastructure.Identity;
 using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Configuration.Provider;
-using System.Net;
 using System.Security.Claims;
 
 namespace BankDirectoryApi.Application.Services.Related.UserManagement
@@ -38,27 +37,27 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
         }
         public async Task<Result<List<UserDTO>>> GetAllUsersAsync(UserFilterDTO model, CancellationToken cancellationToken)
         {
+            var validationResult = ValidationHelper.ValidateNullModel(model, "model");
+            if (validationResult.IsFailed) return validationResult.ToResult<List<UserDTO>>();
 
-            if (model == null)
-                return Result.Fail(new Error("model is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
-
+            
             var users = await IdentityExceptionHelper.Execute(() => _userManager.Users.ToListAsync(cancellationToken), _logger);
             
             return Result.Ok( _mapper.Map<List<UserDTO>>(users));
 
         }
+
         public async Task<Result<UserDTO>> GetUserByIdAsync(string userId)
         {
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId, "userId");
+            if (validationResult.IsFailed) return validationResult.ToResult<UserDTO>();
 
-            if (string.IsNullOrEmpty(userId))
-                return Result.Fail(new Error("UserId is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
 
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await IdentityExceptionHelper.Execute(()=>
+            _userManager.FindByIdAsync(userId),_logger);
             if (user == null)
                 return Result.Fail(new Error($"Get User by Id({userId}) failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
 
             var roles = await IdentityExceptionHelper.Execute(() => _userManager.GetRolesAsync(user), _logger);
             var userDTO = _mapper.Map<UserDTO>(user);
@@ -68,68 +67,71 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
         public async Task<Result<UserDTO>> GetUserByEmailAsync(string email)
         {
 
-            if (string.IsNullOrEmpty(email))
-                return Result.Fail(new Error("Email is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(email, "email");
+            if (validationResult.IsFailed) return validationResult.ToResult<UserDTO>();
 
             var user = await IdentityExceptionHelper.Execute(() => _userManager.FindByEmailAsync(email), _logger);
             if (user == null)
                 return Result.Fail(new Error($"Get User by Email({email}) failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
             return Result.Ok(_mapper.Map<UserDTO>(user));
 
         }
         public async Task<Result<UserDTO>> GetUserByUserNameAsync(string userName)
         {
-            
-                if (string.IsNullOrEmpty(userName)) 
-                return Result.Fail(new Error("UserName is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userName, "userName");
+            if (validationResult.IsFailed) return validationResult.ToResult<UserDTO>();
+
             var user = await IdentityExceptionHelper.Execute(() => _userManager.FindByNameAsync(userName),_logger);
                 if (user == null)
                    return Result.Fail(new Error($"Get User by UserName({userName}) failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
             return Result.Ok(_mapper.Map<UserDTO>(user));
            
         }
         public async Task<Result<UserDTO>> UserExistsByEmailAsync(string email)
         {
-           
-                if (string.IsNullOrEmpty(email)) 
-                 return Result.Fail(new Error("Email is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(email, "email");
+            if (validationResult.IsFailed) return validationResult.ToResult<UserDTO>();
+
             var user = await IdentityExceptionHelper.Execute(() => _userManager.FindByEmailAsync(email),_logger);
             if (user == null)
                 return Result.Fail(new Error($"Get User by Email({email}) failed by UserManager<ApplicationUser>")
-                .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
            
                 return Result.Ok( _mapper.Map<UserDTO>(user));
             
         }
-
-
         public async Task<Result<UserDTO>> UpdateUserAsync(UpdateUserDTO model)
         {
-            
-                if (model == null) 
-                return Result.Fail(new Error("Model is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
-                 
-            var user = _mapper.Map<ApplicationUser>(model);
-                var updateResult = await IdentityExceptionHelper.Execute(() => _userManager.UpdateAsync(user),_logger);
+
+            var validationResult = ValidationHelper.ValidateNullModel(model, "model");
+            if (validationResult.IsFailed) return validationResult.ToResult<UserDTO>();
+
+            var oldUser = await IdentityExceptionHelper.Execute(() =>
+            _userManager.FindByIdAsync(model.UserId), _logger);
+            if (oldUser == null)
+                return Result.Fail(new Error($"Get User by Id({model.UserId}) failed by UserManager<ApplicationUser>")
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
+
+            var updatedUser = _mapper.Map(model,oldUser);
+                var updateResult = await IdentityExceptionHelper.Execute(() => _userManager.UpdateAsync(updatedUser),_logger);
                 if (!updateResult.Succeeded)
                 {
                    return Result.Fail(new Error($"Update User failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest)).IncludeIdentityErrors(updateResult);
+                    .WithMetadata("ErrorCode", CommonErrors.OperationFailed))
+                    .IncludeIdentityErrors(updateResult);
 
             }
 
                 var existedRoles = await IdentityExceptionHelper.Execute(() =>
-                _userManager.GetRolesAsync(user),_logger);
+                _userManager.GetRolesAsync(updatedUser),_logger);
             if (existedRoles == null)
             {
                 return Result.Fail(new Error($"Get User Roles failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+                    .WithMetadata("ErrorCode", CommonErrors.OperationFailed));
             }
                 var desiredRoles = model.RoleNames ?? new List<string>();
 
@@ -138,11 +140,11 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 if (rolesToRemove.Any())
                 {
                     var removeResult = await IdentityExceptionHelper.Execute(() =>
-                    _userManager.RemoveFromRolesAsync(user, rolesToRemove),_logger);
+                    _userManager.RemoveFromRolesAsync(updatedUser, rolesToRemove),_logger);
                     if (!removeResult.Succeeded)
                     {
                         return Result.Fail(new Error($"Update User failed by UserManager<ApplicationUser>")
-                            .WithMetadata("StatusCode", HttpStatusCode.BadRequest)).IncludeIdentityErrors(removeResult);
+                            .WithMetadata("ErrorCode", CommonErrors.OperationFailed)).IncludeIdentityErrors(removeResult);
                     }
                 }
 
@@ -151,50 +153,48 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 if (rolesToAdd.Any())
                 {
                     var addResult = await IdentityExceptionHelper.Execute(() => 
-                    _userManager.AddToRolesAsync(user, rolesToAdd),_logger);
+                    _userManager.AddToRolesAsync(updatedUser, rolesToAdd),_logger);
                     if (!addResult.Succeeded)
                     {
                 return Result.Fail(new Error($"Update User failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest)).IncludeIdentityErrors(addResult);
+                    .WithMetadata("ErrorCode", CommonErrors.OperationFailed)).IncludeIdentityErrors(addResult);
                 }
                 }
 
-                return Result.Ok(_mapper.Map<UserDTO>(user));
+                return Result.Ok(_mapper.Map<UserDTO>(updatedUser));
           
         }
         public async Task<Result<string>> DeleteUserAsync(string userId)
         {
-            
-                if (string.IsNullOrEmpty(userId)) 
-                return Result.Fail(new Error("UserId is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId, "userId");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
 
             var user = await IdentityExceptionHelper.Execute(() => _userManager.FindByIdAsync(userId),_logger);
 
                 if (user == null)
                 return Result.Fail(new Error($"Get User by Id({userId}) failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
 
             var result = await IdentityExceptionHelper.Execute(() => _userManager.DeleteAsync(user),_logger);
            
                 if (!result.Succeeded)
                 return Result.Fail(new Error($"Delete User failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest)).IncludeIdentityErrors(result);
+                    .WithMetadata("ErrorCode", CommonErrors.OperationFailed)).IncludeIdentityErrors(result);
             return Result.Ok(userId);
            
         }
         public async Task<Result<UserDTO>> CreateUserAsync(RegisterUserDTO model)
         {
-            if (model == null)
-                return Result.Fail(new Error("model is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            var validationResult = ValidationHelper.ValidateNullModel(model, "model");
+            if (validationResult.IsFailed) return validationResult.ToResult<UserDTO>();
 
             var user = await IdentityExceptionHelper.Execute(() =>
                 _userManager.FindByEmailAsync(model.Email), _logger);
             if (user != null)
             {
                 return Result.Fail(new Error($"User with email({model.Email}) already exists")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceAlreadyExists));
             }
 
             user = _mapper.Map<ApplicationUser>(model);
@@ -204,7 +204,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             if (!result.Succeeded)
             {
                 return Result.Fail(new Error($"Create User failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest)).IncludeIdentityErrors(result);
+                    .WithMetadata("ErrorCode", CommonErrors.OperationFailed)).IncludeIdentityErrors(result);
             }
 
             result = await IdentityExceptionHelper.Execute(() => 
@@ -214,7 +214,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
 
                 return Result.Fail(
                    new Error($"Add User to Roles failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest)).IncludeIdentityErrors(result);
+                    .WithMetadata("ErrorCode", CommonErrors.OperationFailed)).IncludeIdentityErrors(result);
                
             }
 
@@ -222,14 +222,12 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
         }
         public async Task<Result<string>> ConfirmEmailAsync(string email, string token)
         {
-            
-                if (string.IsNullOrEmpty(email)) 
-                return Result.Fail(new Error("Email is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
 
-            if (string.IsNullOrEmpty(token))
-                return Result.Fail(new Error("Token is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(email, "email");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
+
+            validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(token, "token");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
 
             var identityUser = await IdentityExceptionHelper.Execute(() =>
             _userManager.FindByEmailAsync(email),_logger);
@@ -237,45 +235,48 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             if (identityUser == null)
             {
                 return Result.Fail(new Error($"Get User by Email({email}) failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
             }
             var result = await IdentityExceptionHelper.Execute(() => 
             _userManager.ConfirmEmailAsync(identityUser, token), _logger);
             if (!result.Succeeded)
             { return Result.Fail(
                 new Error("Email confirmation failed by UserManager<ApplicationUser>")
-                .WithMetadata("StatusCode", HttpStatusCode.BadRequest)).IncludeIdentityErrors(result); 
+                .WithMetadata("ErrorCode", CommonErrors.OperationFailed)).IncludeIdentityErrors(result); 
             }
 
                 return Result.Ok(email);
           
         }
-
         public async Task<Result<bool>> IsEmailConfirmedAsync(UserDTO model)
         {
-           
-                if (model == null) 
-                return Result.Fail(new Error("Model is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
-            var user = _mapper.Map<ApplicationUser>(model);
-                return Result.Ok( await
+
+            var validationResult = ValidationHelper.ValidateNullModel(model, "model");
+            if (validationResult.IsFailed) return validationResult.ToResult<bool>();
+            var user = await IdentityExceptionHelper.Execute(() =>
+            _userManager.FindByEmailAsync(model.Email), _logger);
+            if (user == null)
+            {
+                return Result.Fail(new Error($"Get User by Email({model.Email}) failed by UserManager<ApplicationUser>")
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
+            }
+            return Result.Ok( await
                      IdentityExceptionHelper.Execute(() =>
                     _userManager.IsEmailConfirmedAsync(user),_logger));
           
         }
         public async Task<Result<string>> GenerateEmailConfirmationTokenAsync(string email)
         {
-           
-                if (string.IsNullOrEmpty(email)) 
-                return Result.Fail(new Error("Email is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(email, "email");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
 
             var user = await IdentityExceptionHelper.Execute(() => 
             _userManager.FindByEmailAsync(email),_logger);
             if (user == null)
             {
                 return Result.Fail(new Error($"Get User by Email({email}) failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
             }
 
                 var result = await IdentityExceptionHelper.Execute(() => 
@@ -283,42 +284,32 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 if (string.IsNullOrEmpty(result))
             {
                 return Result.Fail(new Error($"Generate Email Confirmation Token failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+                    .WithMetadata("ErrorCode", CommonErrors.OperationFailed));
             }
             
                 return Result.Ok(result);
            
         }
-
         public async Task<Result<string>> AddLoginAsync(string id, string email, string name, string externalAccessToken, string providerName)
         {
-            
-                if (string.IsNullOrEmpty(id)) 
-                return Result.Fail(new Error("id is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
 
-            if (string.IsNullOrEmpty(email))
-                return Result.Fail(new Error("email is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(id, "id");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
+            validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(email, "email");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
+            validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(name, "name");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
+            validationResult = ValidationHelper.ValidateNullModel(externalAccessToken, "externalAccessToken");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
+            validationResult = ValidationHelper.ValidateNullModel(providerName, "providerName");
 
-            if (string.IsNullOrEmpty(name))
-                return Result.Fail(new Error("name is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
-
-            if (string.IsNullOrEmpty(externalAccessToken))
-                return Result.Fail(new Error("externalAccessToken is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
-
-            if (string.IsNullOrEmpty(providerName))
-                return Result.Fail(new Error("providerName is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
 
             var user = await IdentityExceptionHelper.Execute(() => 
             _userManager.FindByEmailAsync(email),_logger);
 
                 if (user == null)
                 return Result.Fail(new Error($"Get User by Email({email}) failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
             var claims = new List<Claim>
                     {
                         new Claim(ClaimTypes.NameIdentifier, id),
@@ -343,46 +334,45 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 if (!result.Succeeded)
             {
                 return Result.Fail(new Error($"Add Login failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest)).IncludeIdentityErrors(result);
+                    .WithMetadata("ErrorCode", CommonErrors.OperationFailed)).IncludeIdentityErrors(result);
             }
                 return Result.Ok(email);
         }
         public async Task<Result<string>> SetTwoFactorAuthenticationAsync(string userId, bool enabled)
         {
-           
-                if (string.IsNullOrEmpty(userId))
-              return Result.Fail(new Error("userId is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId, "userId");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
+
             var user = await IdentityExceptionHelper.Execute(() => 
             _userManager.FindByIdAsync(userId),_logger);
 
                 if (user == null)
                 return Result.Fail(new Error($"Get User by Id({userId}) failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
 
             var result =await IdentityExceptionHelper.Execute(() => 
             _userManager.SetTwoFactorEnabledAsync(user, enabled),_logger);
                 if (!result.Succeeded)
                 {
                     return Result.Fail(new Error($"Set Two Factor Authentication failed by UserManager<ApplicationUser>")
-                        .WithMetadata("StatusCode", HttpStatusCode.BadRequest)).IncludeIdentityErrors(result);
+                        .WithMetadata("ErrorCode", CommonErrors.OperationFailed)).IncludeIdentityErrors(result);
             }
                 return Result.Ok(userId);
            
         }
         public async Task<Result<Dictionary<string, string>>> GetUserCalimsAsync(string userId)
         {
-           
-                if (string.IsNullOrEmpty(userId)) 
-                return Result.Fail(new Error("userId is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId, "userId");
+            if (validationResult.IsFailed) return validationResult.ToResult<Dictionary<string,string>>();
 
             var user = await IdentityExceptionHelper.Execute(() =>
             _userManager.FindByIdAsync (userId),_logger);
 
                 if(user ==null) 
                 return Result.Fail(new Error($"Get User by Id({userId}) failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
 
             var claims = await IdentityExceptionHelper.Execute(() => 
             _userManager.GetClaimsAsync(user),_logger);
