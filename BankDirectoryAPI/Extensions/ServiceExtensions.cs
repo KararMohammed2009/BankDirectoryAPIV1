@@ -26,11 +26,23 @@ using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorizati
 using BankDirectoryApi.Infrastructure.Identity;
 using System.IdentityModel.Tokens.Jwt;
 using BankDirectoryApi.API.Validators.Auth;
+using Serilog;
 
 namespace BankDirectoryApi.API.Extensions
 {
     public static class ServiceExtensions
     {
+        public static void AddTheSerilogLogger(this WebApplicationBuilder builder)
+        {
+                    Log.Logger = new LoggerConfiguration()
+            .ReadFrom.Configuration(builder.Configuration)
+            .Enrich.FromLogContext()
+            .WriteTo.Console()
+            .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+            .CreateLogger();
+
+                    builder.Host.UseSerilog();
+        }
         public static void AddTheVersioning(this WebApplicationBuilder builder)
         {
             builder.Services.AddApiVersioning(options =>

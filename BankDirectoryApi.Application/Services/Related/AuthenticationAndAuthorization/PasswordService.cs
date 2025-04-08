@@ -12,6 +12,9 @@ using System.Net;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization
 {
+    /// <summary>
+    /// Service to manage user passwords
+    /// </summary>
     public class PasswordService : IPasswordService
     {
         private readonly UserManager<ApplicationUser> _userManager;

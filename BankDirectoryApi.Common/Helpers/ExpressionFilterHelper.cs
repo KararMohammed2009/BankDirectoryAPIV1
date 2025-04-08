@@ -13,8 +13,17 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Common.Helpers
 {
+    /// <summary>
+    /// Helper class to create filter expressions for LINQ queries.
+    /// </summary>
     public static class ExpressionFilterHelper
     {
+        /// <summary>
+        /// Creates a filter expression for the given filter object.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="filterObject"></param>
+        /// <returns> The filter expression as a lambda expression.</returns>
         public static Expression<Func<T, bool>> CreateFilter<T>(object filterObject)
         {
             var parameter = Expression.Parameter(typeof(T), "x");
@@ -106,13 +115,7 @@ namespace BankDirectoryApi.Common.Helpers
             return Expression.Lambda<Func<T, bool>>(finalExpression, parameter);
         }
 
-        //public static Specification<T> CreateFilterUseSpecification<T>(object filterObject)
-        //{
-        //    var specification = new Specification<T>();
-        //    var filter = CreateFilter<T>(filterObject);
-        //    specification.Criteria = filter;
-        //    return specification;
-        //}
+        
 
     }
 }

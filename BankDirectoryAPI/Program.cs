@@ -30,6 +30,7 @@ builder.AddTheAuthorization();
 builder.AddTheValidators();
 builder.AddTheVersioning();
 builder.AddTheUserServices();
+builder.AddTheSerilogLogger();
 var app = builder.Build();
 
 app.UseTheSwagger();

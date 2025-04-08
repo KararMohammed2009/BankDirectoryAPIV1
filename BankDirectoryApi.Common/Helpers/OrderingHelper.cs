@@ -6,8 +6,17 @@ using System.Linq.Expressions;
 
 namespace BankDirectoryApi.Common.Helpers
 {
+    /// <summary>
+    /// Helper class for creating orderings based on provided information.
+    /// </summary>
     public static class OrderingHelper
     {
+        /// <summary>
+        /// Creates a list of orderings based on the provided ordering information.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="orderingInfo"></param>
+        /// <returns> A list of orderings.</returns>
         public static List<Ordering<T>> GetOrderings<T>(Dictionary<string, string> orderingInfo)
         {
             var orderings = new List<Ordering<T>>();

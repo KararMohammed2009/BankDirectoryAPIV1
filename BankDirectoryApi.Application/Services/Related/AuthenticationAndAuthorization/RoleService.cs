@@ -7,94 +7,127 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using BankDirectoryApi.Common.Extensions;
+using BankDirectoryApi.Common.Helpers;
+using BankDirectoryApi.Common.Errors;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization
 {
+    /// <summary>
+    /// Service to manage user roles
+    /// </summary>
     public class RoleService : IRoleService
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly ILogger<RoleService> _logger;
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="userManager"></param>
+        /// <param name="roleManager"></param>
+        /// <param name="logger"></param>
         public RoleService(UserManager<ApplicationUser> userManager,RoleManager<ApplicationRole> roleManager, ILogger<RoleService> logger)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _logger = logger;
         }
-
-        public async Task<Result<string>> AssignRoleAsync(string userId, string role)
+        /// <summary>
+        /// Assign a role to a user
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="roleName"></param>
+        /// <returns>The value of the user id</returns>
+        public async Task<Result<string>> AssignRoleAsync(string userId, string roleName)
         {
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Result.Fail(new Error("User Id is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
-            }
-            if (string.IsNullOrEmpty(role))
-            {
-                return Result.Fail(new Error("Role name is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
-            }
+            var validationResult =  ValidationHelper.ValidateNullOrWhiteSpaceString(userId,"userId");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
+            validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(roleName, "role");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
+
             var user = await IdentityExceptionHelper.Execute(() => _userManager.FindByIdAsync(userId), _logger);
             if (user == null)
             {
                 return Result.Fail(new Error($"User({userId}) not found by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
             }
-            var roleExists = await IdentityExceptionHelper.Execute(() => _roleManager.RoleExistsAsync(role), _logger);
+            var roleExists = await IdentityExceptionHelper.Execute(() => _roleManager.RoleExistsAsync(roleName), _logger);
             if (!roleExists)
             {
-                return Result.Fail(new Error($"Role({role}) not found by RoleManager<ApplicationRole>")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                return Result.Fail(new Error($"Role({roleName}) not found by RoleManager<ApplicationRole>")
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
             }
-            var result = await IdentityExceptionHelper.Execute(() => _userManager.AddToRoleAsync(user, role), _logger);
+            var result = await IdentityExceptionHelper.Execute(() => _userManager.AddToRoleAsync(user, roleName), _logger);
             if (!result.Succeeded)
             {
+                _logger.LogError($"Role assignment failed by UserManager<ApplicationUser> : userId ={userId} , roleName ={roleName}"
+                    ,result.Errors);
                 return Result.Fail(new Error($"Role assignment for user({userId}) failed by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest)).IncludeIdentityErrors(result);
+                    .WithMetadata("ErrorCode", CommonErrors.UnexpectedError)).IncludeIdentityErrors(result);
             }
             return Result.Ok(userId);
         }
-        public async Task<Result<string>> RemoveRoleAsync(string userId, string role)
+        /// <summary>
+        /// Remove a role from a user
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="roleName"></param>
+        /// <returns>The value of the user id</returns>
+        public async Task<Result<string>> RemoveRoleAsync(string userId, string roleName)
         {
 
-            if (string.IsNullOrEmpty(userId))
-                return Result.Fail(new Error("User Id is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
-            if (string.IsNullOrEmpty(role))
-                return Result.Fail(new Error("Role name is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId, "userId");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
+            validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(roleName, "role");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
+
             var user = await IdentityExceptionHelper.Execute(() => _userManager.FindByIdAsync(userId), _logger);
             if (user == null)
                 return Result.Fail(new Error($"User({userId}) not found by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
-            var roleExists = await IdentityExceptionHelper.Execute(() => _roleManager.RoleExistsAsync(role), _logger);
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
+            var roleExists = await IdentityExceptionHelper.Execute(() => _roleManager.RoleExistsAsync(roleName), _logger);
             if (!roleExists)
-                return Result.Fail(new Error($"Role({role}) not found by RoleManager<ApplicationRole>")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
-            var result = await IdentityExceptionHelper.Execute(() => _userManager.RemoveFromRoleAsync(user, role), _logger);
+                return Result.Fail(new Error($"Role({roleName}) not found by RoleManager<ApplicationRole>")
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
+            var result = await IdentityExceptionHelper.Execute(() => _userManager.RemoveFromRoleAsync(user, roleName), _logger);
             if (!result.Succeeded)
             {
+                _logger.LogError($"Role removal failed by UserManager<ApplicationUser> : userId ={userId} , roleName ={roleName}",
+                    result.Errors);
                 return Result.Fail(new Error($"Role removal for user({userId}) failed by UserManager<ApplicationUser>")
-                      .WithMetadata("StatusCode", HttpStatusCode.BadRequest)).IncludeIdentityErrors(result);
+                      .WithMetadata("ErrorCode", CommonErrors.UnexpectedError)).IncludeIdentityErrors(result);
             }
             return Result.Ok(userId);
 
         }
+        /// <summary>
+        /// Get all roles of a user
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns>The value of the user roles</returns>
         public async Task<Result<List<string>>> GetRolesAsync(string userId)
         {
 
-            if (string.IsNullOrEmpty(userId))
-                return Result.Fail
-                    (new Error("User Id is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+           var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId, "userId");
+            if (validationResult.IsFailed) return validationResult.ToResult<List<string>>();
 
             var user = await IdentityExceptionHelper.Execute(() => _userManager.FindByIdAsync(userId), _logger);
             if (user == null)
                 return Result.Fail
                      (new Error($"User({userId}) not found by UserManager<ApplicationUser>")
-                     .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                     .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
             var roles = await IdentityExceptionHelper.Execute(() => _userManager.GetRolesAsync(user), _logger);
             if (roles == null)
                 return Result.Fail
                     (new Error($"Roles not found for user({userId}) by UserManager<ApplicationUser>")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
             return Result.Ok(roles.ToList());
         }
+        /// <summary>
+        /// Get all roles
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The value of all roles</returns>
         public async Task<Result<List<string>>> GetAllRolesAsync( CancellationToken cancellationToken)
         {
 
@@ -103,53 +136,85 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             if (roles == null)
                 return Result.Fail
                        (new Error("Roles not found by RoleManager<ApplicationRole>")
-                       .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                       .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
             return Result.Ok(roles);
 
         }
-        public async Task<Result<bool>> RoleExistsAsync(string role)
+        /// <summary>
+        /// Check if a role exists
+        /// </summary>
+        /// <param name="roleName"></param>
+        /// <returns>True if the role exists, false otherwise</returns>
+        public async Task<Result<bool>> RoleExistsAsync(string roleName)
         {
 
-            if (string.IsNullOrEmpty(role))
-                return Result.Fail
-                        (new Error("Role name is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
-            var exists = await IdentityExceptionHelper.Execute(() => _roleManager.RoleExistsAsync(role), _logger);
+           var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(roleName, "role");
+            if (validationResult.IsFailed) return validationResult.ToResult<bool>();
+
+            var exists = await IdentityExceptionHelper.Execute(() => _roleManager.RoleExistsAsync(roleName), _logger);
             return Result.Ok(exists);
 
         }
-        public async Task<Result<string>> CreateRoleAsync(string role)
+        /// <summary>
+        /// Create a new role
+        /// </summary>
+        /// <param name="roleName"></param>
+        /// <returns>The value of the role id</returns>
+        public async Task<Result<string>> CreateRoleAsync(string roleName)
         {
 
-            if (string.IsNullOrEmpty(role))
+
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(roleName, "role");
+            if (validationResult.IsFailed)
+                return validationResult.ToResult<string>();
+
+            var roleExists = await IdentityExceptionHelper.Execute(() => _roleManager.RoleExistsAsync(roleName), _logger);
+            if (roleExists)
                 return Result.Fail
-                    (new Error("Role name is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
-            var result = await IdentityExceptionHelper.Execute(() => _roleManager.CreateAsync(new ApplicationRole(role)), _logger);
+                    (new Error($"Role({roleName}) already exists by RoleManager<ApplicationRole>")
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceAlreadyExists));
+            var roleEntity = new ApplicationRole(roleName);
+            var result = await IdentityExceptionHelper.Execute(() =>
+            _roleManager.CreateAsync(roleEntity), _logger);
             if (!result.Succeeded)
+            {
+                _logger.LogError($"Role creation failed by RoleManager<ApplicationRole> : roleName ={roleName}"
+                    , result.Errors);
                 return Result.Fail
                     (new Error($"Role creation failed by RoleManager<ApplicationRole>")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest)).IncludeIdentityErrors(result);
-            return Result.Ok(role);
+                    .WithMetadata("ErrorCode", CommonErrors.UnexpectedError)).IncludeIdentityErrors(result);
+            }
+            return Result.Ok(roleEntity.Id);
 
         }
-        public async Task<Result<string>> DeleteRoleAsync(string role)
+        /// <summary>
+        /// Delete a role
+        /// </summary>
+        /// <param name="roleName"></param>
+        /// <returns>The value of the role id</returns>
+        public async Task<Result<string>> DeleteRoleAsync(string roleName)
         {
 
-            if (string.IsNullOrEmpty(role))
-                return Result.Fail
-                     (new Error("Role name is required").WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+         var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(roleName, "role");
+            if (validationResult.IsFailed)
+                return validationResult.ToResult<string>();
 
-            var roleEntity = await IdentityExceptionHelper.Execute(() => _roleManager.FindByNameAsync(role), _logger);
+            var roleEntity = await IdentityExceptionHelper.Execute(() => _roleManager.FindByNameAsync(roleName), _logger);
             if (roleEntity == null)
                 return Result.Fail
-                    (new Error($"Role({role}) not found by RoleManager<ApplicationRole>")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                    (new Error($"Role({roleName}) not found by RoleManager<ApplicationRole>")
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
 
             var result = await IdentityExceptionHelper.Execute(() => _roleManager.DeleteAsync(roleEntity), _logger);
             if (!result.Succeeded)
+            {
+                _logger.LogError($"Role deletion failed by RoleManager<ApplicationRole> : roleName ={roleName}"
+                    , result.Errors);
                 return Result.Fail
                     (new Error($"Role deletion failed by RoleManager<ApplicationRole>")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest)).IncludeIdentityErrors(result);
-            return Result.Ok(role);
+                    .WithMetadata("ErrorCode", CommonErrors.UnexpectedError)).IncludeIdentityErrors(result);
+            }
+            return Result.Ok(roleEntity.Id);
 
 
 

@@ -8,39 +8,61 @@ using BankDirectoryApi.Common.Services;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers;
 using FluentResults;
 using BankDirectoryApi.Common.Errors;
+using Microsoft.Extensions.Logging;
+using BankDirectoryApi.Application.DTOs.Related.UserManagement;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt
 {
+    /// <summary>
+    /// Service to generate JWT tokens
+    /// </summary>
     public class JwtTokenGeneratorService : ITokenGeneratorService
     {
         private readonly IConfiguration _configuration;
         private readonly IDateTimeProvider _dateTimeProvider;
         private readonly IGuidProvider _guidProvider;
+        private readonly ILogger _logger;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <param name="dateTimeProvider"></param>
+        /// <param name="guidProvider"></param>
+        /// <param name="logger"></param>
         public JwtTokenGeneratorService(
             IConfiguration configuration
             ,IDateTimeProvider dateTimeProvider,
-            IGuidProvider guidProvider)
+            IGuidProvider guidProvider,
+            ILogger logger)
         {
             
             _configuration = configuration;
             _dateTimeProvider = dateTimeProvider;
             _guidProvider = guidProvider;
+            _logger = logger;
         }
 
-        public Result<string> GenerateAccessToken(string userId
-            , string userName, string email, IEnumerable<string>? roles,
-            Dictionary<string, string>? userClaims)
+        /// <summary>
+        /// Generate JWT Access Token
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="userName"></param>
+        /// <param name="email"></param>
+        /// <param name="roles"></param>
+        /// <param name="userClaims"></param>
+        /// <returns>The value of generated JWT Access Token</returns>
+        public Result<string> GenerateAccessToken(string userId, string userName, string email, IEnumerable<string>? roles, Dictionary<string, string>? userClaims)
+       
         {
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId, "userId");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
+            validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userName, "userName");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
+            validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(email, "email");
+            if (validationResult.IsFailed) return validationResult.ToResult<string>();
 
-            if (userId == null) return Result.Fail(new Error("userId is null")
-                .WithMetadata("StatusCode", CommonErrors.MissingRequiredField));
-            if (userName == null) return
-                    Result.Fail(new Error("userName is null")
-                    .WithMetadata("StatusCode", CommonErrors.MissingRequiredField));
-            if (email == null)
-                return Result.Fail(new Error("email is null")
-                    .WithMetadata("StatusCode", CommonErrors.MissingRequiredField));
+
 
             var claims = new List<Claim>
             {
@@ -67,10 +89,10 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                 }
             }
 
-            var jwtSecret = JwtHelper.GetJwtSecretKey(_configuration).Value;
-            var jwtIssuer = JwtHelper.GetJwtIssuer(_configuration).Value;
-            var jwtAudience = JwtHelper.GetJwtAudience(_configuration).Value;
-            var jwtExpirationHours = JwtHelper.GetJwtExpirationHours(_configuration).Value;
+            var jwtSecret = JwtHelper.GetJwtSecretKey(_configuration,_logger).Value;
+            var jwtIssuer = JwtHelper.GetJwtIssuer(_configuration,_logger).Value;
+            var jwtAudience = JwtHelper.GetJwtAudience(_configuration, _logger).Value;
+            var jwtExpirationHours = JwtHelper.GetJwtExpirationHours(_configuration, _logger).Value;
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -85,9 +107,6 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             );
 
             var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
-            if (string.IsNullOrEmpty(jwtToken))
-                return Result.Fail(new Error("Generate JWT Access Token Failed")
-                    .WithMetadata("StatusCode", CommonErrors.UnexpectedError));
             return Result.Ok(jwtToken);
         }
 
