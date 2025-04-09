@@ -50,6 +50,7 @@ namespace BankDirectoryApi.Common.Errors
         UnexpectedError = 5005,
         OperationFailed = 5006,
 
+
         //Concurrency Errors
         ConcurrencyFailure = 6000,
         LockAcquisitionFailure = 6001,
