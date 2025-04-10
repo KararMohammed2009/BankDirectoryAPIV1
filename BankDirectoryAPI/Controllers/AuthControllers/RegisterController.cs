@@ -28,7 +28,7 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
         {
             var _clientInfo = ClientInfoHelper.GetClientInfo(HttpContext);
             var result = await _authenticationService.RegisterAsync(model, _clientInfo);
-            return Ok(new ApiResponse<AuthDTO>(result, null, (int)(HttpStatusCode.OK)));
+            return Ok(new ApiResponse<AuthDTO>(result.Value, null, (int)(HttpStatusCode.OK)));
         }
 
     }

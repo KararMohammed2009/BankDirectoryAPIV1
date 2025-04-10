@@ -1,116 +1,176 @@
 ﻿using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.Application.DTOs.Related.UserManagement;
-using BankDirectoryApi.Application.Exceptions;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.ExternalAuthProviders;
+using BankDirectoryApi.Common.Errors;
+using BankDirectoryApi.Common.Helpers;
+using BankDirectoryApi.Infrastructure;
+using FluentResults;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.ExternalAuthProviders
 {
+    /// <summary>
+    /// Service for managing Google external authentication.
+    /// </summary>
     public class GoogleAuthProviderService :  IExternalAuthProviderService
     {
 
         private readonly IConfiguration _configuration;
         private readonly HttpClient _httpClient;
+        private readonly ILogger<GoogleAuthProviderService> _logger;
+        /// <summary>
+        /// Constructor for GoogleAuthProviderService.
+        /// </summary>
+        /// <param name="httpClient"></param>
+        /// <param name="configuration"></param>
+        /// <param name="logger"></param>
         public GoogleAuthProviderService(
             
-            HttpClient httpClient,IConfiguration configuration)
+            HttpClient httpClient,IConfiguration configuration,
+            ILogger<GoogleAuthProviderService> logger
+            )
         {
             _configuration = configuration;
             _httpClient = httpClient;
+            _logger = logger;
         }
-   
-        public async Task<(UserDTO userDTO , string externalAccessToken)> 
+
+        /// <summary>
+        /// Manages the external login process for Google authentication.
+        /// </summary>
+        /// <param name="code"></param>
+        /// <param name="clientInfo"></param>
+        /// <returns> A tuple containing the user information and the external access token.</returns>
+        public async Task<Result<(UserDTO userDTO , string externalAccessToken)>>
             ManageExternalLogin(string code,ClientInfo clientInfo)
         {
-            try
-            {
-                var accessTokenResult = await GetAccessToken(code);
-                var userResult = await GetUser(accessTokenResult);
-                return  (new UserDTO
+           var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(code);
+            if (validationResult.IsFailed)
+            
+                return validationResult.ToResult<(UserDTO userDTO, string externalAccessToken)>();
+
+            var accessTokenResult = await GetAccessToken(code);
+
+            var userResult = await GetUser(accessTokenResult.Value);
+            
+            return  Result.Ok((new UserDTO
                 {
-                  UserName=userResult.Email,
-                  Email=userResult.Email,
-                  Id = userResult.Sub
-                },accessTokenResult);
-            }catch (Exception ex)
-            {
-                throw new GoogleAuthProviderServiceException("Manage External Login failed", ex);
-            }
+                  UserName=userResult.Value.Email,
+                  Email=userResult.Value.Email,
+                  Id = userResult.Value.Sub
+                },accessTokenResult.Value));
+           
            
 
         }
 
 
-
-        private async Task<string> 
+        /// <summary>
+        /// Retrieves the access token from Google using the provided authorization code.
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns> The access token.</returns>
+        private async Task<Result<string> >
             GetAccessToken(string code)
         {
-            try
-            {
+            
                 var tokenEndpoint = _configuration["Authentication:Google:AccessTokenUrl"];
+                if (string.IsNullOrEmpty(tokenEndpoint))
+                {
+                    _logger.LogError("Google token endpoint is not configured: _configuration[\"Authentication:Google:AccessTokenUrl\"]");
+                    return Result.Fail<string>(new Error("Google token endpoint is not configured")
+                        .WithMetadata("ErrorCode",CommonErrors.ConfigurationError));
+                }
+                var client_id = _configuration["Authentication:Google:ClientId"];
+                var client_secret = _configuration["Authentication:Google:ClientSecret"];
+                var redirect_uri = _configuration["Authentication:Google:RedirectUri"];
+                if (string.IsNullOrEmpty(client_id) || string.IsNullOrEmpty(client_secret) || string.IsNullOrEmpty(redirect_uri))
+                {
+                    _logger.LogError("Google client_id, client_secret or redirect_uri is not configured : _configuration[\"Authentication:Google:ClientId\"],_configuration[\"Authentication:Google:ClientSecret\"],_configuration[\"Authentication:Google:RedirectUri\"].");
+                    return Result.Fail<string>(new Error("Google client_id, client_secret or redirect_uri is not configured")
+                        .WithMetadata("ErrorCode", CommonErrors.ConfigurationError));
+                }
                 var content = new FormUrlEncodedContent(new[]
                 {
                     new KeyValuePair<string, string>("code", code),
-                    new KeyValuePair<string, string>("client_id", _configuration["Authentication:Google:ClientId"]),
-                    new KeyValuePair<string, string>("client_secret", _configuration["Authentication:Google:ClientSecret"]),
-                    new KeyValuePair<string, string>("redirect_uri", _configuration["Authentication:Google:RedirectUri"]),
+                    new KeyValuePair<string, string>("client_id", client_id),
+                    new KeyValuePair<string, string>("client_secret",client_secret),
+                    new KeyValuePair<string, string>("redirect_uri", redirect_uri),
                     new KeyValuePair<string, string>("grant_type", "authorization_code")
                 });
 
-                var response = await _httpClient.PostAsync(tokenEndpoint, content);
+                HttpResponseMessage response;
+                
+                response = await ExternalServiceExceptionHelper.Execute(()=>
+                    _httpClient.PostAsync(tokenEndpoint, content),_logger);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    throw new Exception(errorContent);
+                    return Result.Fail<string>(new Error(errorContent)
+                        .WithMetadata("ErrorCode", CommonErrors.ExternalServiceError));
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
-                if(json == null) throw new Exception("access token response retrieved from external service is null");
+                if(json == null) 
+                    return Result.Fail<string>(new Error("Access token not found in response.")
+                        .WithMetadata("ErrorCode", CommonErrors.ExternalServiceError));
                 var tokenData = System.Text.Json.JsonSerializer.Deserialize<GoogleAccessTokenResponseDTO>(json);
 
                 if (tokenData == null || tokenData.AccessToken == null)
                 {
-                    throw new Exception( "Access token not found in response.");
+                    return Result.Fail<string>(new Error("Access token not found in response.")
+                        .WithMetadata("ErrorCode", CommonErrors.ExternalServiceError));
                 }
 
-                return tokenData.AccessToken;
-            }
-            catch (Exception ex) {
-                throw new GoogleAuthProviderServiceException("Get AccessToken Failed", ex);
-            }
+                return Result.Ok(tokenData.AccessToken);
+           
 
         }
-        private async Task< GoogleUserResponseDTO >
+        /// <summary>
+        /// Retrieves the user information from Google using the provided access token.
+        /// </summary>
+        /// <param name="accessToken"></param>
+        /// <returns> The user information.</returns>
+        private async Task< Result<GoogleUserResponseDTO >>
             GetUser(string accessToken)
         {
-            try
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(accessToken);
+            if (validationResult.IsFailed)
+                return validationResult.ToResult<GoogleUserResponseDTO>();
+
+            var tokenEndpoint = _configuration["Authentication:Google:UserInfoUrl"];
+            if (string.IsNullOrEmpty(tokenEndpoint))
             {
-                var tokenEndpoint = _configuration["Authentication:Google:UserInfoUrl"];
-                var client = new HttpClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                var response = await client.GetAsync(tokenEndpoint);
+                _logger.LogError("Google token endpoint is not configured: _configuration[\"Authentication:Google:UserInfoUrl\"]");
+                return Result.Fail<GoogleUserResponseDTO>(new Error("Google token endpoint is not configured")
+                    .WithMetadata("ErrorCode", CommonErrors.ConfigurationError));
+            }
+
+            var client = new HttpClient();
+                client.DefaultRequestHeaders.Authorization = 
+                new AuthenticationHeaderValue("Bearer", accessToken);
+                var response = await ExternalServiceExceptionHelper.Execute(() =>
+                    client.GetAsync(tokenEndpoint), _logger);
+            
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    throw new Exception(errorContent);
-                }
+                    return Result.Fail<GoogleUserResponseDTO>(new Error(errorContent)
+                        .WithMetadata("ErrorCode", CommonErrors.ExternalServiceError));
+            }
                 var UserData = await response.Content.ReadAsStringAsync();
-                if (string.IsNullOrEmpty(UserData))
-                {
-                    throw new Exception("user data retrieved from external service is null");
-                }
-                var userDto = System.Text.Json.JsonSerializer.Deserialize<GoogleUserResponseDTO>(UserData);
+                if (string.IsNullOrWhiteSpace(UserData))
+                return Result.Fail<GoogleUserResponseDTO>(new Error("User data not found in response.")
+                    .WithMetadata("ErrorCode", CommonErrors.ExternalServiceError));
+            var userDto = System.Text.Json.JsonSerializer.Deserialize<GoogleUserResponseDTO>(UserData);
                 if (userDto == null)
-                {
-                    throw new Exception("Unable to deserialize user data retrieved from external service");
-                }
-                return userDto;
-            }
-            catch (Exception ex) {
-            throw new GoogleAuthProviderServiceException($"Get User is Failed", ex);
-            }
+                return Result.Fail<GoogleUserResponseDTO>(new Error("User data not found in response.")
+                    .WithMetadata("ErrorCode", CommonErrors.ExternalServiceError));
+            return Result.Ok(userDto);
+            
 
         }
     }

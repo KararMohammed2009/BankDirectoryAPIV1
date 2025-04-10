@@ -29,6 +29,7 @@ namespace BankDirectoryApi.Common.Errors
         FileNotFound = 2005,
         ExternalServiceUnavailable = 2006,
         ExternalServiceTimeout = 2007,
+        ExternalServiceError = 2008,
 
         // Authorization & Authentication Errors (Security Layer)
         UnauthorizedAccess = 3000,

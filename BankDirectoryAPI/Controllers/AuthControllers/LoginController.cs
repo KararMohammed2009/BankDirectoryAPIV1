@@ -28,7 +28,7 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
         {
             var _clientInfo = ClientInfoHelper.GetClientInfo(HttpContext);
             var result = await _authenticationService.LoginAsync(model, _clientInfo);
-                return Ok(new ApiResponse<AuthDTO>(result, null, (int)HttpStatusCode.OK));
+                return Ok(new ApiResponse<AuthDTO>(result.Value, null, (int)HttpStatusCode.OK));
         }
         [Authorize]
         [HttpPost("Logout")]
@@ -37,7 +37,7 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
             var _userId = UserHelper.GetUserId(HttpContext);
             var _clientInfo = ClientInfoHelper.GetClientInfo(HttpContext);
             var result = await _authenticationService.LogoutAsync(_userId,model.SessionId, _clientInfo);
-            return Ok(new ApiResponse<bool>(result, null, (int)HttpStatusCode.OK));
+            return Ok(new ApiResponse<bool>(true, null, (int)HttpStatusCode.OK));
         }
 
     }

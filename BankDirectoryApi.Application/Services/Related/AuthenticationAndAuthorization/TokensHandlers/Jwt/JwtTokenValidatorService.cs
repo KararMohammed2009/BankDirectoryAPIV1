@@ -23,7 +23,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
 
         private readonly IConfiguration _configuration;
         private readonly JwtSecurityTokenHandler _jwtSecurityTokenHandler;
-        private readonly ILogger _logger;
+        private readonly ILogger<JwtTokenValidatorService> _logger;
 
         /// <summary>
         /// Constructor
@@ -33,7 +33,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         /// <param name="logger"></param>
         public JwtTokenValidatorService(
             IConfiguration configuration, JwtSecurityTokenHandler jwtSecurityTokenHandler
-            ,ILogger logger)
+            ,ILogger<JwtTokenValidatorService> logger)
         {
             _configuration = configuration;
             _jwtSecurityTokenHandler = jwtSecurityTokenHandler;

@@ -73,9 +73,9 @@ namespace BankDirectoryApi.Application.Services.Main
         public async Task DeleteBankAsync(int id)
         {
             var bank = await _bankRepository.GetByIdAsync(id);
-            if (bank != null)
+            if (bank.IsSuccess)
             {
-                _bankRepository.Delete(bank);
+                _bankRepository.Delete(bank.Value);
                 await _bankRepository.SaveChangesAsync();
             }
         }

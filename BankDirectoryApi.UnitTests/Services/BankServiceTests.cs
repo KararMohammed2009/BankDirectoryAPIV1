@@ -10,6 +10,7 @@ using BankDirectoryApi.Domain.Entities;
 using FluentAssertions;
 using BankDirectoryApi.Application.DTOs.Core;
 using BankDirectoryApi.Application.Services.Main;
+using FluentResults;
 namespace BankDirectoryApi.UnitTests.Services
 {
     public class BankServiceTests
@@ -47,7 +48,7 @@ namespace BankDirectoryApi.UnitTests.Services
         {
             // Arrange
             var cancellationToken = CancellationToken.None;
-            IEnumerable<Bank> banks = new List<Bank> { new Bank { Id = 1, Name = "Test Bank 1" },
+            Result<IEnumerable<Bank>> banks = new List<Bank> { new Bank { Id = 1, Name = "Test Bank 1" },
             new Bank { Id = 2, Name = "Test Bank 2" }};
             IEnumerable<BankDTO> banksDtos = new List<BankDTO> {
                 new BankDTO { Id = 1, Name = "Test Bank 1" }, new BankDTO { Id = 2, Name = "Test Bank 2" } };

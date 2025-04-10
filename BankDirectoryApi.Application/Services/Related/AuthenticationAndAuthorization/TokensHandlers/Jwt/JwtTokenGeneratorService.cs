@@ -21,7 +21,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         private readonly IConfiguration _configuration;
         private readonly IDateTimeProvider _dateTimeProvider;
         private readonly IGuidProvider _guidProvider;
-        private readonly ILogger _logger;
+        private readonly ILogger<JwtTokenGeneratorService> _logger;
 
         /// <summary>
         /// Constructor
@@ -34,7 +34,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             IConfiguration configuration
             ,IDateTimeProvider dateTimeProvider,
             IGuidProvider guidProvider,
-            ILogger logger)
+            ILogger<JwtTokenGeneratorService> logger)
         {
             
             _configuration = configuration;
@@ -107,6 +107,12 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             );
 
             var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
+            if (string.IsNullOrWhiteSpace(jwtToken))
+            {
+                _logger.LogCritical("Error generating JWT token");
+                return Result.Fail(new Error("Error generating JWT token")
+                    .WithMetadata("ErrorCode", CommonErrors.InternalServerError));
+            }
             return Result.Ok(jwtToken);
         }
 

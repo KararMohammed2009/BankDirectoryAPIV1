@@ -133,6 +133,7 @@ namespace BankDirectoryApi.API.Extensions
             // Register External Authentication Providers
             builder.Services.AddScoped<HttpClient>();
             builder.Services.AddScoped<IExternalAuthProviderService, GoogleAuthProviderService>();
+            builder.Services.AddScoped<IExternalAuthProviderServiceFactory, ExternalAuthProviderFactory>();
             builder.Services.AddScoped<GoogleAuthProviderService>();
 
 

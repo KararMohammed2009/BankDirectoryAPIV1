@@ -1,11 +1,7 @@
 ﻿
 using BankDirectoryApi.API.Helpers;
 using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization;
-using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.ExternalAuthProviders;
-using BankDirectoryApi.Application.Services.Related.UserManagement;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Routing;
 
 namespace BankDirectoryApi.API.Controllers.AuthControllers.ExternalAuthProviders
 {

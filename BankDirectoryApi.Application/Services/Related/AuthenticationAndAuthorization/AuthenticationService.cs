@@ -1,19 +1,21 @@
 ﻿using AutoMapper;
 using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.Application.DTOs.Related.UserManagement;
-using BankDirectoryApi.Application.Exceptions;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.ExternalAuthProviders;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers;
 using BankDirectoryApi.Application.Interfaces.Related.UserManagement;
-using BankDirectoryApi.Common.Exceptions;
+using BankDirectoryApi.Common.Helpers;
 using FluentResults;
+using Microsoft.Extensions.Logging;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization
 {
+    /// <summary>
+    /// Service for handling authentication and authorization
+    /// </summary>
     public class AuthenticationService:IAuthenticationService
     {
-        private readonly IExternalAuthProviderService _externalAuthProvider;
         private readonly IMapper _mapper;
         private readonly IRefreshTokenService _refreshTokenService;
         private readonly ITokenGeneratorService _tokenGenerator;
@@ -21,183 +23,282 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         private readonly IUserService _userService;
         private readonly IPasswordService _passwordService;
         private readonly IRoleService _roleService;
+        private readonly ILogger<AuthenticationService> _logger;
+        private readonly IExternalAuthProviderServiceFactory _externalAuthProviderServiceFactory;
 
+        /// <summary>
+        /// Constructor for AuthenticationService
+        /// </summary>
+        /// <param name="refreshTokenService"></param>
+        /// <param name="mapper"></param>
+        /// <param name="externalAuthProvider"></param>
+        /// <param name="tokenGenerator"></param>
+        /// <param name="tokenValidator"></param>
+        /// <param name="userService"></param>
+        /// <param name="passwordService"></param>
+        /// <param name="roleService"></param>
+        /// <param name="logger"></param>
         public AuthenticationService(
             IRefreshTokenService refreshTokenService,
-            IMapper mapper, IExternalAuthProviderService externalAuthProvider
+            IMapper mapper
             ,ITokenGeneratorService tokenGenerator,
             ITokenValidatorService tokenValidator,
             IUserService userService,
             IPasswordService passwordService,
-            IRoleService roleService
+            IRoleService roleService,
+            ILogger<AuthenticationService> logger,
+            IExternalAuthProviderServiceFactory externalAuthProviderServiceFactory
             )
              
         {
             _mapper = mapper;
             _refreshTokenService = refreshTokenService;
-            _externalAuthProvider = externalAuthProvider;
             _tokenGenerator = tokenGenerator;
             _tokenValidator = tokenValidator;
             _userService = userService;
             _passwordService = passwordService;
             _roleService = roleService;
+            _logger = logger;
+            _externalAuthProviderServiceFactory = externalAuthProviderServiceFactory;
+
 
         }
-   
+        /// <summary>
+        /// Registers a new user in the system.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="clientInfo"></param>
+        /// <returns>The result of the registration process, including authentication tokens.</returns>
         public async Task<Result<AuthDTO>> RegisterAsync(RegisterUserDTO model, ClientInfo clientInfo)
         {
             
+            var validationResult = ValidationHelper.ValidateNullModel(model);
+            if (validationResult.IsFailed)
+                return validationResult.ToResult<AuthDTO>();
 
-                if (model == null) 
-                return Result.Fail(new Error("Model is null").e("Status"));
             var user = await _userService.CreateUserAsync(model);
-                var userClaims = await _userService.GetUserCalimsAsync(user.Id);
-                var accessToken = await 
-                    _tokenGenerator.GenerateAccessTokenAsync(user.Id,
-                    user.UserName,user.Email,user.Roles, userClaims);
+           if(user.IsFailed)
+                return user.ToResult<AuthDTO>();
 
-                var refreshTokenResult = await _refreshTokenService.GenerateRefreshTokenEntityAsync(user.Id, clientInfo);
+            var userClaims = await _userService.GetUserCalimsAsync(user.Value.Id);
+            if (userClaims.IsFailed)
+                return userClaims.ToResult<AuthDTO>();
 
-               await _refreshTokenService.StoreRefreshTokenAsync(refreshTokenResult.refreshTokenEntity);
+            var accessToken =  
+                    _tokenGenerator.GenerateAccessToken(user.Value.Id,
+                    user.Value.UserName,user.Value.Email,user.Value.Roles, userClaims.Value);
+            if (accessToken.IsFailed)
+                return accessToken.ToResult<AuthDTO>();
+
+            var refreshTokenResult =  _refreshTokenService.GenerateRefreshTokenEntity(user.Value.Id, clientInfo);
+            if (refreshTokenResult.IsFailed)
+                return refreshTokenResult.ToResult<AuthDTO>();
+
+            await _refreshTokenService.StoreRefreshTokenAsync(refreshTokenResult.Value.refreshTokenEntity);
               
                 return  new AuthDTO
                 {
-                    AccessToken = accessToken,
-                    RefreshToken = refreshTokenResult.refreshToken,
+                    AccessToken = accessToken.Value,
+                    RefreshToken = refreshTokenResult.Value.refreshToken,
                 };
            
         }
-
-        public async Task<AuthDTO> LoginAsync(LoginUserDTO model, ClientInfo clientInfo)
+        /// <summary>
+        /// Logs in a user using an external authentication provider.
+        /// </summary>
+        /// <param name="code"></param>
+        /// <param name="providerName"></param>
+        /// <param name="clientInfo"></param>
+        /// <returns>The result of the external login process, including authentication tokens.</returns>
+        public async Task<Result<AuthDTO>> LoginAsync(LoginUserDTO model, ClientInfo clientInfo)
         {
-            try
-            {
-              
-                var result = await _passwordService.CheckPasswordSignInAsync(model, model.Password, false);
+         
+              var validationResult = ValidationHelper.ValidateNullModel(model);
+            if (validationResult.IsFailed)
+                return validationResult.ToResult<AuthDTO>();
 
-                if (!result)
-                    throw new Exception("Invalid credentials");
+            var checkPasswordResult = await _passwordService.CheckPasswordSignInAsync(model, model.Password, false);
 
-                var roles = await _roleService.GetRolesAsync(model.UserId);
-                var claims = await _userService.GetUserCalimsAsync(model.UserId);
-                var accessToken = await _tokenGenerator.GenerateAccessTokenAsync
-                    (model.UserId,model.UserName,model.Email,roles,claims);
+            if (checkPasswordResult.IsFailed)
+                return checkPasswordResult.ToResult<AuthDTO>();
+            model.UserId = checkPasswordResult.Value;
+            var roles = await _roleService.GetRolesAsync(model.UserId);
+            var claims = await _userService.GetUserCalimsAsync(model.UserId);
 
-                var refreshTokenResult = await
-                    _refreshTokenService.GenerateRefreshTokenEntityAsync(model.UserId, clientInfo);
+                var accessToken =  _tokenGenerator.GenerateAccessToken
+                    (model.UserId,model.UserName,model.Email,roles.Value,claims.Value);
+                if (accessToken.IsFailed)
+                return accessToken.ToResult<AuthDTO>();
+            var refreshTokenResult = 
+                    _refreshTokenService.GenerateRefreshTokenEntity(model.UserId, clientInfo);
+            if (refreshTokenResult.IsFailed)
+                return refreshTokenResult.ToResult<AuthDTO>();
 
-                await _refreshTokenService.StoreRefreshTokenAsync(refreshTokenResult.refreshTokenEntity);
-                return new AuthDTO
+            var storeResult = await _refreshTokenService.StoreRefreshTokenAsync(refreshTokenResult.Value.refreshTokenEntity);
+            if (storeResult.IsFailed)
+                return storeResult.ToResult<AuthDTO>();
+            return new AuthDTO
                 {
-                    AccessToken = accessToken,
-                    RefreshToken = refreshTokenResult.refreshToken,
+                    AccessToken = accessToken.Value,
+                    RefreshToken = refreshTokenResult.Value.refreshToken,
                 };
-            }
-            catch (Exception ex)
-            {
-                throw new AuthenticationServiceException("Login failed", ex);
-            }
+          
         }
-        public async Task<AuthDTO> GenerateAccessTokenFromRefreshTokenAsync(string userId,
+        /// <summary>
+        /// Generates a new access token using a refresh token.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="refreshToken"></param>
+        /// <param name="clientInfo"></param>
+        /// <returns>The result of the token generation process, including the new access token and refresh token.</returns>
+
+        public async Task <Result<AuthDTO>> GenerateAccessTokenFromRefreshTokenAsync(string userId,
             string refreshToken, ClientInfo clientInfo)
         {
-            try
-            {
-                if (string.IsNullOrEmpty(userId)) throw new Exception("User id is required");
-                if (string.IsNullOrEmpty(refreshToken)) throw new Exception("Refresh token is required");
+           var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId);
+            if (validationResult.IsFailed)
+                return validationResult.ToResult<AuthDTO>();
+            validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(refreshToken);
+            if (validationResult.IsFailed)
+                return validationResult.ToResult<AuthDTO>();
 
-                var user = await _userService.GetUserByIdAsync(userId);
 
-                var refreshTokenEntity = await _refreshTokenService.GenerateRefreshTokenEntityAsync(user.Id, clientInfo);
-                var claims = await _userService.GetUserCalimsAsync(userId);
-                var accessToken = await _tokenGenerator.GenerateAccessTokenAsync(
-                    user.Id,user.UserName,user.Email,user.Roles,claims);
+            var user = await _userService.GetUserByIdAsync(userId);
+            if (user.IsFailed)
+                return user.ToResult<AuthDTO>();
 
-                await _refreshTokenService.RotateRefreshTokenAsync(
-                    refreshToken, refreshTokenEntity.refreshTokenEntity);
+            var refreshTokenEntity =  _refreshTokenService.GenerateRefreshTokenEntity(userId, clientInfo);
+            if (refreshTokenEntity.IsFailed)
+                return refreshTokenEntity.ToResult<AuthDTO>();
 
-                return new AuthDTO
+            var claims = await _userService.GetUserCalimsAsync(userId);
+                var accessToken =  _tokenGenerator.GenerateAccessToken(
+                    userId,user.Value.UserName,user.Value.Email,user.Value.Roles,claims.Value);
+
+            if (accessToken.IsFailed)
+                return accessToken.ToResult<AuthDTO>();
+           var rotateResult =  await _refreshTokenService.RotateRefreshTokenAsync(
+                    refreshToken, refreshTokenEntity.Value.refreshTokenEntity);
+            if (rotateResult.IsFailed)
+                return rotateResult.ToResult<AuthDTO>();
+            return new AuthDTO
                 {
-                    AccessToken = accessToken,
-                    RefreshToken = refreshTokenEntity.refreshToken,
+                    AccessToken = accessToken.Value,
+                    RefreshToken = refreshTokenEntity.Value.refreshToken,
                 };
-            }
-            catch (Exception ex)
-            {
-                throw new AuthenticationServiceException("Generate access token from refresh token failed", ex);
-            }
+          
         }
-        public async Task<bool> LogoutAsync(
+        /// <summary>
+        /// Logs out a user from the system.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="sessionId"></param>
+        /// <param name="clientInfo"></param>
+        /// <returns>The value of userId.</returns>
+        public async Task<Result<string>> LogoutAsync(
             string userId, string sessionId, ClientInfo clientInfo)
         {
-            try
-            {
-                if (string.IsNullOrEmpty(userId))
-                {
-                    throw new Exception("User id is required");
-                }
-                if (string.IsNullOrEmpty(sessionId)) throw new Exception("Session id is required");
+           
+               var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId);
+            if (validationResult.IsFailed)
+                return validationResult.ToResult<string>();
+            validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(sessionId);
+            if (validationResult.IsFailed)
+                return validationResult.ToResult<string>();
 
-                await _refreshTokenService.RevokeAllRefreshTokensAsync(
+            var revokeResult =await _refreshTokenService.RevokeAllRefreshTokensAsync(
                     userId, sessionId, clientInfo?.IpAddress);
+            if (revokeResult.IsFailed)
+                return revokeResult.ToResult<string>();
 
-                return true;
-            }
-            catch (Exception ex)
-            {
-                throw new AuthenticationServiceException("Logout failed", ex);
-            }
+            return Result.Ok(userId);
+         
         }
-        public async Task<AuthDTO> ExternalLoginAsync(string code,string providerName, ClientInfo clientInfo)
+        /// <summary>
+        /// Logs in a user using an external authentication provider.
+        /// </summary>
+        /// <param name="code"></param>
+        /// <param name="providerName"></param>
+        /// <param name="clientInfo"></param>
+        /// <returns>The result of the external login process, including authentication tokens.</returns>
+        public async Task<Result<AuthDTO>> ExternalLoginAsync(string code,string providerName, ClientInfo clientInfo)
         {
-            try
-            {
-                if (string.IsNullOrEmpty(code)) { throw new Exception("Code is required"); }
-                var externalLoginInfo = await _externalAuthProvider.ManageExternalLogin(code, clientInfo);
-                var user = await _userService.UserExistsByEmailAsync(externalLoginInfo.userDTO.Email);
-                if (user == null) {
-                     user = await _userService.CreateUserAsync(new RegisterUserDTO
+          var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(code);
+            if (validationResult.IsFailed)
+                return validationResult.ToResult<AuthDTO>();
+            validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(providerName);
+            if (validationResult.IsFailed)
+                return validationResult.ToResult<AuthDTO>();
+
+            var externalAuthProvider = _externalAuthProviderServiceFactory.GetProvider(providerName);
+            var externalLoginInfo = await externalAuthProvider.ManageExternalLogin(code, clientInfo);
+            if (externalLoginInfo.IsFailed)
+                return externalLoginInfo.ToResult<AuthDTO>();
+
+            UserDTO user;
+            var userExists = await _userService.UserExistsByEmailAsync(externalLoginInfo.Value.userDTO.Email);
+            if (userExists.IsFailed)
+                return userExists.ToResult<AuthDTO>();
+
+            if (!userExists.Value) {
+                     var userResult = await _userService.CreateUserAsync(new RegisterUserDTO
                     {
-                        Email = externalLoginInfo.userDTO.UserName,
-                        UserName = externalLoginInfo.userDTO.Email,
+                        Email = externalLoginInfo.Value.userDTO.UserName,
+                        UserName = externalLoginInfo.Value.userDTO.Email,
                     });
-                }
-                await _userService.AddLoginAsync(user.Id, user.Email, user.UserName,
-                    externalLoginInfo.externalAccessToken, providerName);
+                if (userResult.IsFailed)
+                    return userResult.ToResult<AuthDTO>();
+                user = userResult.Value;
+            }
+            else
+            {
+                var userResult = await _userService.GetUserByEmailAsync(externalLoginInfo.Value.userDTO.Email);
+                if (userResult.IsFailed)
+                    return userResult.ToResult<AuthDTO>();
+                user = userResult.Value;
+            }
 
-                var roles = await _roleService.GetRolesAsync(user.Id);
+                var loginResult = await _userService.AddLoginAsync(user.Id, user.Email, user.UserName,
+                    externalLoginInfo.Value.externalAccessToken, providerName);
+            if (loginResult.IsFailed)
+                return loginResult.ToResult<AuthDTO>();
+            var roles = await _roleService.GetRolesAsync(user.Id);
                 var claims = await _userService.GetUserCalimsAsync(user.Id);
-                var accessToken = await _tokenGenerator.GenerateAccessTokenAsync
-                    (user.Id, user.UserName, user.Email, roles, claims );
+                var accessToken =  _tokenGenerator.GenerateAccessToken
+                    (user.Id, user.UserName, user.Email, roles.Value, claims.Value );
+            if(accessToken.IsFailed)
+                return accessToken.ToResult<AuthDTO>();
+            var refreshTokenResult = 
+                    _refreshTokenService.GenerateRefreshTokenEntity(user.Id, clientInfo);
+            if (refreshTokenResult.IsFailed)
+                return refreshTokenResult.ToResult<AuthDTO>();
 
-                var refreshTokenResult = await
-                    _refreshTokenService.GenerateRefreshTokenEntityAsync(user.Id, clientInfo);
-
-                await _refreshTokenService.StoreRefreshTokenAsync(refreshTokenResult.refreshTokenEntity);
-                return new AuthDTO
+            var storeResult =
+                await _refreshTokenService.StoreRefreshTokenAsync(refreshTokenResult.Value.refreshTokenEntity);
+            if (storeResult.IsFailed)
+                return storeResult.ToResult<AuthDTO>();
+            return new AuthDTO
                 {
-                    AccessToken = accessToken,
-                    RefreshToken = refreshTokenResult.refreshToken,
+                    AccessToken = accessToken.Value,
+                    RefreshToken = refreshTokenResult.Value.refreshToken,
                 };
-
-
-            }
-            catch (Exception ex)
-            {
-                throw new AuthenticationServiceException("External login failed", ex);
-            }
         }
-        public async Task<bool> ValidateAccessTokenAsync(string accessToken)
+        /// <summary>
+        /// Validates the provided access token.
+        /// </summary>
+        /// <param name="accessToken"></param>
+        /// <returns>True if the access token is valid; otherwise, false.</returns>
+        public async Task<Result<bool>> ValidateAccessTokenAsync(string accessToken)
         {
-            try
-            {
-                var result = await _tokenValidator.ValidateAccessTokenAsync(accessToken);
-                return result;
-            }
-            catch (Exception ex)
-            {
-                throw new AuthenticationServiceException("Validate access token failed", ex);
-            }
+           var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(accessToken);
+            if (validationResult.IsFailed)
+                return validationResult.ToResult<bool>().IsFailed;
+
+            var result = await _tokenValidator.ValidateAccessTokenAsync(accessToken);
+            if (result.IsFailed)
+                return result.ToResult<bool>();
+            return Result.Ok(result.Value);
+           
         }
         
     }

@@ -46,7 +46,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         /// Generate a new refresh token
         /// </summary>
         /// <returns>The refresh token and its hash</returns>
-        public Result<(string RefreshToken, string HashedRefreshToken)> GenerateRefreshTokenAsync()
+        public Result<(string RefreshToken, string HashedRefreshToken)> GenerateRefreshToken()
         {
            
           var randomNumberResult = _randomNumberProvider.GetBase64RandomNumber(64);
@@ -63,13 +63,13 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         /// <param name="clientInfo"></param>
         /// <returns>The refresh token entity and the refresh token</returns>
         public  Result<(RefreshToken refreshTokenEntity, string refreshToken)>
-            GenerateRefreshTokenEntityAsync(string userId, ClientInfo clientInfo)
+            GenerateRefreshTokenEntity(string userId, ClientInfo clientInfo)
         {
           var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId, "userId");
             if (validationResult.IsFailed)
                 return validationResult.ToResult<(RefreshToken refreshTokenEntity, string refreshToken)>();
 
-            var refreshTokenPairResult = GenerateRefreshTokenAsync();
+            var refreshTokenPairResult = GenerateRefreshToken();
             if (refreshTokenPairResult.IsFailed)
                 return refreshTokenPairResult.ToResult<(RefreshToken refreshTokenEntity, string refreshToken)>();
 

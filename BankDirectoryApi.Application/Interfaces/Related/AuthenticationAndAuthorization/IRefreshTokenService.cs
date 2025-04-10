@@ -13,14 +13,14 @@ namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAutho
         /// Generate a new refresh token
         /// </summary>
         /// <returns>The refresh token and its hash</returns>
-        Result<(string RefreshToken, string HashedRefreshToken)> GenerateRefreshTokenAsync();
+        Result<(string RefreshToken, string HashedRefreshToken)> GenerateRefreshToken();
         /// <summary>
         /// Generate a new refresh token entity
         /// </summary>
         /// <param name="userId"></param>
         /// <param name="clientInfo"></param>
         /// <returns>The refresh token entity and the refresh token</returns>
-        Result<(RefreshToken refreshTokenEntity, string refreshToken)> GenerateRefreshTokenEntityAsync( string userId , ClientInfo clientInfo);
+        Result<(RefreshToken refreshTokenEntity, string refreshToken)> GenerateRefreshTokenEntity( string userId , ClientInfo clientInfo);
         /// <summary>
         /// Store the refresh token in the database
         /// </summary>

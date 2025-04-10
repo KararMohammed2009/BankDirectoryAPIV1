@@ -14,14 +14,25 @@ using System.Security.Claims;
 
 namespace BankDirectoryApi.Application.Services.Related.UserManagement
 {
+    /// <summary>
+    /// Service class for user management operations.
+    /// </summary>
     public class UserService : IUserService
     {
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
-        private readonly ILogger _logger;
+        private readonly ILogger<UserService> _logger;
 
+        /// <summary>
+        /// Constructor for UserService.
+        /// </summary>
+        /// <param name="mapper"></param>
+        /// <param name="userManager"></param>
+        /// <param name="signInManager"></param>
+        /// <param name="roleManager"></param>
+        /// <param name="logger"></param>
         public UserService(
             IMapper mapper, UserManager<ApplicationUser> userManager
             , SignInManager<ApplicationUser> signInManager,
@@ -35,6 +46,12 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             _roleManager = roleManager;
             _logger = logger;
         }
+        /// <summary>
+        /// Retrieves all users based on the provided filter criteria.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The list of users that match the filter criteria.</returns>
         public async Task<Result<List<UserDTO>>> GetAllUsersAsync(UserFilterDTO model, CancellationToken cancellationToken)
         {
             var validationResult = ValidationHelper.ValidateNullModel(model, "model");
@@ -46,7 +63,11 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             return Result.Ok( _mapper.Map<List<UserDTO>>(users));
 
         }
-
+        /// <summary>
+        /// Retrieves a user by their ID.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns>The user with the specified ID.</returns>
         public async Task<Result<UserDTO>> GetUserByIdAsync(string userId)
         {
             var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId, "userId");
@@ -64,6 +85,11 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             userDTO.Roles = roles;
             return Result.Ok(userDTO);
         }
+        /// <summary>
+        /// Retrieves a user by their email address.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns>The user with the specified email address.</returns>
         public async Task<Result<UserDTO>> GetUserByEmailAsync(string email)
         {
 
@@ -77,6 +103,11 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             return Result.Ok(_mapper.Map<UserDTO>(user));
 
         }
+        /// <summary>
+        /// Retrieves a user by their username.
+        /// </summary>
+        /// <param name="userName"></param>
+        /// <returns>The user with the specified username.</returns>
         public async Task<Result<UserDTO>> GetUserByUserNameAsync(string userName)
         {
 
@@ -90,20 +121,26 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             return Result.Ok(_mapper.Map<UserDTO>(user));
            
         }
-        public async Task<Result<UserDTO>> UserExistsByEmailAsync(string email)
+        /// <summary>
+        /// Checks if a user exists by their email.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns>True if the user exists, false otherwise.</returns>
+        public async Task<Result<bool>> UserExistsByEmailAsync(string email)
         {
 
             var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(email, "email");
-            if (validationResult.IsFailed) return validationResult.ToResult<UserDTO>();
+            if (validationResult.IsFailed) return validationResult.ToResult<bool>();
 
             var user = await IdentityExceptionHelper.Execute(() => _userManager.FindByEmailAsync(email),_logger);
-            if (user == null)
-                return Result.Fail(new Error($"Get User by Email({email}) failed by UserManager<ApplicationUser>")
-                .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
-           
-                return Result.Ok( _mapper.Map<UserDTO>(user));
             
+                return Result.Ok(user !=null);
         }
+        /// <summary>
+        /// Updates a user with the provided information.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns>The updated user.</returns>
         public async Task<Result<UserDTO>> UpdateUserAsync(UpdateUserDTO model)
         {
 
@@ -164,6 +201,11 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 return Result.Ok(_mapper.Map<UserDTO>(updatedUser));
           
         }
+        /// <summary>
+        /// Deletes a user by their ID.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns>The value of user id.</returns>
         public async Task<Result<string>> DeleteUserAsync(string userId)
         {
 
@@ -184,6 +226,11 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             return Result.Ok(userId);
            
         }
+        /// <summary>
+        /// Creates a new user with the provided information.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns>The created user.</returns>
         public async Task<Result<UserDTO>> CreateUserAsync(RegisterUserDTO model)
         {
             var validationResult = ValidationHelper.ValidateNullModel(model, "model");
@@ -220,6 +267,12 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
 
             return Result.Ok(_mapper.Map<UserDTO>(user));
         }
+        /// <summary>
+        /// Confirms a user's email address using the provided token.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="token"></param>
+        /// <returns>The value of the user id.</returns>
         public async Task<Result<string>> ConfirmEmailAsync(string email, string token)
         {
 
@@ -248,6 +301,11 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 return Result.Ok(email);
           
         }
+        /// <summary>
+        /// Checks if a user's email is confirmed.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns>True if the email is confirmed, false otherwise.</returns>
         public async Task<Result<bool>> IsEmailConfirmedAsync(UserDTO model)
         {
 
@@ -265,6 +323,11 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                     _userManager.IsEmailConfirmedAsync(user),_logger));
           
         }
+        /// <summary>
+        /// Generates a token for email confirmation.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns>The value of email confirmation token.</returns>
         public async Task<Result<string>> GenerateEmailConfirmationTokenAsync(string email)
         {
 
@@ -290,6 +353,15 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 return Result.Ok(result);
            
         }
+        /// <summary>
+        /// External login for a user using the provided information.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="email"></param>
+        /// <param name="name"></param>
+        /// <param name="externalAccessToken"></param>
+        /// <param name="providerName"></param>
+        /// <returns>The value of the user id.</returns>
         public async Task<Result<string>> AddLoginAsync(string id, string email, string name, string externalAccessToken, string providerName)
         {
 
@@ -338,6 +410,12 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             }
                 return Result.Ok(email);
         }
+        /// <summary>
+        /// Set Two-Factor Authentication enabled or disabled for a user.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="enabled"></param>
+        /// <returns>The value of the user id.</returns>
         public async Task<Result<string>> SetTwoFactorAuthenticationAsync(string userId, bool enabled)
         {
 
@@ -361,6 +439,11 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 return Result.Ok(userId);
            
         }
+        /// <summary>
+        /// Get the claims of a user by their ID.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns>The claims of the user .</returns>
         public async Task<Result<Dictionary<string, string>>> GetUserCalimsAsync(string userId)
         {
 

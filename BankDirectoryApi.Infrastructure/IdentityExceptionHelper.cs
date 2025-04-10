@@ -13,8 +13,13 @@ namespace BankDirectoryApi.Infrastructure
     public static class IdentityExceptionHelper
     {
         /// <summary>
-        /// Executes an Identity operation and handle Exceptions Logging
+        /// Helper class for handling exceptions related to external services.
         /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="action"></param>
+        /// <param name="logger"></param>
+        /// <param name="operationName"></param>
+        /// <returns>The result of the operation.</returns>
         public static async Task<T> Execute<T>(
             Func<Task<T>> action,
             ILogger logger,
@@ -47,5 +52,5 @@ namespace BankDirectoryApi.Infrastructure
             }
         }
     }
-}
+
 }

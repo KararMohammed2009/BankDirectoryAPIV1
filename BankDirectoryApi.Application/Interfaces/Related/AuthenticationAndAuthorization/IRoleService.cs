@@ -6,7 +6,7 @@ namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAutho
     /// <summary>
     /// Service to manage user roles
     /// </summary>
-    interface IRoleService
+    public interface IRoleService
     {
         /// <summary>
         /// Assign a role to a user

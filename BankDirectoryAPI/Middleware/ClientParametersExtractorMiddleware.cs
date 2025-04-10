@@ -29,7 +29,7 @@ namespace BankDirectoryApi.API.Middleware
                 string? userId = null;
                 if (!string.IsNullOrEmpty(accessToken))
                 {
-                    userId = _tokenParser.GetUserIdAsync(accessToken);
+                    userId = _tokenParser.GetUserIdAsync(accessToken).Value;
                 }
 
                 // Extract client IP and user-agent from the request

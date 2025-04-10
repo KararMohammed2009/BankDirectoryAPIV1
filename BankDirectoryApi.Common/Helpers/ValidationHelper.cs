@@ -19,8 +19,12 @@ namespace BankDirectoryApi.Common.Helpers
         /// <param name="parameter"></param>
         /// <param name="parameterName"></param>
         /// <returns> Result indicating success or failure.</returns>
-        public static Result ValidateNullOrWhiteSpaceString(string parameter, string parameterName)
+        public static Result ValidateNullOrWhiteSpaceString(string parameter, string? parameterName=null)
         {
+            if (string.IsNullOrWhiteSpace(parameterName))
+            {
+                parameterName = nameof(parameter);
+            }
             if (string.IsNullOrWhiteSpace(parameter))
             {
                 return Result.Fail(new Error($"{parameterName} is required")
@@ -35,8 +39,12 @@ namespace BankDirectoryApi.Common.Helpers
         /// <param name="model"></param>
         /// <param name="modelName"></param>
         /// <returns> Result indicating success or failure.</returns>
-        public static Result ValidateNullModel<T>(T model, string modelName) where T : class
+        public static Result ValidateNullModel<T>(T model, string? modelName = null) where T : class
         {
+            if (string.IsNullOrWhiteSpace(modelName))
+            {
+                modelName = typeof(T).Name;
+            }
             if (model == null)
             {
                 return Result.Fail(new Error($"{modelName} is required")
