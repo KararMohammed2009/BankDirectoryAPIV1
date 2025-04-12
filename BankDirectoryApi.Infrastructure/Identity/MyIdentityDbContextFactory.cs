@@ -5,7 +5,7 @@ using System.IO;
 
 namespace BankDirectoryApi.Infrastructure.Identity
 {
-    public class IdentityDbContextFactory : IDesignTimeDbContextFactory<MyIdentityDbContext>
+    public class MyIdentityDbContextFactory : IDesignTimeDbContextFactory<MyIdentityDbContext>
     {
         public MyIdentityDbContext CreateDbContext(string[] args)
         {

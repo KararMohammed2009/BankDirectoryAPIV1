@@ -1,0 +1,5 @@
+﻿EXEC sp_MSforeachtable "ALTER TABLE ? NOCHECK CONSTRAINT all"
+EXEC sp_MSforeachtable "DROP TABLE ?"
+
+Add-Migration InitialCreate -Project BankDirectoryApi.Infrastructure -StartupProject BankDirectoryApi.API -Context ApplicationDbContext 
+update-database -Project BankDirectoryApi.Infrastructure -StartupProject BankDirectoryApi.API -Context ApplicationDbContext 

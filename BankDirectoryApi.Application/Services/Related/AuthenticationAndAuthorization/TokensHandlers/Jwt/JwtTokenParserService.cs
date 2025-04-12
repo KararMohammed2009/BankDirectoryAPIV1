@@ -20,14 +20,11 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
     /// </summary>
     public class JwtTokenParserService : ITokenParserService
     {
-        private readonly JwtSecurityTokenHandler _jwtSecurityTokenHandler;
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="jwtSecurityTokenHandler"></param>
-        public JwtTokenParserService(JwtSecurityTokenHandler jwtSecurityTokenHandler)
+        public JwtTokenParserService()
         {
-            _jwtSecurityTokenHandler = jwtSecurityTokenHandler;
         }
 
         /// <summary>
@@ -39,9 +36,9 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         {
             var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(accessToken, "accessToken");
             if (validationResult.IsFailed) return validationResult.ToResult<string>();
-           
 
-            var jwtToken = _jwtSecurityTokenHandler.ReadToken(accessToken) as JwtSecurityToken;
+            var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
+            var jwtToken = jwtSecurityTokenHandler.ReadToken(accessToken) as JwtSecurityToken;
 
             if (jwtToken == null)
             {

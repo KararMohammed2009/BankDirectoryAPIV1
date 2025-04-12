@@ -1,6 +1,7 @@
 ﻿using BankDirectoryApi.Domain.Entities;
 using BankDirectoryApi.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -19,18 +20,17 @@ namespace BankDirectoryApi.Infrastructure.Data
         public DbSet<Branch> Branches { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
+        // Fix for CS7036: Pass the 'options' parameter to the base class constructor.
         public ApplicationDbContext(DbContextOptions<MyIdentityDbContext> options)
-            : base(options) { }
+            : base(options)
+        { }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            // Add any custom configurations here
-            // Add DbSet properties for other entities
-
+            // Add any custom configurations here  
             modelBuilder.Entity<Branch>()
-             .OwnsOne(b => b.Address);
+                .OwnsOne(b => b.Address);
         }
-
-
     }
 }

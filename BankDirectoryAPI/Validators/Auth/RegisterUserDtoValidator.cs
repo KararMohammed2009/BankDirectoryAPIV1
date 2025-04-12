@@ -6,7 +6,7 @@ namespace BankDirectoryApi.API.Validators.Auth
 {
     public class RegisterUserDtoValidator: AbstractValidator<RegisterUserDTO>
     {
-        RegisterUserDtoValidator()
+        public RegisterUserDtoValidator()
         {
             // UserName: Required, between 3-50 characters, only letters, numbers, and underscores.
             RuleFor(x => x.UserName)

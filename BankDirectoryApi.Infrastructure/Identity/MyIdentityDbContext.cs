@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Infrastructure.Identity
 {
-    public class MyIdentityDbContext : IdentityDbContext<IdentityUser,IdentityRole,string>
+    public class MyIdentityDbContext : IdentityDbContext<ApplicationUser,ApplicationRole,string>
     {
         public MyIdentityDbContext(DbContextOptions<MyIdentityDbContext> options)
             : base(options) { }

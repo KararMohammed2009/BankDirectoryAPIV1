@@ -22,21 +22,18 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
     {
 
         private readonly IConfiguration _configuration;
-        private readonly JwtSecurityTokenHandler _jwtSecurityTokenHandler;
         private readonly ILogger<JwtTokenValidatorService> _logger;
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="configuration"></param>
-        /// <param name="jwtSecurityTokenHandler"></param>
         /// <param name="logger"></param>
         public JwtTokenValidatorService(
-            IConfiguration configuration, JwtSecurityTokenHandler jwtSecurityTokenHandler
+            IConfiguration configuration
             ,ILogger<JwtTokenValidatorService> logger)
         {
             _configuration = configuration;
-            _jwtSecurityTokenHandler = jwtSecurityTokenHandler;
             _logger = logger;
         }
 
@@ -66,8 +63,8 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                     ValidIssuer = jwtIssuer.Value,
                     ValidAudience = jwtAudience.Value
                 };
-
-                var validatedToken = await _jwtSecurityTokenHandler.ValidateTokenAsync(accessToken, validationParameters);
+            var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
+            var validatedToken = await jwtSecurityTokenHandler.ValidateTokenAsync(accessToken, validationParameters);
             if (validatedToken == null)
             {
                 _logger.LogError("Validate accessToken failed by JwtSecurityTokenHandler");

@@ -121,30 +121,27 @@ namespace BankDirectoryApi.API.Extensions
             builder.Services.AddScoped<IRoleService, RoleService>();
             builder.Services.AddScoped<ISessionService, SessionService>();
             builder.Services.AddScoped<IEmailConfirmationService, EmailConfirmationService>();
-            builder.Services.AddScoped<IHashService, HashService>();
+            
             builder.Services.AddScoped<ITokenGeneratorService, JwtTokenGeneratorService>();
             builder.Services.AddScoped<ITokenValidatorService, JwtTokenValidatorService>();
             builder.Services.AddScoped<ITokenParserService, JwtTokenParserService>();
-            builder.Services.AddScoped<JwtSecurityTokenHandler>();
+           
 
 
-       
 
             // Register External Authentication Providers
-            builder.Services.AddScoped<HttpClient>();
-            builder.Services.AddScoped<IExternalAuthProviderService, GoogleAuthProviderService>();
+            builder.Services.AddHttpClient<GoogleAuthProviderService>();
             builder.Services.AddScoped<IExternalAuthProviderServiceFactory, ExternalAuthProviderFactory>();
-            builder.Services.AddScoped<GoogleAuthProviderService>();
 
-
-            builder.Services.AddIdentity<IdentityUser, IdentityRole>() // Registers Identity services (User + Role management)
+            
+            builder.Services.AddIdentity<ApplicationUser, ApplicationRole>() // Registers Identity services (User + Role management)
             .AddEntityFrameworkStores<ApplicationDbContext>() //Configures Identity to use Entity Framework Core with ApplicationDbContext
             .AddDefaultTokenProviders(); //Enables password reset, email confirmation, 2FA tokens
                                          // Register ASP.NET Identity Managers
-            builder.Services.AddScoped<UserManager<IdentityUser>>();
-            builder.Services.AddScoped<SignInManager<IdentityUser>>();
-            builder.Services.AddScoped<RoleManager<IdentityRole>>();
-
+            builder.Services.AddScoped<UserManager<ApplicationUser>>();
+            builder.Services.AddScoped<SignInManager<ApplicationUser>>();
+            builder.Services.AddScoped<RoleManager<ApplicationRole>>();
+            builder.Services.AddScoped<DbInitializer>();
         }
       
         public static void AddTheSwagger(this WebApplicationBuilder builder)
@@ -248,6 +245,8 @@ namespace BankDirectoryApi.API.Extensions
             // Register Common Services
             services.AddScoped<IDateTimeProvider, DateTimeProvider>();
             services.AddScoped<IGuidProvider, GuidProvider>();
+            services.AddScoped<IRandomNumberProvider, RandomNumberProvider>();
+            services.AddScoped<IHashService, HashService>();
             services.AddHttpContextAccessor();  
         }
 
@@ -255,11 +254,12 @@ namespace BankDirectoryApi.API.Extensions
         public static void AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
             // Register database context
-            services.AddDbContext<MyIdentityDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            //services.AddDbContext<MyIdentityDbContext>(options =>
+            //    options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            
 
             // Register repositories, for example:
             services.AddScoped<IBankRepository, BankRepository>();
@@ -267,6 +267,15 @@ namespace BankDirectoryApi.API.Extensions
             services.AddScoped<IATMRepository, ATMRepository>();
             services.AddScoped<ICardRepository, CardRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            
+        }
+        public static void InitializeDatabase(this WebApplication app)
+        {
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbInitializer = scope.ServiceProvider.GetRequiredService<DbInitializer>();
+                dbInitializer.InitializeAsync().Wait();
+            }
         }
     }
 }

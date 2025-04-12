@@ -59,8 +59,15 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
 
             
             var users = await IdentityExceptionHelper.Execute(() => _userManager.Users.ToListAsync(cancellationToken), _logger);
-            
-            return Result.Ok( _mapper.Map<List<UserDTO>>(users));
+            var roles = await IdentityExceptionHelper.Execute(() => _roleManager.Roles.ToListAsync(cancellationToken), _logger);
+            var usersDtos = _mapper.Map<List<UserDTO>>(users);
+            foreach (var item in usersDtos)
+            {
+                var user = users.Find(o => o.Id == item.Id);
+                var userRoles = await IdentityExceptionHelper.Execute(() => _userManager.GetRolesAsync(user!), _logger);
+                item.Roles = userRoles;
+            }
+            return Result.Ok( usersDtos);
 
         }
         /// <summary>
@@ -100,7 +107,10 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             if (user == null)
                 return Result.Fail(new Error($"Get User by Email({email}) failed by UserManager<ApplicationUser>")
                     .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
-            return Result.Ok(_mapper.Map<UserDTO>(user));
+            var roles = await IdentityExceptionHelper.Execute(() => _userManager.GetRolesAsync(user), _logger);
+            var userDTO = _mapper.Map<UserDTO>(user);
+            userDTO.Roles = roles;
+            return Result.Ok(userDTO);
 
         }
         /// <summary>
@@ -118,7 +128,10 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 if (user == null)
                    return Result.Fail(new Error($"Get User by UserName({userName}) failed by UserManager<ApplicationUser>")
                     .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
-            return Result.Ok(_mapper.Map<UserDTO>(user));
+            var roles = await IdentityExceptionHelper.Execute(() => _userManager.GetRolesAsync(user), _logger);
+            var userDTO = _mapper.Map<UserDTO>(user);
+            userDTO.Roles = roles;
+            return Result.Ok(userDTO);
            
         }
         /// <summary>
@@ -148,9 +161,9 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             if (validationResult.IsFailed) return validationResult.ToResult<UserDTO>();
 
             var oldUser = await IdentityExceptionHelper.Execute(() =>
-            _userManager.FindByIdAsync(model.UserId), _logger);
+            _userManager.FindByIdAsync(model.Id), _logger);
             if (oldUser == null)
-                return Result.Fail(new Error($"Get User by Id({model.UserId}) failed by UserManager<ApplicationUser>")
+                return Result.Fail(new Error($"Get User by Id({model.Id}) failed by UserManager<ApplicationUser>")
                     .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
 
             var updatedUser = _mapper.Map(model,oldUser);

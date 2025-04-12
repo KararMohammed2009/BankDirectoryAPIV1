@@ -9,10 +9,11 @@ namespace BankDirectoryApi.Common.Services
     /// </summary>
     public class RandomNumberProvider : IRandomNumberProvider
     {
-        private readonly RandomNumberGenerator _randomNumberGenerator;
-        public RandomNumberProvider(RandomNumberGenerator randomNumberGenerator)
+        /// <summary>
+        /// Random number generator Constructor
+        /// </summary>
+        public RandomNumberProvider()
         {
-            _randomNumberGenerator = randomNumberGenerator;
         }
         /// <summary>
         /// Generate a random number in Base64 format
@@ -21,8 +22,9 @@ namespace BankDirectoryApi.Common.Services
         /// <returns>The value of the base64 encoded random number</returns>
         public Result<string> GetBase64RandomNumber(int length)
         {
+            var randomNumberGenerator = RandomNumberGenerator.Create();
             byte[] randomBytes = new byte[length]; // Adjust length as needed
-            _randomNumberGenerator.GetBytes(randomBytes);
+            randomNumberGenerator.GetBytes(randomBytes);
           
             return Result.Ok(Convert.ToBase64String(randomBytes));
         }

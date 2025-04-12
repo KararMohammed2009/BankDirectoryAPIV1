@@ -3,6 +3,7 @@ using BankDirectoryApi.API.Helpers;
 using BankDirectoryApi.API.Models;
 using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.Application.DTOs.Related.UserManagement;
+using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -15,9 +16,9 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
     [ApiController]
     public class RegisterController : ControllerBase
     {
-        private readonly AuthenticationService _authenticationService;
+        private readonly IAuthenticationService _authenticationService;
 
-        public RegisterController(AuthenticationService authenticationService)
+        public RegisterController(IAuthenticationService authenticationService)
         {
             _authenticationService = authenticationService;
           

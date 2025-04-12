@@ -18,16 +18,16 @@ namespace BankDirectoryApi.Infrastructure.Services
     {
         public static void AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            //services.AddDbContext<ApplicationDbContext>(options =>
+            //    options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
-            // Register Repositories
-            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-            services.AddScoped<IBankRepository, BankRepository>();
-            services.AddScoped<IBranchRepository, BranchRepository>();
-            services.AddScoped<IATMRepository, ATMRepository>();
-            services.AddScoped<ICardRepository, CardRepository>();
-            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            //// Register Repositories
+            //services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            //services.AddScoped<IBankRepository, BankRepository>();
+            //services.AddScoped<IBranchRepository, BranchRepository>();
+            //services.AddScoped<IATMRepository, ATMRepository>();
+            //services.AddScoped<ICardRepository, CardRepository>();
+            //services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
             //// Register Services
             //services.AddScoped<IBankService, BankService>();

@@ -105,8 +105,8 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                 expires: expires,
                 signingCredentials: creds
             );
-
-            var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
+            var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
+            var jwtToken = jwtSecurityTokenHandler.WriteToken(token);
             if (string.IsNullOrWhiteSpace(jwtToken))
             {
                 _logger.LogCritical("Error generating JWT token");

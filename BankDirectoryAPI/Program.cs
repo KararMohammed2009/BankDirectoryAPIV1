@@ -42,5 +42,6 @@ app.UseRateLimitLoggingMiddleware();
 
 app.UseHttpsRedirection();
 app.MapControllers();
+app.InitializeDatabase();
 app.Run();
 public partial class Program { }

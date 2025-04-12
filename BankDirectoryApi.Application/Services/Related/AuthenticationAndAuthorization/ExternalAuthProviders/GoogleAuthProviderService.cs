@@ -149,11 +149,11 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                     .WithMetadata("ErrorCode", CommonErrors.ConfigurationError));
             }
 
-            var client = new HttpClient();
-                client.DefaultRequestHeaders.Authorization = 
-                new AuthenticationHeaderValue("Bearer", accessToken);
+            var request = new HttpRequestMessage(HttpMethod.Get, tokenEndpoint);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
                 var response = await ExternalServiceExceptionHelper.Execute(() =>
-                    client.GetAsync(tokenEndpoint), _logger);
+                    _httpClient.SendAsync(request), _logger);
             
                 if (!response.IsSuccessStatusCode)
                 {

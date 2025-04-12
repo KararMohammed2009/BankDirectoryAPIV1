@@ -19,14 +19,14 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
     public class SessionService : ISessionService
     {
 
-        private readonly RandomNumberProvider _randomNumberProvider;
+        private readonly IRandomNumberProvider _randomNumberProvider;
         private readonly ILogger<SessionService> _logger;
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="randomNumberProvider"></param>
         /// <param name="logger"></param>
-        public SessionService(RandomNumberProvider randomNumberProvider,ILogger<SessionService> logger)
+        public SessionService(IRandomNumberProvider randomNumberProvider,ILogger<SessionService> logger)
         {
             _randomNumberProvider = randomNumberProvider;
             _logger = logger;
