@@ -41,11 +41,7 @@ namespace BankDirectoryApi.API.Middleware
                     // Store in HttpContext for rate limiting and logging
                     context.Items["ClientId"] = userId;
                 }
-                else
-                {
-                    // Default if no user found (e.g., unauthenticated users)
-                    context.Items["ClientId"] = "anonymous";
-                }
+                
                 if (!string.IsNullOrEmpty(clientIp))
                 {
                     // Store in HttpContext for rate limiting and logging and other purposes

@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Common.Errors
 {
+    /// <summary>
+    /// Enumeration for common error codes used across the application.
+    /// </summary>
     public enum CommonErrors
     {
     

@@ -49,6 +49,19 @@ namespace BankDirectoryApi.Common.Extensions
                         ValidAudience = jwtAudience.Value,
                         ClockSkew = TimeSpan.Zero, // Optional: disables clock skew
                     };
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnTokenValidated = context =>
+                        {
+                            // Add logging here to inspect the token and validation results
+                            logger.LogInformation("Token validated: {Token}", context.SecurityToken);
+                            return Task.CompletedTask;
+                        },
+                        OnAuthenticationFailed = context => {
+                            logger.LogError("Authentication failed: {Exception}", context.Exception);
+                            return Task.CompletedTask;
+                        }
+                    };
                 });
 
                 return services;

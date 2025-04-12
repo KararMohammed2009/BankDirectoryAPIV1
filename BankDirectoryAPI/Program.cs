@@ -20,9 +20,10 @@ builder.Services.AddControllers(
 builder.Services.AddApplicationMappers();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddGlobalMappers();
 
 builder.AddTheSwagger();
-builder.AddJwtAuth();
+
 builder.AddLimitRate();
 builder.AddTheCors();
 builder.AddTheAuthentication();
@@ -31,15 +32,21 @@ builder.AddTheValidators();
 builder.AddTheVersioning();
 builder.AddTheUserServices();
 builder.AddTheSerilogLogger();
+builder.AddJwtAuth();
+
 var app = builder.Build();
 
 app.UseTheSwagger();
+app.UseRouting();
 app.UseJwtAuth();
 app.UseLimitRate();
 app.UseExceptionMiddleware();
 app.UseRequestLoggingMiddleware();
 app.UseRateLimitLoggingMiddleware();
-
+if (builder.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
 app.UseHttpsRedirection();
 app.MapControllers();
 app.InitializeDatabase();

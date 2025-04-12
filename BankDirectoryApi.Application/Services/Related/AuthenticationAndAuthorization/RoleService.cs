@@ -1,6 +1,5 @@
 ﻿using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.Infrastructure;
-using BankDirectoryApi.Infrastructure.Identity;
 using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +8,7 @@ using System.Net;
 using BankDirectoryApi.Common.Extensions;
 using BankDirectoryApi.Common.Helpers;
 using BankDirectoryApi.Common.Errors;
+using BankDirectoryApi.Domain.Entities.Identity;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization
 {

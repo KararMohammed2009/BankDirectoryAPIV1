@@ -76,11 +76,12 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             var refreshTokenLifetimeDays = _configuration["JwtSettings:RefreshTokenLifetimeDays"];
 
 
-            double refreshTokenLifetimeDaysValue;
-            if (string.IsNullOrWhiteSpace(refreshTokenLifetimeDays) || double.TryParse(refreshTokenLifetimeDays,out refreshTokenLifetimeDaysValue))
-                return Result.Fail(new Error("Generate RefreshToken Entity failed : Refresh token lifetime days read from Configration is null or empty or invalid")
+            int refreshTokenLifetimeDaysValue;
+            int.TryParse(refreshTokenLifetimeDays, out refreshTokenLifetimeDaysValue);
+            if (refreshTokenLifetimeDaysValue <= 0)
+                return Result.Fail(new Error("Generate RefreshToken Entity failed : Refresh token lifetime days read from Configration is invalid or less than 0")
                      .WithMetadata("ErrorCode", CommonErrors.ConfigurationError));
-
+           
 
 
             var dateNowResult = _dateTimeProvider.UtcNow;
@@ -110,7 +111,8 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             var validationResult = ValidationHelper.ValidateNullModel(refreshToken, "refreshToken");
             if (validationResult.IsFailed)
                 return validationResult.ToResult<RefreshToken>();
-            await _refreshTokenRepository.AddAsync(refreshToken);
+             await _refreshTokenRepository.AddAsync(refreshToken);
+            await _refreshTokenRepository.SaveChangesAsync();
             return  Result.Ok(refreshToken);
         }
         /// <summary>
@@ -135,7 +137,8 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                 return hashedOldRefreshTokenResult.ToResult<RefreshToken>();
             await _refreshTokenRepository.RotateRefreshTokenAsync(
                 hashedOldRefreshTokenResult.Value, newRefreshToken);
-                return Result.Ok(newRefreshToken);
+            await _refreshTokenRepository.SaveChangesAsync();
+            return Result.Ok(newRefreshToken);
 
         }
         /// <summary>
@@ -156,6 +159,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
            
           
              await _refreshTokenRepository.RevokeAllRefreshTokensAsync(userId,sessionId,ipAddress);
+            await _refreshTokenRepository.SaveChangesAsync();
             return Result.Ok(userId);
 
         }

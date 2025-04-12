@@ -1,4 +1,4 @@
-﻿using BankDirectoryApi.Infrastructure.Identity;
+﻿using BankDirectoryApi.Domain.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -25,9 +25,7 @@ namespace BankDirectoryApi.Infrastructure.Data
 
         public async Task InitializeAsync()
         {
-            // Ensure database is created
-            await _context.Database.MigrateAsync();
-
+           
             // Seed roles
             await SeedRolesAsync();
 
@@ -63,7 +61,7 @@ namespace BankDirectoryApi.Infrastructure.Data
             _logger.LogInformation("Seeding admin user...");
             // Check if the admin user exists
             var adminUser = await _userManager.FindByEmailAsync("admin@bankdirectory.com");
-            _logger.LogInformation("Admin user already exists.");
+
             if (adminUser == null)
             {
                 // Create the admin user
@@ -73,18 +71,41 @@ namespace BankDirectoryApi.Infrastructure.Data
                     Email = "admin@bankdirectory.com",
                 };
 
-                var createResult = await _userManager.CreateAsync(adminUser, "abc123");
+                var createResult = await _userManager.CreateAsync(adminUser, "Abc123$$");
 
                 if (createResult.Succeeded)
                 {
                     _logger.LogInformation("Admin user created successfully.");
                     // Assign roles to the admin user
-                    await _userManager.AddToRoleAsync(adminUser, "Admin");
-                    _logger.LogInformation("Admin user assigned to Admin role.");
+                    createResult = await _userManager.AddToRoleAsync(adminUser, "Admin");
+                    if (createResult.Succeeded)
+                    {
+                        _logger.LogInformation("Admin user assigned to Admin role.");
+                    }
+                    else
+                    {
+                        _logger.LogError("Failed to assign admin user to Admin role.");
+                        foreach (var error in createResult.Errors)
+                        {
+                            _logger.LogError($"Error: {error.Description}");
+                        }
+                    }
 
                 }
-              
+                else
+                {
+                    _logger.LogError("Failed to create admin user.");
+                    foreach (var error in createResult.Errors)
+                    {
+                        _logger.LogError($"Error: {error.Description}");
+                    }
+                }
+            }
 
+
+            else
+            {
+                _logger.LogInformation("Admin user already exists.");
             }
             _logger.LogInformation("Admin user seeded successfully.");
         }

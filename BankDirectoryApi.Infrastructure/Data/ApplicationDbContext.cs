@@ -1,5 +1,5 @@
 ﻿using BankDirectoryApi.Domain.Entities;
-using BankDirectoryApi.Infrastructure.Identity;
+using BankDirectoryApi.Domain.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Infrastructure.Data
 {
-    public class ApplicationDbContext : MyIdentityDbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
     {
         public DbSet<Bank> Banks { get; set; } = null!;
         public DbSet<ATM> ATMs { get; set; } = null!;
@@ -21,7 +21,7 @@ namespace BankDirectoryApi.Infrastructure.Data
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
         // Fix for CS7036: Pass the 'options' parameter to the base class constructor.
-        public ApplicationDbContext(DbContextOptions<MyIdentityDbContext> options)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         { }
 
@@ -29,8 +29,37 @@ namespace BankDirectoryApi.Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
             // Add any custom configurations here  
+            ConfigureIdentity(modelBuilder); // Call to configure Identity
+            ConfigureEntities(modelBuilder);
+        }
+        private static void ConfigureIdentity(ModelBuilder modelBuilder)
+        {
+            // Explicitly configure ApplicationUser
+            modelBuilder.Entity<ApplicationUser>(b =>
+            {
+                b.HasKey(u => u.Id);
+                b.Property(u => u.CreationDate).IsRequired();
+                // Add any other specific ApplicationUser configurations here
+            });
+
+            // You might not need to reconfigure IdentityRole, but you can if needed
+            modelBuilder.Entity<ApplicationRole>(b =>
+            {
+                b.HasKey(r => r.Id);
+                // Add any specific ApplicationRole configurations here
+            });
+        }
+
+        private static void ConfigureEntities(ModelBuilder modelBuilder)
+        {
             modelBuilder.Entity<Branch>()
                 .OwnsOne(b => b.Address);
+
+            // Configure the relationship for RefreshToken
+            modelBuilder.Entity<RefreshToken>()
+                .HasOne(rt => rt.User)
+                .WithMany()  // No explicit collection navigation property in ApplicationUser
+                .HasForeignKey(rt => rt.UserId);
         }
     }
 }

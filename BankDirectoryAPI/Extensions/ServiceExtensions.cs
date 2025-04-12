@@ -23,25 +23,39 @@ using BankDirectoryApi.Application.Interfaces.Related.Communications;
 using BankDirectoryApi.Application.Services.Related.Communications;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers;
 using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt;
-using BankDirectoryApi.Infrastructure.Identity;
+
 using System.IdentityModel.Tokens.Jwt;
 using BankDirectoryApi.API.Validators.Auth;
 using Serilog;
+using BankDirectoryApi.Domain.Entities.Identity;
+using BankDirectoryApi.API.Mappings.Interfaces;
+using BankDirectoryApi.API.Mappings.Classes;
+using Microsoft.OpenApi.Models;
 
 namespace BankDirectoryApi.API.Extensions
 {
     public static class ServiceExtensions
     {
+        public static void AddGlobalMappers(this IServiceCollection services)
+        {
+            services.AddSingleton<IActionGlobalMapper,ActionGlobalMapperV1>();
+        }
         public static void AddTheSerilogLogger(this WebApplicationBuilder builder)
         {
-                    Log.Logger = new LoggerConfiguration()
+             Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(builder.Configuration)
             .Enrich.FromLogContext()
             .WriteTo.Console()
-            .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+            .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day )
             .CreateLogger();
 
-                    builder.Host.UseSerilog();
+                  
+            builder.Host.UseSerilog((context, services, configuration) =>
+             {
+                 configuration
+                     .ReadFrom.Configuration(context.Configuration)
+                     .ReadFrom.Services(services);
+             });
         }
         public static void AddTheVersioning(this WebApplicationBuilder builder)
         {
@@ -150,7 +164,35 @@ namespace BankDirectoryApi.API.Extensions
             if (builder.Environment.IsDevelopment())
             {
                 builder.Services.AddEndpointsApiExplorer();
-                builder.Services.AddSwaggerGen();
+                builder.Services.AddSwaggerGen(c =>
+                {
+                    // JWT Bearer token authentication
+                    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                    {
+                        In = ParameterLocation.Header,
+                        Description = "Please enter JWT with Bearer into field",
+                        Name = "Authorization",
+                        Type = SecuritySchemeType.Http,
+                        BearerFormat = "JWT",
+                        Scheme = "bearer"
+                    });
+
+                    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] { }
+                    }
+                });
+                }
+            );
             }
         }
         public static void AddTheCors(this WebApplicationBuilder builder)

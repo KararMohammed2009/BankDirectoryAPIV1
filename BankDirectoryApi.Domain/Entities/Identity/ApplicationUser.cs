@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace BankDirectoryApi.Infrastructure.Identity
+namespace BankDirectoryApi.Domain.Entities.Identity
 {
     public class ApplicationUser : IdentityUser
     {

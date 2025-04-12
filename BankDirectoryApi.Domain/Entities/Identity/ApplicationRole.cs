@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BankDirectoryApi.Infrastructure.Identity
+namespace BankDirectoryApi.Domain.Entities.Identity
 {
     public class ApplicationRole :IdentityRole
     {

@@ -21,8 +21,4 @@
     <ProjectReference Include="..\BankDirectoryApi.Infrastructure\BankDirectoryApi.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Mappings\Resolvers\Related\" />
-  </ItemGroup>
-
 </Project>

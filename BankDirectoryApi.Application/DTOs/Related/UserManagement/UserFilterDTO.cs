@@ -2,7 +2,7 @@
 using BankDirectoryApi.Domain.Classes.Pagination;
 using BankDirectoryApi.Domain.Entities;
 using BankDirectoryApi.Domain.Enums;
-using BankDirectoryApi.Infrastructure.Identity;
+using BankDirectoryApi.Domain.Entities.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;

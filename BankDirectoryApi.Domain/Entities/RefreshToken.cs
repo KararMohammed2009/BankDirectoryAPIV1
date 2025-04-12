@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using BankDirectoryApi.Domain.Entities.Identity;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -35,7 +36,7 @@ namespace BankDirectoryApi.Domain.Entities
         [Required]
         public string SessionId { get; set; } // Session ID for the token
         // Navigation Property
-        public IdentityUser User { get; set; } = null!; // The user that owns the refresh token
+        public ApplicationUser User { get; set; } = null!; // The user that owns the refresh token
     }
 
 

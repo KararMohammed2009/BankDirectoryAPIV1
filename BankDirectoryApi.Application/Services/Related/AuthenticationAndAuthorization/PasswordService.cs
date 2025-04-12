@@ -5,7 +5,7 @@ using BankDirectoryApi.Common.Errors;
 using BankDirectoryApi.Common.Extensions;
 using BankDirectoryApi.Common.Helpers;
 using BankDirectoryApi.Infrastructure;
-using BankDirectoryApi.Infrastructure.Identity;
+using BankDirectoryApi.Domain.Entities.Identity;
 using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

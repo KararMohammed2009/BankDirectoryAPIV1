@@ -122,6 +122,7 @@ namespace BankDirectoryApi.Infrastructure.Repositories
         public async Task AddAsync(T entity)
         {
             await _dbSet.AddAsync(entity);
+            
         }
         public void Update(T entity)
         {

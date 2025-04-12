@@ -4,8 +4,9 @@ using BankDirectoryApi.Application.Interfaces.Related.UserManagement;
 using BankDirectoryApi.Common.Errors;
 using BankDirectoryApi.Common.Extensions;
 using BankDirectoryApi.Common.Helpers;
+using BankDirectoryApi.Common.Services;
+using BankDirectoryApi.Domain.Entities.Identity;
 using BankDirectoryApi.Infrastructure;
-using BankDirectoryApi.Infrastructure.Identity;
 using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +25,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly ILogger<UserService> _logger;
+        private readonly IDateTimeProvider _dateTimeProvider;
 
         /// <summary>
         /// Constructor for UserService.
@@ -37,7 +39,8 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             IMapper mapper, UserManager<ApplicationUser> userManager
             , SignInManager<ApplicationUser> signInManager,
             RoleManager<ApplicationRole> roleManager
-            , ILogger<UserService> logger
+            , ILogger<UserService> logger,
+            IDateTimeProvider dateTimeProvider
             )
         {
             _mapper = mapper;
@@ -45,6 +48,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             _signInManager = signInManager;
             _roleManager = roleManager;
             _logger = logger;
+            _dateTimeProvider = dateTimeProvider;
         }
         /// <summary>
         /// Retrieves all users based on the provided filter criteria.
@@ -258,7 +262,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             }
 
             user = _mapper.Map<ApplicationUser>(model);
-
+            user.CreationDate = _dateTimeProvider.UtcNow.Value;
             var result = await IdentityExceptionHelper.Execute(() =>
                 _userManager.CreateAsync(user, model.Password), _logger);
             if (!result.Succeeded)

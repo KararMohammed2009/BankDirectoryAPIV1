@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Common.Extensions
 {
-    public static class FluentResultExtentions
+    public static class FluentResultsExtentions
     {
         public static Result IncludeIdentityErrors(this Result result, IdentityResult identityResult)
         {
