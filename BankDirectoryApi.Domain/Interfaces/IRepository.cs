@@ -16,5 +16,6 @@ namespace BankDirectoryApi.Domain.Interfaces
         void Update(T entity);
         void Delete(T entity);
         Task SaveChangesAsync();
+        Task<int> SaveChangesReturnStatusAsync();
     }
 }

@@ -213,7 +213,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             if (validationResult.IsFailed)
                 return validationResult.ToResult<string>();
 
-            var revokeResult =await _refreshTokenService.RevokeAllRefreshTokensAsync(
+            var revokeResult = await _refreshTokenService.RevokeAllRefreshTokensAsync(
                     userId, sessionId, clientInfo?.IpAddress);
             if (revokeResult.IsFailed)
                 return revokeResult.ToResult<string>();

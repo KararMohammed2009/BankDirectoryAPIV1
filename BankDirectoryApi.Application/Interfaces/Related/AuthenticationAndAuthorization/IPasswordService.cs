@@ -24,7 +24,8 @@ namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAutho
         /// <param name="currentPassword"></param>
         /// <param name="newPassword"></param>
         /// <returns>The value of the user id</returns>
-        Task<Result<string>> ChangePasswordAsync(string userId, string currentPassword, string newPassword);
+        Task<Result<string>> ChangePasswordAsync(string userId, string currentPassword,
+            string newPassword, ClientInfo clientInfo);
         /// <summary>
         /// Reset the password of a user
         /// </summary>

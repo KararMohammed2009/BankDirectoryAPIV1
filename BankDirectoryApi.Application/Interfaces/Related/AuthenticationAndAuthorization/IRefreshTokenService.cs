@@ -35,12 +35,19 @@ namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAutho
         /// <returns>The rotated new refresh token entity</returns>
         Task<Result<RefreshToken>> RotateRefreshTokenAsync(string oldRefreshToken, RefreshToken newRefreshToken);
         /// <summary>
-        /// Revoke a refresh token
+        /// Revoke all refresh tokens for a user with a specific session id
         /// </summary>
         /// <param name="userId"></param>
         /// <param name="sessionId"></param>
         /// <param name="ipAddress"></param>
         /// <returns>The value of user id</returns>
         Task<Result<string>> RevokeAllRefreshTokensAsync(string userId,string sessionId,string? ipAddress);
+        /// <summary>
+        /// Revoke all refresh tokens for a user
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="ipAddress"></param>
+        /// <returns>The value of user id</returns>
+        Task<Result<string>> RevokeAllRefreshTokensAsync(string userId, string? ipAddress);
     }
 }

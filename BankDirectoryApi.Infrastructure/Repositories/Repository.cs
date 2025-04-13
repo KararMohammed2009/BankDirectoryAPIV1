@@ -10,10 +10,10 @@ using System.Net;
 
 namespace BankDirectoryApi.Infrastructure.Repositories
 {
-    public class Repository<T> : IRepository<T> where T : class 
+    public class Repository<T> : IRepository<T> where T : class
     {
-        private readonly ApplicationDbContext _context;
-        private readonly DbSet<T> _dbSet;
+        protected readonly ApplicationDbContext _context;
+        protected readonly DbSet<T> _dbSet;
 
         public Repository(ApplicationDbContext context)
         {
@@ -21,10 +21,10 @@ namespace BankDirectoryApi.Infrastructure.Repositories
             _dbSet = _context.Set<T>();
         }
 
-          public async Task<Result<IEnumerable<T>>> GetAllAsync(CancellationToken cancellationToken) => 
-            await _dbSet.ToListAsync(cancellationToken);
+        public async Task<Result<IEnumerable<T>>> GetAllAsync(CancellationToken cancellationToken) =>
+          await _dbSet.ToListAsync(cancellationToken);
 
-       
+
         public async Task<Result<PaginatedResponse<T>>>
            GetAllAsync(ISpecification<T> spec, CancellationToken cancellationToken)
         {
@@ -67,7 +67,7 @@ namespace BankDirectoryApi.Infrastructure.Repositories
                             orderedQuery = query.OrderBy(ordering.OrderBy);
                         }
                     }
-                    else if(orderedQuery != null)
+                    else if (orderedQuery != null)
                     {
                         if (ordering.IsDescending)
                         {
@@ -104,17 +104,18 @@ namespace BankDirectoryApi.Infrastructure.Repositories
 
 
 
-        public async Task<Result<T>> GetByIdAsync(int id)  {
+        public async Task<Result<T>> GetByIdAsync(int id)
+        {
             var result = await _dbSet.FindAsync(id);
             if (result == null)
             {
                 return Result.Fail(new Error($"Entity with id {id} not found").WithMetadata
-                    ("StatusCode",HttpStatusCode.NotFound));
+                    ("StatusCode", HttpStatusCode.NotFound));
             }
             return Result.Ok(result);
         }
 
-      
+
 
         public async Task<Result<IEnumerable<T>>> FindAsync(Expression<Func<T, bool>> predicate)
             => await _dbSet.Where(predicate).ToListAsync();
@@ -122,7 +123,7 @@ namespace BankDirectoryApi.Infrastructure.Repositories
         public async Task AddAsync(T entity)
         {
             await _dbSet.AddAsync(entity);
-            
+
         }
         public void Update(T entity)
         {
@@ -135,5 +136,9 @@ namespace BankDirectoryApi.Infrastructure.Repositories
         }
 
         public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
+        public async Task<int> SaveChangesReturnStatusAsync()
+        {
+            return await _context.SaveChangesAsync();
+        }
     }
 }

@@ -2,8 +2,6 @@
 using BankDirectoryApi.API.Helpers;
 using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
-using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization;
-using BankDirectoryApi.Application.Services.Related.UserManagement;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -30,7 +28,9 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO model)
         {
-            var result = await _passwordService.ChangePasswordAsync(_userId,model.CurrentPassword, model.NewPassword);
+            var _clientInfo = ClientInfoHelper.GetClientInfo(HttpContext);
+            var result = await _passwordService.ChangePasswordAsync(
+                _userId,model.CurrentPassword, model.NewPassword, _clientInfo);
             return Ok(result);
         }
 

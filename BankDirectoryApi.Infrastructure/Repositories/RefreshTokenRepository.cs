@@ -6,57 +6,78 @@ using BankDirectoryApi.Common.Services;
 using System.Linq.Expressions;
 using FluentResults;
 using System.Net;
+using BankDirectoryApi.Common.Helpers;
+using BankDirectoryApi.Common.Errors;
 
 namespace BankDirectoryApi.Infrastructure.Repositories
 {
-    public class RefreshTokenRepository : Repository<RefreshToken>,IRefreshTokenRepository
+    /// <summary>
+    /// Repository for managing refresh tokens
+    /// </summary>
+    public class RefreshTokenRepository : Repository<RefreshToken>, IRefreshTokenRepository
     {
-        private readonly ApplicationDbContext _context;
         private readonly IDateTimeProvider _dateTimeProvider;
 
-        public RefreshTokenRepository(ApplicationDbContext context,IDateTimeProvider dateTimeProvider) : base(context)
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="dateTimeProvider"></param>
+        public RefreshTokenRepository(ApplicationDbContext context, IDateTimeProvider dateTimeProvider)
+            : base(context) // Pass the context to the base class constructor
         {
-            _context = context;
             _dateTimeProvider = dateTimeProvider;
         }
-        private  Expression<Func<RefreshToken, bool>> IsValidToken()
+
+        /// <summary>
+        /// Check if the refresh token is valid
+        /// </summary>
+        /// <returns>Expression to check if the refresh token is valid</returns>
+        private Expression<Func<RefreshToken, bool>> IsValidToken()
         {
             return rt => !rt.IsRevoked
                       && !rt.IsUsed
                       && rt.ExpirationDate > _dateTimeProvider.UtcNow.Value;
         }
 
-
-        public async Task<Result<bool>> RevokeAllRefreshTokensAsync(string userId, string sessionId, string? RevokedByIp)
+        /// <summary>
+        /// Revoke all refresh tokens for a user
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="sessionId"></param>
+        /// <param name="RevokedByIp"></param>
+        /// <returns>The status of the operation</returns>
+        public async Task<Result> RevokeAllRefreshTokensAsync(string userId, string sessionId, string? RevokedByIp)
         {
-            if (string.IsNullOrEmpty(userId)) 
-                return Result.Fail(new Error("User Id is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
-            if (string.IsNullOrEmpty(sessionId))
-                return Result.Fail(new Error("Session Id is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
-         
-                var refreshTokens = await _context.RefreshTokens
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId, "userId");
+            if (validationResult.IsFailed)
+                return validationResult;
+            validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(sessionId, "sessionId");
+            if (validationResult.IsFailed)
+                return validationResult;
+
+            var refreshTokens = await _context.RefreshTokens
                 .Where(rt => rt.UserId == userId && rt.SessionId == sessionId)
                 .Where(IsValidToken()).ToListAsync();
-            refreshTokens.ForEach(rt => {
+
+            refreshTokens.ForEach(rt =>
+            {
                 rt.IsRevoked = true;
                 rt.RevokedByIp = RevokedByIp;
             });
-            var rowsAffected = await _context.SaveChangesAsync();
-            if (rowsAffected == 0)
-                return Result.Fail(new Error("No refresh tokens were revoked")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
-            if (rowsAffected < 0)
-                return Result.Fail(new Error("An error occurred while revoking refresh tokens")
-                    .WithMetadata("StatusCode", HttpStatusCode.InternalServerError));
-            return Result.Ok(true);
+            return Result.Ok();
         }
-        public async Task<Result<bool>> RevokeAllRefreshTokensAsync(string userId,string RevokedByIp)
+        /// <summary>
+        /// Revoke all refresh tokens for a user
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="RevokedByIp"></param>
+        /// <returns>The status of the operation</returns>
+        public async Task<Result> RevokeAllRefreshTokensAsync(string userId, string RevokedByIp)
         {
-            if (string.IsNullOrEmpty(userId))
-                return Result.Fail(new Error("User Id is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId, "userId");
+            if (validationResult.IsFailed)
+                return validationResult;
 
             var refreshTokens = await _context.RefreshTokens
                 .Where(rt => rt.UserId == userId)
@@ -66,20 +87,19 @@ namespace BankDirectoryApi.Infrastructure.Repositories
                 rt.IsRevoked = true;
                 rt.RevokedByIp = RevokedByIp;
             });
-            var rowsAffected = await _context.SaveChangesAsync();
-            if (rowsAffected == 0)
-                return Result.Fail(new Error("No refresh tokens were revoked")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
-            if (rowsAffected < 0)
-                return Result.Fail(new Error("An error occurred while revoking refresh tokens")
-                    .WithMetadata("StatusCode", HttpStatusCode.InternalServerError));
-            return Result.Ok(true);
+           
+            return Result.Ok();
         }
-        public async Task<Result<bool>> RevokeAllRefreshTokensAsync(string userId)
+        /// <summary>
+        /// Revoke all refresh tokens for a user
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns>The status of the operation</returns>
+        public async Task<Result> RevokeAllRefreshTokensAsync(string userId)
         {
-            if (string.IsNullOrEmpty(userId))
-                return Result.Fail(new Error("User Id is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId, "userId");
+            if (validationResult.IsFailed)
+                return validationResult;
 
             var refreshTokens = await _context.RefreshTokens
                 .Where(rt => rt.UserId == userId)
@@ -88,46 +108,37 @@ namespace BankDirectoryApi.Infrastructure.Repositories
             {
                 rt.IsRevoked = true;
             });
-            var rowsAffected = await _context.SaveChangesAsync();
-            if (rowsAffected == 0)
-                return Result.Fail(new Error("No refresh tokens were revoked")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
-            if (rowsAffected < 0)
-                return Result.Fail(new Error("An error occurred while revoking refresh tokens")
-                    .WithMetadata("StatusCode", HttpStatusCode.InternalServerError));
-            return Result.Ok(true);
+           
+            return Result.Ok();
         }
-        public async Task<Result<bool>> RotateRefreshTokenAsync(string oldTokenHash,RefreshToken newToken)
+        /// <summary>
+        /// Rotate the refresh token with the given hash by the new refresh token
+        /// </summary>
+        /// <param name="oldTokenHash"></param>
+        /// <param name="newToken"></param>
+        /// <returns>The status of the operation</returns>
+        public async Task<Result> RotateRefreshTokenAsync(string oldTokenHash, RefreshToken newToken)
         {
-            if (string.IsNullOrEmpty(oldTokenHash))
-                return Result.Fail(new Error("Old token hash is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
-            if (newToken == null)
-                return Result.Fail(new Error("New token is required")
-                    .WithMetadata("StatusCode", HttpStatusCode.BadRequest));
+           var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(oldTokenHash, "oldTokenHash");
+            if (validationResult.IsFailed)
+                return validationResult;
+            validationResult = ValidationHelper.ValidateNullModel(newToken, "newToken");
+            if (validationResult.IsFailed)
+                return validationResult;
 
-            var refreshToken = await _context.RefreshTokens.Where(rt=>
+          
+            var refreshToken = await _context.RefreshTokens.Where(rt =>
             rt.TokenHash == oldTokenHash).Where(IsValidToken()).FirstOrDefaultAsync();
             if (refreshToken == null)
                 return Result.Fail(new Error("Refresh token not found")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
             newToken.UserId = refreshToken.UserId;
             _context.RefreshTokens.Add(newToken);
 
             refreshToken.IsUsed = true;
             refreshToken.ReplacedByTokenHash = newToken.TokenHash;
-
-            var rowsAffected = await _context.SaveChangesAsync();
-            if (rowsAffected == 0)
-                return Result.Fail(new Error("No refresh tokens were revoked")
-                    .WithMetadata("StatusCode", HttpStatusCode.NotFound));
-            if (rowsAffected < 0)
-                return Result.Fail(new Error("An error occurred while revoking refresh tokens")
-                    .WithMetadata("StatusCode", HttpStatusCode.InternalServerError));
-            return Result.Ok(true);
+            return Result.Ok();
         }
-      
-
     }
 
 }

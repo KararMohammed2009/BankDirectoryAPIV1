@@ -22,15 +22,18 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<PasswordService> _logger;
+        private readonly IRefreshTokenService _refreshTokenService;
         public PasswordService(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager
-            ,ILogger<PasswordService> logger)
+            ,ILogger<PasswordService> logger,
+IRefreshTokenService refreshTokenService)
         {
 
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
+            _refreshTokenService = refreshTokenService;
         }
 
         /// <summary>
@@ -128,7 +131,8 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         /// <param name="currentPassword"></param>
         /// <param name="newPassword"></param>
         /// <returns>The value of the user id</returns>
-        public async Task<Result<string>> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+        public async Task<Result<string>> ChangePasswordAsync(string userId, 
+            string currentPassword, string newPassword, ClientInfo clientInfo)
         {
 
            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId, "userId");
@@ -153,6 +157,10 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             if (!result.Succeeded)
                 return Result.Fail(new Error("Change Password failed by UserManager<ApplicationUser>")
                     .WithMetadata("ErrorCode", CommonErrors.UnexpectedError)).IncludeIdentityErrors(result);
+           
+            var revokeResult = await _refreshTokenService.RevokeAllRefreshTokensAsync(userId,clientInfo?.IpAddress);
+            if (revokeResult.IsFailed)
+                return revokeResult.ToResult<string>();
             return Result.Ok(user.Id);
 
         }

@@ -111,8 +111,15 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             var validationResult = ValidationHelper.ValidateNullModel(refreshToken, "refreshToken");
             if (validationResult.IsFailed)
                 return validationResult.ToResult<RefreshToken>();
-             await _refreshTokenRepository.AddAsync(refreshToken);
-            await _refreshTokenRepository.SaveChangesAsync();
+
+            await _refreshTokenRepository.AddAsync(refreshToken);
+            var result = await _refreshTokenRepository.SaveChangesReturnStatusAsync();
+            if (result == 0)
+                return Result.Fail(new Error("Store RefreshToken failed : No refresh token was stored")
+                    .WithMetadata("ErrorCode", CommonErrors.UnexpectedError));
+            if (result < 0)
+                return Result.Fail(new Error("Store RefreshToken failed : An error occurred while storing refresh token")
+                    .WithMetadata("ErrorCode", CommonErrors.UnexpectedError));
             return  Result.Ok(refreshToken);
         }
         /// <summary>
@@ -135,9 +142,18 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             var hashedOldRefreshTokenResult = _hashService.GetHash(oldRefreshToken);
             if (hashedOldRefreshTokenResult.IsFailed)
                 return hashedOldRefreshTokenResult.ToResult<RefreshToken>();
-            await _refreshTokenRepository.RotateRefreshTokenAsync(
+            var rotateResult = await _refreshTokenRepository.RotateRefreshTokenAsync(
                 hashedOldRefreshTokenResult.Value, newRefreshToken);
-            await _refreshTokenRepository.SaveChangesAsync();
+            if (rotateResult.IsFailed)
+                return rotateResult.ToResult<RefreshToken>();
+            var result = await _refreshTokenRepository.SaveChangesReturnStatusAsync();
+            if (result == 0)
+                return Result.Fail(new Error("Rotate RefreshToken failed : No refresh token was rotated")
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
+            if (result < 0)
+                return Result.Fail(new Error("Rotate RefreshToken failed : An error occurred while rotating refresh token")
+                    .WithMetadata("ErrorCode", CommonErrors.UnexpectedError));
+            
             return Result.Ok(newRefreshToken);
 
         }
@@ -156,10 +172,46 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(sessionId, "sessionId");
             if (validationResult.IsFailed)
                 return validationResult.ToResult<string>();
+
+
+            var revokeResult = await _refreshTokenRepository.RevokeAllRefreshTokensAsync(userId, sessionId, ipAddress);
+            if (revokeResult.IsFailed)
+                return revokeResult.ToResult<string>();
+            var result = await _refreshTokenRepository.SaveChangesReturnStatusAsync();
+            if (result == 0)
+                return Result.Fail(new Error("Revoke RefreshToken failed : No refresh token was revoked")
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
+            if (result < 0)
+                return Result.Fail(new Error("Revoke RefreshToken failed : An error occurred while revoking refresh token")
+                    .WithMetadata("ErrorCode", CommonErrors.UnexpectedError));
+            return Result.Ok(userId);
+
+        }
+        /// <summary>
+        /// Revoke a refresh token
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="sessionId"></param>
+        /// <param name="ipAddress"></param>
+        /// <returns>The value of user id</returns>
+        public async Task<Result<string>> RevokeAllRefreshTokensAsync(string userId, string? ipAddress)
+        {
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId, "userId");
+            if (validationResult.IsFailed)
+                return validationResult.ToResult<string>();
            
-          
-             await _refreshTokenRepository.RevokeAllRefreshTokensAsync(userId,sessionId,ipAddress);
-            await _refreshTokenRepository.SaveChangesAsync();
+
+
+            var revokeResult = await _refreshTokenRepository.RevokeAllRefreshTokensAsync(userId, ipAddress);
+            if (revokeResult.IsFailed)
+                return revokeResult.ToResult<string>();
+            var result = await _refreshTokenRepository.SaveChangesReturnStatusAsync();
+            if (result == 0)
+                return Result.Fail(new Error("Revoke RefreshToken failed : No refresh token was revoked")
+                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
+            if (result < 0)
+                return Result.Fail(new Error("Revoke RefreshToken failed : An error occurred while revoking refresh token")
+                    .WithMetadata("ErrorCode", CommonErrors.UnexpectedError));
             return Result.Ok(userId);
 
         }
