@@ -7,10 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Logging\**" />
+    <EmbeddedResource Remove="Logging\**" />
+    <None Remove="Logging\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Classes\" />
     <Folder Include="Constants\" />
     <Folder Include="Interfaces\" />
-    <Folder Include="Logging\" />
   </ItemGroup>
 
   <ItemGroup>

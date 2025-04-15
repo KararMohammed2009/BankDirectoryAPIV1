@@ -1,15 +1,7 @@
-﻿using BankDirectoryApi.Application.Exceptions;
-using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
+﻿using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.Common.Services;
 using FluentResults;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization
 {

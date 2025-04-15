@@ -1,5 +1,4 @@
 ﻿using BankDirectoryApi.Application.DTOs.Related.Communications;
-using BankDirectoryApi.Application.Exceptions;
 using BankDirectoryApi.Application.Interfaces.Related.Communications;
 using BankDirectoryApi.Application.Interfaces.Related.UserManagement;
 using FluentResults;
