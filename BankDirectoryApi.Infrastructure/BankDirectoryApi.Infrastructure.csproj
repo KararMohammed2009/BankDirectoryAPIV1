@@ -21,9 +21,11 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.2" />
+    <PackageReference Include="Twilio" Version="7.10.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BankDirectoryApi.Application\BankDirectoryApi.Application.csproj" />
     <ProjectReference Include="..\BankDirectoryApi.Common\BankDirectoryApi.Common.csproj" />
     <ProjectReference Include="..\BankDirectoryApi.Domain\BankDirectoryApi.Domain.csproj" />
   </ItemGroup>
