@@ -31,8 +31,8 @@ using BankDirectoryApi.Domain.Entities.Identity;
 using BankDirectoryApi.API.Mappings.Interfaces;
 using BankDirectoryApi.API.Mappings.Classes;
 using Microsoft.OpenApi.Models;
-using BankDirectoryApi.Application.Interfaces.Related.VerificationServices;
-using BankDirectoryApi.Infrastructure.Services;
+using BankDirectoryApi.Application.Interfaces.Related.ThirdParties;
+using BankDirectoryApi.Infrastructure.Services.ThirdParties;
 
 namespace BankDirectoryApi.API.Extensions
 {

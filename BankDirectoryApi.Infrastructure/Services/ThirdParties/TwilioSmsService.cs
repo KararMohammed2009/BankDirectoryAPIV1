@@ -1,4 +1,4 @@
-﻿using BankDirectoryApi.Application.Interfaces.Related.VerificationServices;
+﻿using BankDirectoryApi.Application.Interfaces.Related.ThirdParties;
 using BankDirectoryApi.Common.Helpers;
 using FluentResults;
 using Microsoft.Extensions.Configuration;
@@ -8,7 +8,7 @@ using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
 
-namespace BankDirectoryApi.Infrastructure.Services
+namespace BankDirectoryApi.Infrastructure.Services.ThirdParties
 {
     /// <summary>
     /// Service for sending SMS using Twilio.
@@ -28,11 +28,11 @@ namespace BankDirectoryApi.Infrastructure.Services
         /// <param name="logger"></param>
         /// <exception cref="ArgumentException"></exception>
         public TwilioSmsService(
-            IConfiguration configration,
+            IConfiguration configuration,
             ILogger<TwilioSmsService> logger
             )
         {
-            _configuration = configration;
+            _configuration = configuration;
             _twilioAccountSid = SecureVariablesHelper.GetSecureVariable(
                 "TWILIO_ACCOUNT_SID",
                 _configuration,

@@ -3,7 +3,7 @@ using BankDirectoryApi.API.Helpers;
 using BankDirectoryApi.API.Mappings.Interfaces;
 using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
-using BankDirectoryApi.Application.Interfaces.Related.VerificationServices;
+using BankDirectoryApi.Application.Interfaces.Related.ThirdParties;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -33,8 +33,6 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
         [HttpPost]
         public async Task<IActionResult> Login([FromBody] LoginUserDTO model)
         {
-           //var res =await _smsService.SendSmsAsync("+9647821790617", "Hello World ahmed");
-          var res = await _emailService.SendEmailAsync("karar.m2009@outlook.com", "Test", "Hello World");
             var _clientInfo = ClientInfoHelper.GetClientInfo(HttpContext);
                 var result = await _authenticationService.LoginAsync(model, _clientInfo);
                 return _actionGlobalMapper.MapResultToApiResponse(result);

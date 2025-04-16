@@ -1,20 +1,17 @@
-﻿using BankDirectoryApi.Application.Interfaces.Related.VerificationServices;
-using BankDirectoryApi.Common.Errors;
+﻿using BankDirectoryApi.Common.Errors;
 using BankDirectoryApi.Common.Helpers;
 using FluentResults;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using SendGrid.Helpers.Mail.Model;
 using SendGrid.Helpers.Mail;
 using SendGrid;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using BankDirectoryApi.Application.Interfaces.Related.ThirdParties;
 
-namespace BankDirectoryApi.Infrastructure.Services
+namespace BankDirectoryApi.Infrastructure.Services.ThirdParties
 {
+    /// <summary>
+    /// Service for sending emails using Twilio SendGrid.
+    /// </summary>
     public class TwilioEmailService : IEmailService
     {
         private readonly IConfiguration _configuration;
@@ -22,25 +19,39 @@ namespace BankDirectoryApi.Infrastructure.Services
         private readonly string _apiKey;
         private readonly string _fromEmail;
         private readonly string _fromName;
+        /// <summary>
+        /// Constructor for TwilioEmailService.
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <param name="logger"></param>
         public TwilioEmailService(IConfiguration configuration,
             ILogger<TwilioEmailService> logger)
         {
             _logger = logger;
             _configuration = configuration;
             _apiKey = SecureVariablesHelper.GetSecureVariable(
-                "TWILIO_API_KEY",
+                "SENDGRID_API_KEY",
                 _configuration,
-                "Email:Twilio:ApiKey",_logger).Value;
+                "Email:SendGrid:ApiKey",_logger).Value;
             _fromEmail = SecureVariablesHelper.GetSecureVariable(
-                "TWILIO_FROM_EMAIL",
+                "SENDGRID_FROM_EMAIL",
                 _configuration,
-                "Email:Twilio:FromEmail",_logger).Value;
+                "Email:SendGrid:FromEmail", _logger).Value;
             _fromName = SecureVariablesHelper.GetSecureVariable(
-                "TWILIO_FROM_NAME",
+                "SENDGRID_FROM_NAME",
                 _configuration,
-                "Email:Twilio:FromName",_logger).Value;
+                "Email:SendGrid:FromName", _logger).Value;
         }
-        public async Task<Result> SendEmailAsync(string to, string subject, string body)
+        /// <summary>
+        /// Sends an email asynchronously using Twilio SendGrid.
+        /// </summary>
+        /// <param name="to"></param>
+        /// <param name="subject"></param>
+        /// <param name="plainTextContent"></param>
+        /// <param name="htmlContent"></param>
+        /// <returns>The result of the email sending operation.</returns>
+        public async Task<Result> SendEmailAsync(string to,
+            string subject,string plainTextContent, string htmlContent)
         {
             var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(to, nameof(to));
             if (validationResult.IsFailed)
@@ -48,23 +59,27 @@ namespace BankDirectoryApi.Infrastructure.Services
             validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(subject, nameof(subject));
             if (validationResult.IsFailed)
                 return Result.Fail(validationResult.Errors);
-            validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(body, nameof(body));
-            if (validationResult.IsFailed)
-                return Result.Fail(validationResult.Errors);
+            validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(htmlContent, nameof(htmlContent));
+            var validationResultForPlainText = ValidationHelper.ValidateNullOrWhiteSpaceString(plainTextContent, nameof(plainTextContent));
+            if(validationResult.IsFailed && validationResultForPlainText.IsFailed)
+            {
+                return Result.Fail(errors: 
+                    validationResult.Errors.Concat(validationResultForPlainText.Errors).ToList());
+            }
+                
             try
             {
                 var client = new SendGridClient(_apiKey);
                 var from = new EmailAddress(_fromEmail, _fromName);
                 var toEmail = new EmailAddress(to);
-                var msg = MailHelper.CreateSingleEmail(from, toEmail, subject, plainTextContent: null, body);
+                var msg = MailHelper.CreateSingleEmail(from, toEmail, subject, plainTextContent, htmlContent);
                 var response = await client.SendEmailAsync(msg);
-
+                var message =await  response.Body.ReadAsStringAsync();
                 if (!response.IsSuccessStatusCode)
                 {
                     _logger.LogError($"Failed to send email. Status code: {response.StatusCode}, Body: {await response.Body.ReadAsStringAsync()}");
                     return Result.Fail(new Error("Failed to send email using Twilio")
-                        
-                        .WithMetadata("ErrorCode", CommonErrors.OperationFailed));
+                    .WithMetadata("ErrorCode", CommonErrors.OperationFailed));
                 }
                 return Result.Ok();
             }

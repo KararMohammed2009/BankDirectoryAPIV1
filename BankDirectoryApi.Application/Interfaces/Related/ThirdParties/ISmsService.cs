@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BankDirectoryApi.Application.Interfaces.Related.VerificationServices
+namespace BankDirectoryApi.Application.Interfaces.Related.ThirdParties
 {
     /// <summary>
     /// Interface for SMS service.
