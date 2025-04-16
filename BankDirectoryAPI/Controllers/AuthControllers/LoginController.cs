@@ -3,6 +3,7 @@ using BankDirectoryApi.API.Helpers;
 using BankDirectoryApi.API.Mappings.Interfaces;
 using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
+using BankDirectoryApi.Application.Interfaces.Related.VerificationServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,19 +16,26 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
     {
         private readonly IAuthenticationService _authenticationService;
         private readonly IActionGlobalMapper _actionGlobalMapper;
+        private readonly ISmsService _smsService;
+        private readonly IEmailService _emailService;
 
         public LoginController(IAuthenticationService authenticationService
-            ,IActionGlobalMapper actionGlobalMapper)
+            ,IActionGlobalMapper actionGlobalMapper,
+            ISmsService smsService,
+            IEmailService emailService)
         {
             _authenticationService = authenticationService;
             _actionGlobalMapper = actionGlobalMapper;
+            _smsService = smsService;
+            _emailService = emailService;
         }
 
         [HttpPost]
         public async Task<IActionResult> Login([FromBody] LoginUserDTO model)
         {
-           
-                var _clientInfo = ClientInfoHelper.GetClientInfo(HttpContext);
+           //var res =await _smsService.SendSmsAsync("+9647821790617", "Hello World ahmed");
+          var res = await _emailService.SendEmailAsync("karar.m2009@outlook.com", "Test", "Hello World");
+            var _clientInfo = ClientInfoHelper.GetClientInfo(HttpContext);
                 var result = await _authenticationService.LoginAsync(model, _clientInfo);
                 return _actionGlobalMapper.MapResultToApiResponse(result);
 

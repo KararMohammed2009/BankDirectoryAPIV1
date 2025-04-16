@@ -31,6 +31,8 @@ using BankDirectoryApi.Domain.Entities.Identity;
 using BankDirectoryApi.API.Mappings.Interfaces;
 using BankDirectoryApi.API.Mappings.Classes;
 using Microsoft.OpenApi.Models;
+using BankDirectoryApi.Application.Interfaces.Related.VerificationServices;
+using BankDirectoryApi.Infrastructure.Services;
 
 namespace BankDirectoryApi.API.Extensions
 {
@@ -117,13 +119,18 @@ namespace BankDirectoryApi.API.Extensions
         }
         public static void AddTheAuthorization(this WebApplicationBuilder builder)
         {
-           builder.Services.AddAuthorization(options =>
+            builder.Services.AddAuthorization(options =>
             {
                 options.AddPolicy("CanAccessSomething", policy =>
-                    policy.RequireClaim("CanAccessSomething", "true")); 
+                    policy.RequireClaim("CanAccessSomething", "true"));
             });
 
 
+        }
+        public static void AddTheExternalServices(this WebApplicationBuilder builder)
+        {
+            builder.Services.AddScoped<ISmsService, TwilioSmsService>();
+            builder.Services.AddScoped<IEmailService, TwilioEmailService>();
         }
 
         public static void AddTheUserServices(this WebApplicationBuilder builder)

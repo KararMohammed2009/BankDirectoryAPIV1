@@ -3,6 +3,8 @@ using BankDirectoryApi.Common.Helpers;
 using FluentResults;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Identity.Client;
+using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
 
@@ -11,35 +13,41 @@ namespace BankDirectoryApi.Infrastructure.Services
     /// <summary>
     /// Service for sending SMS using Twilio.
     /// </summary>
-    public class TwilloSmsService : ISmsService
+    public class TwilioSmsService : ISmsService
     {
         private readonly IConfiguration _configuration;
         private readonly string _twilioAccountSid;
         private readonly string _twilioAuthToken;
         private readonly string _twilioFromNumber;
-        private readonly ILogger<TwilloSmsService> _logger;
+        private readonly ILogger<TwilioSmsService> _logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TwilloSmsService"/> class.
+        /// Initializes a new instance of the <see cref="TwilioSmsService"/> class.
         /// </summary>
         /// <param name="configration"></param>
         /// <param name="logger"></param>
         /// <exception cref="ArgumentException"></exception>
-        public TwilloSmsService(
+        public TwilioSmsService(
             IConfiguration configration,
-            ILogger<TwilloSmsService> logger
+            ILogger<TwilioSmsService> logger
             )
         {
             _configuration = configration;
-            _twilioAccountSid = _configuration["Sms:Twilio:AccountSid"]!;
-            _twilioAuthToken = _configuration["Sms:Twilio:AuthToken"]!;
-            _twilioFromNumber = _configuration["Sms:Twilio:FromNumber"]!;
-            if (string.IsNullOrWhiteSpace(_twilioAccountSid) ||
-                string.IsNullOrWhiteSpace(_twilioAuthToken) ||
-                string.IsNullOrWhiteSpace(_twilioFromNumber))
-            {
-                throw new ArgumentException("Twilio configuration is missing.");
-            }
+            _twilioAccountSid = SecureVariablesHelper.GetSecureVariable(
+                "TWILIO_ACCOUNT_SID",
+                _configuration,
+                "Sms:Twilio:AccountSid",
+                logger).Value;
+            _twilioAuthToken = SecureVariablesHelper.GetSecureVariable("TWILIO_AUTH_TOKEN",
+                _configuration,
+                "Sms:Twilio:AuthToken",
+                logger).Value;
+            _twilioFromNumber = SecureVariablesHelper.GetSecureVariable(
+                "TWILIO_FROM_NUMBER",
+                _configuration,
+                "Sms:Twilio:FromNumber",
+                logger).Value;
+            
             _logger = logger;
         }
         /// <summary>
@@ -59,6 +67,7 @@ namespace BankDirectoryApi.Infrastructure.Services
 
             try
             {
+                TwilioClient.Init(_twilioAccountSid, _twilioAuthToken);
                 var theMessage = await MessageResource.CreateAsync(
                body: message,
                from: new PhoneNumber(_twilioFromNumber),
