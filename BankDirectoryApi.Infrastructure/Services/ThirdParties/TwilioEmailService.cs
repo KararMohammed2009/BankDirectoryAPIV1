@@ -87,7 +87,7 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties
             {
                 _logger.LogError(ex, "Error sending email using Twilio");
                 return Result.Fail(new Error("Error sending email using Twilio").CausedBy(ex)
-                    .WithMetadata("ErrorCode", CommonErrors.UnexpectedError));
+                    .WithMetadata("ErrorCode", CommonErrors.ThirdPartyServiceError));
             }
 
         }

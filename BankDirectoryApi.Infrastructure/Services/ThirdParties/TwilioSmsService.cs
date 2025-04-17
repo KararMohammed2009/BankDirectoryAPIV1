@@ -1,4 +1,5 @@
 ﻿using BankDirectoryApi.Application.Interfaces.Related.ThirdParties;
+using BankDirectoryApi.Common.Errors;
 using BankDirectoryApi.Common.Helpers;
 using FluentResults;
 using Microsoft.Extensions.Configuration;
@@ -83,8 +84,9 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties
             }
             catch (Exception ex)
             {
-                _logger.LogError($"An error occurred while sending SMS: {ex.Message}");
-                return Result.Fail($"An error occurred while sending SMS: {ex.Message}");
+               _logger.LogError(ex, "Error sending SMS to {PhoneNumber}", phoneNumber);
+                return Result.Fail(new Error("Failed to send SMS.")
+                    .WithMetadata("ErrorCode", CommonErrors.ThirdPartyServiceError));
             }
         }
 

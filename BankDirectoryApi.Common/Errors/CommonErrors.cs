@@ -53,7 +53,7 @@ namespace BankDirectoryApi.Common.Errors
         ConfigurationError = 5004,
         UnexpectedError = 5005,
         OperationFailed = 5006,
-
+        ThirdPartyServiceError = 5007,
 
         //Concurrency Errors
         ConcurrencyFailure = 6000,

@@ -1,9 +1,4 @@
 ﻿using FluentResults;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Application.Interfaces.Related.ThirdParties.Verification
 {
@@ -23,7 +18,7 @@ namespace BankDirectoryApi.Application.Interfaces.Related.ThirdParties.Verificat
         /// </summary>
         /// <param name="email"></param>
         /// <param name="code"></param>
-        /// <returns>The result of the verification operation.</returns>
+        /// <returns>The result of the verification operation with a boolean indicating success.</returns>
         Task<Result<bool>> VerifyCodeAsync(string email, string code);
     }
 }

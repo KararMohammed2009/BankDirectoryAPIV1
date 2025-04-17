@@ -9,23 +9,20 @@ using Twilio.Rest.Verify.V2.Service;
 
 namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
 {
-    /// <summary>
-    /// Service for sending SMS verification codes using Twilio.
-    /// </summary>
-    public class TwilioSmsVerificationService:ISmsVerificationService
+    public class TwilioEmailVerificationService : IEmailVerificationService
     {
         private readonly IConfiguration _configuration;
         private readonly string _twilioAccountSid;
         private readonly string _twilioAuthToken;
         private readonly string _serviceSid;
-        private readonly ILogger<TwilioSmsVerificationService> _logger;
+        private readonly ILogger<TwilioEmailVerificationService> _logger;
         /// <summary>
-        /// Constructor for TwilioSmsVerificationService.
+        /// Constructor for TwilioEmailVerificationService.
         /// </summary>
         /// <param name="configuration"></param>
         /// <param name="logger"></param>
-        public TwilioSmsVerificationService(IConfiguration configuration,
-            ILogger<TwilioSmsVerificationService> logger)
+        public TwilioEmailVerificationService(IConfiguration configuration,
+            ILogger<TwilioEmailVerificationService> logger)
         {
             _configuration = configuration;
             _twilioAccountSid = SecureVariablesHelper.GetSecureVariable(
@@ -44,45 +41,44 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
                 logger).Value;
 
             _logger = logger;
-
         }
         /// <summary>
-        /// Sends a verification code to the specified phone number using Twilio.
+        /// Sends a verification code to the specified email address using Twilio.
         /// </summary>
-        /// <param name="phoneNumber"></param>
+        /// <param name="email"></param>
         /// <returns>The result of the verification code sending operation.</returns>
-        public async Task<Result> SendVerificationCodeAsync(string phoneNumber)
+        public async Task<Result> SendVerificationCodeAsync(string email)
         {
-            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(phoneNumber, nameof(phoneNumber));
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(email, nameof(email));
             if (validationResult.IsFailed)
-                return Result.Fail(validationResult.Errors);
+                return (Result.Fail(validationResult.Errors));
             try
             {
+
                 TwilioClient.Init(_twilioAccountSid, _twilioAuthToken);
                 var verification = await VerificationResource.CreateAsync(
-                    to: phoneNumber,
-                    channel: "sms",
-                    pathServiceSid: _serviceSid
-                );
-               
+                   to: email,
+                   channel: "email",
+                   pathServiceSid: _serviceSid
+               );
                 return Result.Ok();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error sending verification code.");
-                return Result.Fail(new Error("Error sending verification code.")
-                    .WithMetadata("ErrorCode",CommonErrors.ThirdPartyServiceError));
+                _logger.LogError(ex, "Error sending verification code to email: {Email}", email);
+                return Result.Fail(new Error("Failed to send verification code.")
+                    .WithMetadata("ErrorCode", CommonErrors.ThirdPartyServiceError));
             }
         }
         /// <summary>
-        /// Verifies the code sent to the user's phone number.
+        /// Verifies the provided code for the specified email address using Twilio.
         /// </summary>
-        /// <param name="phoneNumber"></param>
+        /// <param name="email"></param>
         /// <param name="code"></param>
-        /// <returns>The result of the verification operation with a boolean indicating success or failure.</returns>
-        public async Task<Result<bool>> VerifyCodeAsync(string phoneNumber, string code)
+        /// <returns>The result of the verification operation , true if the code is valid, false otherwise.</returns>
+        public async Task<Result<bool>> VerifyCodeAsync(string email, string code)
         {
-            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(phoneNumber, nameof(phoneNumber));
+            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(email, nameof(email));
             if (validationResult.IsFailed)
                 return Result.Fail(validationResult.Errors);
             validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(code, nameof(code));
@@ -92,7 +88,7 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
             {
                 TwilioClient.Init(_twilioAccountSid, _twilioAuthToken);
                 var verificationCheck = await VerificationCheckResource.CreateAsync(
-                    to: phoneNumber,
+                    to: email,
                     code: code,
                     pathServiceSid: _serviceSid
                 );
@@ -107,10 +103,11 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error verifying code.");
-                return Result.Fail(new Error("Error verifying code.")
+                _logger.LogError(ex, "Error verifying code for email: {Email}", email);
+                return Result.Fail(new Error("Failed to verify code.")
                     .WithMetadata("ErrorCode", CommonErrors.ThirdPartyServiceError));
             }
         }
+
     }
 }
