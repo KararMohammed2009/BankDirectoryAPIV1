@@ -48,7 +48,7 @@ if (builder.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.MapControllers();
 //app.InitializeDatabase();
 app.Run();

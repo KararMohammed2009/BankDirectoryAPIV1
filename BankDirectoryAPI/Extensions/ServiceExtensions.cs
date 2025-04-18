@@ -24,13 +24,12 @@ using BankDirectoryApi.Application.Services.Related.Communications;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization.TokensHandlers;
 using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt;
 
-using System.IdentityModel.Tokens.Jwt;
+using Microsoft.OpenApi.Models;
 using BankDirectoryApi.API.Validators.Auth;
 using Serilog;
 using BankDirectoryApi.Domain.Entities.Identity;
 using BankDirectoryApi.API.Mappings.Interfaces;
 using BankDirectoryApi.API.Mappings.Classes;
-using Microsoft.OpenApi.Models;
 using BankDirectoryApi.Application.Interfaces.Related.ThirdParties;
 using BankDirectoryApi.Infrastructure.Services.ThirdParties;
 
@@ -167,8 +166,8 @@ namespace BankDirectoryApi.API.Extensions
       
         public static void AddTheSwagger(this WebApplicationBuilder builder)
         {
-
-            if (builder.Environment.IsDevelopment())
+            var swaggerEnabled = builder.Configuration.GetValue<bool>("Swagger:Enabled");
+            if (builder.Environment.IsDevelopment() || swaggerEnabled)
             {
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen(c =>
@@ -198,6 +197,8 @@ namespace BankDirectoryApi.API.Extensions
                         new string[] { }
                     }
                 });
+                    c.SwaggerDoc("v1", new OpenApiInfo { Title = "BankDirectoryApi", Version = "v1" });
+
                 }
             );
             }
@@ -252,8 +253,8 @@ namespace BankDirectoryApi.API.Extensions
         }
         public static void UseTheSwagger(this WebApplication app )
         {
-
-            if (app.Environment.IsDevelopment())
+            var swaggerEnabled = app.Configuration.GetValue<bool>("Swagger:Enabled");
+            if (app.Environment.IsDevelopment() || swaggerEnabled)
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
