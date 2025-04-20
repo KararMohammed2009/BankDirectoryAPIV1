@@ -1,14 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Swashbuckle.AspNetCore.Annotations;
 
 namespace BankDirectoryApi.Application.DTOs.Related.Communications
 {
+    /// <summary>
+    /// Data Transfer Object for email confirmation.
+    /// </summary>
     public class EmailConfirmationDTO
     {
-        public string Email { get; set; }
-        public string Token { get; set; }
+        [SwaggerSchema("The email address to be confirmed.", Nullable = false)]
+        public required string Email { get; set; }
+
+        [SwaggerSchema("The email confirmation token.", Nullable = false)]
+        public required string Token { get; set; }
     }
 }

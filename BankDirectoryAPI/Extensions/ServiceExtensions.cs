@@ -32,6 +32,7 @@ using BankDirectoryApi.API.Mappings.Interfaces;
 using BankDirectoryApi.API.Mappings.Classes;
 using BankDirectoryApi.Application.Interfaces.Related.ThirdParties;
 using BankDirectoryApi.Infrastructure.Services.ThirdParties;
+using BankDirectoryApi.API.Validators.Users;
 
 namespace BankDirectoryApi.API.Extensions
 {
@@ -83,6 +84,15 @@ namespace BankDirectoryApi.API.Extensions
             builder.Services.AddValidatorsFromAssemblyContaining<LoginUserDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<LogoutUserDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserDtoValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<UpdateUserDtoValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<ChangePasswordDtoValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<ResetPasswordDtoValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<EmailConfirmationDtoValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<ForgotPasswordDtoValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<PaginationInfoValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<RoleDtoValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<UserFilterDtoValidator>();
+
             #endregion
             builder.Services.AddValidatorsFromAssemblyContaining<BankDTOValidator>();
 
@@ -198,7 +208,8 @@ namespace BankDirectoryApi.API.Extensions
                     }
                 });
                     c.SwaggerDoc("v1", new OpenApiInfo { Title = "BankDirectoryApi", Version = "v1" });
-
+                    c.EnableAnnotations();
+                    c.SupportNonNullableReferenceTypes();
                 }
             );
             }
@@ -257,7 +268,10 @@ namespace BankDirectoryApi.API.Extensions
             if (app.Environment.IsDevelopment() || swaggerEnabled)
             {
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Your API Title v1");
+                });
             }
         }
     

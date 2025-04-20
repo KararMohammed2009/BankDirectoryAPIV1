@@ -87,7 +87,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
 
             var accessToken =  
                     _tokenGenerator.GenerateAccessToken(user.Value.Id,
-                    user.Value.UserName,user.Value.Email,user.Value.Roles, userClaims.Value);
+                    user.Value.UserName,user.Value.Email,user.Value.RolesNames, userClaims.Value);
             if (accessToken.IsFailed)
                 return accessToken.ToResult<AuthDTO>();
 
@@ -125,17 +125,17 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             if (checkPasswordResult.IsFailed)
                 return checkPasswordResult.ToResult<AuthDTO>();
 
-            model.UserId = checkPasswordResult.Value;
-            var user = await _userService.GetUserByIdAsync(model.UserId);
-            var roles = await _roleService.GetRolesAsync(model.UserId);
-            var claims = await _userService.GetUserCalimsAsync(model.UserId);
+            var userId = checkPasswordResult.Value;
+            var user = await _userService.GetUserByIdAsync(userId);
+            var roles = await _roleService.GetRolesAsync(userId);
+            var claims = await _userService.GetUserCalimsAsync(userId);
 
                 var accessToken =  _tokenGenerator.GenerateAccessToken
                     (user.Value.Id,user.Value.UserName,user.Value.Email,roles.Value,claims.Value);
                 if (accessToken.IsFailed)
                 return accessToken.ToResult<AuthDTO>();
             var refreshTokenResult = 
-                    _refreshTokenService.GenerateRefreshTokenEntity(model.UserId, clientInfo);
+                    _refreshTokenService.GenerateRefreshTokenEntity(userId, clientInfo);
             if (refreshTokenResult.IsFailed)
                 return refreshTokenResult.ToResult<AuthDTO>();
 
@@ -179,7 +179,7 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
 
             var claims = await _userService.GetUserCalimsAsync(userId);
                 var accessToken =  _tokenGenerator.GenerateAccessToken(
-                    userId,user.Value.UserName,user.Value.Email,user.Value.Roles,claims.Value);
+                    userId,user.Value.UserName,user.Value.Email,user.Value.RolesNames,claims.Value);
 
             if (accessToken.IsFailed)
                 return accessToken.ToResult<AuthDTO>();
@@ -252,7 +252,9 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                     {
                         Email = externalLoginInfo.Value.userDTO.UserName,
                         UserName = externalLoginInfo.Value.userDTO.Email,
-                    });
+                         Password = string.Empty,
+                         TwoFactorEnabled = false,
+                     });
                 if (userResult.IsFailed)
                     return userResult.ToResult<AuthDTO>();
                 user = userResult.Value;

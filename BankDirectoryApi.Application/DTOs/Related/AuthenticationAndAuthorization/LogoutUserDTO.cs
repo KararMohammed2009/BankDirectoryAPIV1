@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Swashbuckle.AspNetCore.Annotations;
 
 namespace BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization
 {
+    /// <summary>
+    /// DTO for logging out a user
+    /// </summary>
     public class LogoutUserDTO
     {
-       
-        public string SessionId { get; set; }
+        [SwaggerSchema("The identifier of the session to be logged out.", Nullable = false)]
+        public required string SessionId { get; set; }
     }
 }

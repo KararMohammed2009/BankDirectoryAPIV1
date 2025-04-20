@@ -13,7 +13,9 @@ using System.Net;
 
 namespace BankDirectoryApi.API.Controllers.AuthControllers
 {
-  
+    /// <summary>
+    /// Controller for handling user registration operations.
+    /// </summary>
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/Auth/Register")]
     [ApiController]
@@ -22,7 +24,11 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
     {
         private readonly IAuthenticationService _authenticationService;
         private readonly IActionGlobalMapper _actionGlobalMapper;
-
+        /// <summary>
+        /// Constructor for RegisterController.
+        /// </summary>
+        /// <param name="authenticationService"></param>
+        /// <param name="actionGlobalMapper"></param>
         public RegisterController(IAuthenticationService authenticationService,
             IActionGlobalMapper actionGlobalMapper)
         {
@@ -30,7 +36,11 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
             _actionGlobalMapper = actionGlobalMapper;
 
         }
-
+        /// <summary>
+        /// Handles user registration.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns>The result of the registration process.</returns>
         [HttpPost("Register")]
         public async Task<IActionResult> Register(RegisterUserDTO model)
         {

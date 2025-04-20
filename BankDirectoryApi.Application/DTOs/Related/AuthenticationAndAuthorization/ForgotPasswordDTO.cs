@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Swashbuckle.AspNetCore.Annotations;
+
 
 namespace BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization
 {
     public class ForgotPasswordDTO
     {
-        public string Email { get; set; }
+        [SwaggerSchema("The email address associated with the account for which the password reset is requested.", Nullable = false)]
+        public required string Email { get; set; }
     }
 }

@@ -69,7 +69,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             {
                 var user = users.Find(o => o.Id == item.Id);
                 var userRoles = await IdentityExceptionHelper.Execute(() => _userManager.GetRolesAsync(user!), _logger);
-                item.Roles = userRoles;
+                item.RolesNames = userRoles;
             }
             return Result.Ok( usersDtos);
 
@@ -93,7 +93,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
 
             var roles = await IdentityExceptionHelper.Execute(() => _userManager.GetRolesAsync(user), _logger);
             var userDTO = _mapper.Map<UserDTO>(user);
-            userDTO.Roles = roles;
+            userDTO.RolesNames = roles;
             return Result.Ok(userDTO);
         }
         /// <summary>
@@ -113,7 +113,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                     .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
             var roles = await IdentityExceptionHelper.Execute(() => _userManager.GetRolesAsync(user), _logger);
             var userDTO = _mapper.Map<UserDTO>(user);
-            userDTO.Roles = roles;
+            userDTO.RolesNames = roles;
             return Result.Ok(userDTO);
 
         }
@@ -134,7 +134,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                     .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
             var roles = await IdentityExceptionHelper.Execute(() => _userManager.GetRolesAsync(user), _logger);
             var userDTO = _mapper.Map<UserDTO>(user);
-            userDTO.Roles = roles;
+            userDTO.RolesNames = roles;
             return Result.Ok(userDTO);
            
         }
@@ -187,7 +187,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                 return Result.Fail(new Error($"Get User Roles failed by UserManager<ApplicationUser>")
                     .WithMetadata("ErrorCode", CommonErrors.OperationFailed));
             }
-                var desiredRoles = model.RoleNames ?? new List<string>();
+                var desiredRoles = model.RolesNames ?? new List<string>();
 
                 // Remove roles
                 var rolesToRemove = existedRoles.Except(desiredRoles).ToList();
@@ -272,7 +272,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             }
 
             result = await IdentityExceptionHelper.Execute(() => 
-            _userManager.AddToRolesAsync(user, model.Roles),_logger);
+            _userManager.AddToRolesAsync(user, model.RolesNames),_logger);
             if (!result.Succeeded)
             {
 

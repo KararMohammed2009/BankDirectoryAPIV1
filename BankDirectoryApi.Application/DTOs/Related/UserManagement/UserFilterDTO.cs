@@ -1,31 +1,33 @@
 ﻿using BankDirectoryApi.Domain.Attributes;
 using BankDirectoryApi.Domain.Classes.Pagination;
-using BankDirectoryApi.Domain.Entities;
 using BankDirectoryApi.Domain.Enums;
 using BankDirectoryApi.Domain.Entities.Identity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace BankDirectoryApi.Application.DTOs.Related.UserManagement
 {
     public class UserFilterDTO
     {
         [Filter(FilterType.Contains, typeof(ApplicationUser), nameof(ApplicationUser.UserName))]
-        public string UserName { get; set; }
+        [SwaggerSchema("UserName", Description = "The username of the user. This is a partial match filter.")]
+        public string? UserName { get; set; }
 
         [Filter(FilterType.Contains, typeof(ApplicationUser), nameof(ApplicationUser.Email))]
-        public string EmailAddress { get; set; }
+        [SwaggerSchema("EmailAddress", Description = "The email address of the user. This is a partial match filter.")]
+        public string? EmailAddress { get; set; }
 
         [Filter(FilterType.StartsWith, typeof(ApplicationUser), nameof(ApplicationUser.PhoneNumber))]
-        public string PhoneNumber { get; set; }
+        [SwaggerSchema("PhoneNumber", Description = "The phone number of the user. This is a partial match filter.")]
+        public string? PhoneNumber { get; set; }
 
         [Filter(FilterType.StartsWith, typeof(ApplicationRole), nameof(ApplicationRole.Name))]
-        public string RoleName { get; set; }
+        [SwaggerSchema("RoleName", Description = "The name of the role assigned to the user. This is a partial match filter.")]
+        public string? RoleName { get; set; }
 
-        public PaginationInfo PaginationInfo { get; set; }
-        public Dictionary<string, string> OrderingInfo { get; set; }
+        [SwaggerSchema("PaginationInfo", Description = "Pagination information for the result set.")]
+        public PaginationInfo? PaginationInfo { get; set; }
+
+        [SwaggerSchema("OrderingInfo", Description = "Ordering information for the result set.")]
+        public Dictionary<string, string>? OrderingInfo { get; set; }
     }
 }

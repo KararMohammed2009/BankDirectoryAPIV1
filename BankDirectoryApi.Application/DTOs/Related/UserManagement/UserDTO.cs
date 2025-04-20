@@ -1,19 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Swashbuckle.AspNetCore.Annotations;
 
 namespace BankDirectoryApi.Application.DTOs.Related.UserManagement
 {
+    /// <summary>
+    /// Data Transfer Object for User information.
+    /// </summary>
     public class UserDTO
     {
-        public string Id { get; set; }
-        public string UserName { get; set; }
-        public string Email { get; set; }
-        public string PhoneNumber { get; set; }
-        public IEnumerable<string> Roles { get; set; }
-        public Dictionary<string, string> Claims { get; set; }
+        [SwaggerSchema("The unique identifier of the user.", Nullable = false)]
+        public required string Id { get; set; }
+
+        [SwaggerSchema("The username of the user. Must be between 3 and 50 characters and can only contain letters, numbers, and underscores.", Nullable = false)]
+        public required string UserName { get; set; }
+
+        [SwaggerSchema("The email address of the user. Must be in a valid email format.", Nullable = false)]
+        public required string Email { get; set; }
+
+        [SwaggerSchema("The phone number of the user. Must be in a valid international phone number format if provided.")]
+        public string? PhoneNumber { get; set; }
+
+        [SwaggerSchema("The roles assigned to the user.")]
+        public IEnumerable<string>? RolesNames { get; set; }
+
+        [SwaggerSchema("Additional claims associated with the user.")]
+        public Dictionary<string, string>? Claims { get; set; }
     }
 }

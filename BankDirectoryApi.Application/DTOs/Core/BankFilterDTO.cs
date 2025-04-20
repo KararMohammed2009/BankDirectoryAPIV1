@@ -11,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Application.DTOs.Core
 {
+    /// <summary>
+    /// Data Transfer Object for filtering banks.
+    /// </summary>
     public class BankFilterDTO
     {
         [Filter(FilterType.Contains, typeof(Bank), nameof(Bank.Name))]
