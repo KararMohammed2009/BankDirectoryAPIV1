@@ -2,6 +2,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
+
+
+
 # Copy only solution and project files to restore dependencies
 COPY BankDirectoryAPI.sln ./
 COPY BankDirectoryAPI/BankDirectoryApi.API.csproj BankDirectoryAPI/
@@ -31,11 +34,17 @@ RUN dotnet publish "BankDirectoryAPI/BankDirectoryApi.API.csproj" -c Release -o 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS runtime
 WORKDIR /app
 
+RUN apk add --no-cache icu krb5-libs
+
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+
+
 # Copy published output from the build stage
 COPY --from=build /out .
 
 # Set ASP.NET Core to listen on all interfaces for Docker access
 ENV ASPNETCORE_URLS=http://0.0.0.0:5000
+
 
 # Expose the HTTP port
 EXPOSE 5000
@@ -43,6 +52,7 @@ EXPOSE 5000
 # Run the application
 EXPOSE 5000
 ENTRYPOINT ["dotnet", "BankDirectoryApi.API.dll"]
+
 
 #docker run -d -p 5000:5000 --name bankapi -e ASPNETCORE_URLS=http://0.0.0.0:5000 bankdirectoryapi
 #docker build -t bankdirectoryapi .

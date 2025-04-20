@@ -16,18 +16,12 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
     {
         private readonly IAuthenticationService _authenticationService;
         private readonly IActionGlobalMapper _actionGlobalMapper;
-        private readonly ISmsService _smsService;
-        private readonly IEmailService _emailService;
 
         public LoginController(IAuthenticationService authenticationService
-            ,IActionGlobalMapper actionGlobalMapper,
-            ISmsService smsService,
-            IEmailService emailService)
+            ,IActionGlobalMapper actionGlobalMapper)
         {
             _authenticationService = authenticationService;
             _actionGlobalMapper = actionGlobalMapper;
-            _smsService = smsService;
-            _emailService = emailService;
         }
 
         [HttpPost]

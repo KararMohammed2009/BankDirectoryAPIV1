@@ -8,8 +8,13 @@ using BankDirectoryApi;
 using System.Text;
 using BankDirectoryApi.Common.Extensions;
 using BankDirectoryApi.API.Filters;
+//using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+//var cultureInfo = CultureInfo.InvariantCulture;
+//CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+//CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Add services to the container.
 builder.Services.AddControllers(
