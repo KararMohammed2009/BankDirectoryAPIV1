@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using SendGrid.Helpers.Mail;
 using SendGrid;
 using BankDirectoryApi.Application.Interfaces.Related.ThirdParties;
+using Twilio;
 
 namespace BankDirectoryApi.Infrastructure.Services.ThirdParties
 {
@@ -19,6 +20,7 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties
         private readonly string _apiKey;
         private readonly string _fromEmail;
         private readonly string _fromName;
+        private readonly SendGridClient _sendGridClient;
         /// <summary>
         /// Constructor for TwilioEmailService.
         /// </summary>
@@ -41,6 +43,7 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties
                 "SENDGRID_FROM_NAME",
                 _configuration,
                 "Email:SendGrid:FromName", _logger).Value;
+            _sendGridClient = new SendGridClient(_apiKey);
         }
         /// <summary>
         /// Sends an email asynchronously using Twilio SendGrid.
@@ -69,11 +72,10 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties
                 
             try
             {
-                var client = new SendGridClient(_apiKey);
                 var from = new EmailAddress(_fromEmail, _fromName);
                 var toEmail = new EmailAddress(to);
                 var msg = MailHelper.CreateSingleEmail(from, toEmail, subject, plainTextContent, htmlContent);
-                var response = await client.SendEmailAsync(msg);
+                var response = await _sendGridClient.SendEmailAsync(msg);
                 var message =await  response.Body.ReadAsStringAsync();
                 if (!response.IsSuccessStatusCode)
                 {

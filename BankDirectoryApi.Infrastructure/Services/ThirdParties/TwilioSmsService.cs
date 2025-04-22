@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using Twilio;
+using Twilio.Clients;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
 
@@ -21,6 +22,7 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties
         private readonly string _twilioAuthToken;
         private readonly string _twilioFromNumber;
         private readonly ILogger<TwilioSmsService> _logger;
+        private readonly ITwilioRestClient _twilioClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TwilioSmsService"/> class.
@@ -30,7 +32,8 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties
         /// <exception cref="ArgumentException"></exception>
         public TwilioSmsService(
             IConfiguration configuration,
-            ILogger<TwilioSmsService> logger
+            ILogger<TwilioSmsService> logger,
+            ITwilioRestClient twilioClient
             )
         {
             _configuration = configuration;
@@ -50,6 +53,7 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties
                 logger).Value;
             
             _logger = logger;
+            _twilioClient = twilioClient;
         }
         /// <summary>
         /// Sends an SMS message to the specified phone number.
@@ -68,11 +72,12 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties
 
             try
             {
-                TwilioClient.Init(_twilioAccountSid, _twilioAuthToken);
+              
                 var theMessage = await MessageResource.CreateAsync(
                body: message,
                from: new PhoneNumber(_twilioFromNumber),
-               to: new PhoneNumber(phoneNumber));
+               to: new PhoneNumber(phoneNumber),
+               client:_twilioClient);
                 if (theMessage.ErrorCode != null)
                 {
                     _logger.LogError($"Failed to send SMS: {theMessage.ErrorMessage}");

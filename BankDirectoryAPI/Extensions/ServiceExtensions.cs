@@ -35,6 +35,8 @@ using BankDirectoryApi.Infrastructure.Services.ThirdParties;
 using BankDirectoryApi.API.Validators.Users;
 using BankDirectoryApi.Application.Interfaces.Related.ThirdParties.Verification;
 using BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification;
+using BankDirectoryApi.Common.Helpers;
+using Twilio.Clients;
 
 namespace BankDirectoryApi.API.Extensions
 {
@@ -145,6 +147,16 @@ namespace BankDirectoryApi.API.Extensions
             builder.Services.AddScoped<IEmailService, TwilioEmailService>();
             builder.Services.AddScoped<ISmsVerificationService, TwilioSmsVerificationService>();
             builder.Services.AddScoped<IEmailVerificationService, TwilioEmailVerificationService>();
+            builder.Services.AddSingleton<TwilioRestClient>(provider =>
+            {
+                var configuration = provider.GetRequiredService<IConfiguration>();
+                var logger = provider.GetRequiredService<ILogger<TwilioRestClient>>();
+
+                var accountSid = SecureVariablesHelper.GetSecureVariable("TWILIO_ACCOUNT_SID", configuration, "Sms:Twilio:AccountSid", logger).Value;
+                var authToken = SecureVariablesHelper.GetSecureVariable("TWILIO_AUTH_TOKEN", configuration, "Sms:Twilio:AuthToken", logger).Value;
+
+                return new TwilioRestClient(accountSid, authToken);
+            });
         }
 
         public static void AddTheUserServices(this WebApplicationBuilder builder)

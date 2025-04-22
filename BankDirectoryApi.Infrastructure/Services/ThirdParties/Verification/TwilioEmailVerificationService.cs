@@ -4,7 +4,9 @@ using BankDirectoryApi.Common.Helpers;
 using FluentResults;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Threading.Channels;
 using Twilio;
+using Twilio.Clients;
 using Twilio.Rest.Verify.V2.Service;
 
 namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
@@ -16,13 +18,15 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
         private readonly string _twilioAuthToken;
         private readonly string _serviceSid;
         private readonly ILogger<TwilioEmailVerificationService> _logger;
+        private readonly ITwilioRestClient _twilioClient;
         /// <summary>
         /// Constructor for TwilioEmailVerificationService.
         /// </summary>
         /// <param name="configuration"></param>
         /// <param name="logger"></param>
         public TwilioEmailVerificationService(IConfiguration configuration,
-            ILogger<TwilioEmailVerificationService> logger)
+            ILogger<TwilioEmailVerificationService> logger,
+            ITwilioRestClient twilioRestClient)
         {
             _configuration = configuration;
             _twilioAccountSid = SecureVariablesHelper.GetSecureVariable(
@@ -41,6 +45,7 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
                 logger).Value;
 
             _logger = logger;
+            _twilioClient = twilioRestClient;
         }
         /// <summary>
         /// Sends a verification code to the specified email address using Twilio.
@@ -55,11 +60,12 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
             try
             {
 
-                TwilioClient.Init(_twilioAccountSid, _twilioAuthToken);
+                
                 var verification = await VerificationResource.CreateAsync(
                    to: email,
                    channel: "email",
-                   pathServiceSid: _serviceSid
+                   pathServiceSid: _serviceSid,
+                   client: _twilioClient
                );
                 return Result.Ok();
             }
@@ -86,11 +92,11 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
                 return Result.Fail(validationResult.Errors);
             try
             {
-                TwilioClient.Init(_twilioAccountSid, _twilioAuthToken);
                 var verificationCheck = await VerificationCheckResource.CreateAsync(
                     to: email,
                     code: code,
-                    pathServiceSid: _serviceSid
+                    pathServiceSid: _serviceSid,
+                    client: _twilioClient
                 );
                 if (verificationCheck.Status == "approved")
                 {
