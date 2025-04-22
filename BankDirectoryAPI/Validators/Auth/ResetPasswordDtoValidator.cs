@@ -11,10 +11,9 @@ namespace BankDirectoryApi.API.Validators.Auth
             RuleFor(x => x.Email)
                 .NotEmpty().WithMessage("Email is required.")
                 .EmailAddress().WithMessage("Invalid email format.");
-
-            // Token: Required, not empty.
-            RuleFor(x => x.Token)
-                .NotEmpty().WithMessage("Token is required.");
+            // Code: Required, not empty.
+            RuleFor(x => x.Code)
+                .NotEmpty().WithMessage("Code is required.");
 
             // NewPassword: Required, must meet the password complexity requirements.
             RuleFor(x => x.NewPassword)

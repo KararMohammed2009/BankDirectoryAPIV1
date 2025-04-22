@@ -271,17 +271,7 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
                     .WithMetadata("ErrorCode", CommonErrors.OperationFailed)).IncludeIdentityErrors(result);
             }
 
-            result = await IdentityExceptionHelper.Execute(() => 
-            _userManager.AddToRolesAsync(user, model.RolesNames),_logger);
-            if (!result.Succeeded)
-            {
-
-                return Result.Fail(
-                   new Error($"Add User to Roles failed by UserManager<ApplicationUser>")
-                    .WithMetadata("ErrorCode", CommonErrors.OperationFailed)).IncludeIdentityErrors(result);
-               
-            }
-
+           
             return Result.Ok(_mapper.Map<UserDTO>(user));
         }
         /// <summary>

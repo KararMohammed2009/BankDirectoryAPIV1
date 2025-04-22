@@ -25,10 +25,6 @@ namespace BankDirectoryApi.Application.DTOs.Related.UserManagement
             )]
             public required string Password { get; set; }
 
-            [SwaggerSchema(
-                "Optional list of roles names for the user."
-            )]
-            public IEnumerable<string>? RolesNames { get; set; }
 
             [SwaggerSchema(
                 "User's phone number for registration. Must be in a valid international phone number format if provided. Either Email or Phone Number is required."

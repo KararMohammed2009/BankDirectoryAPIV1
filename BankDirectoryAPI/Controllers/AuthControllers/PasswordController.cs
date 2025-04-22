@@ -3,6 +3,7 @@ using BankDirectoryApi.API.Helpers;
 using BankDirectoryApi.API.Mappings.Interfaces;
 using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
 using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
+using FluentResults;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,7 +36,7 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
         /// <param name="model"></param>
         /// <returns>The result of the password change process.</returns>
         [Authorize]
-        [HttpPost("change-password")]
+        [HttpPost("ChangePassword")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO model)
         {
             var _clientInfo = ClientInfoHelper.GetClientInfo(HttpContext);
@@ -50,23 +51,22 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
         /// </summary>
         /// <param name="model"></param>
         /// <returns>The result of the password reset request.</returns>
-        [HttpPost("forgot-password")]
+        [HttpPost("ForgotPassword")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDTO model)
         {
             var result = await _passwordService.ForgotPasswordAsync(model.Email);
-            return _actionGlobalMapper.MapResultToApiResponse(result);
+            return _actionGlobalMapper.MapResultToApiResponse(result.ToResult());
         }
 
         /// <summary>
-        /// Handles the process of resetting the user's password using a token.
+        /// Handles the process of resetting the user's password using a reset code.
         /// </summary>
         /// <param name="model"></param>
         /// <returns>The result of the password reset process.</returns>
-        [HttpPost("reset-password")]
+        [HttpPost("ResetPassword")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO model)
         {
-            var _userId = UserHelper.GetUserId(HttpContext);
-            var result = await _passwordService.ResetPasswordAsync(_userId,model.Token,model.NewPassword);
+            var result = await _passwordService.ResetPasswordAsync(model.Email,model.Code,model.NewPassword);
             return _actionGlobalMapper.MapResultToApiResponse(result);
         }
 

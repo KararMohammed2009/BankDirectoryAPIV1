@@ -10,7 +10,7 @@ using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Net;
+using BankDirectoryApi.Application.Interfaces.Related.ThirdParties.Verification;
 
 namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization
 {
@@ -23,49 +23,24 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<PasswordService> _logger;
         private readonly IRefreshTokenService _refreshTokenService;
+        private readonly IEmailVerificationService _emailVerificationService;
         public PasswordService(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager
             ,ILogger<PasswordService> logger,
-IRefreshTokenService refreshTokenService)
+            IRefreshTokenService refreshTokenService,
+            IEmailVerificationService emailVerificationService
+            )
         {
 
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
             _refreshTokenService = refreshTokenService;
+            _emailVerificationService = emailVerificationService;
         }
 
-        /// <summary>
-        /// Generate a password reset token for a user
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <returns>The value of generated token</returns>
-        public async Task<Result<string>> GeneratePasswordResetTokenAsync(string userId)
-        {
-            var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId,"userId");
-            if (validationResult.IsFailed)
-                return validationResult.ToResult<string>();
-
-
-            var user = await IdentityExceptionHelper.Execute(()=>
-                _userManager.FindByIdAsync(userId),_logger);
-                if (user == null)
-                return Result.Fail(new Error($"Cannot find user by id({userId}) by UserManager<ApplicationUser>")
-                    .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
-
-            var result = await IdentityExceptionHelper.Execute(() => 
-            _userManager.GeneratePasswordResetTokenAsync(user),_logger);
-            if (string.IsNullOrWhiteSpace(result))
-            {
-                _logger.LogError($"Token generation failed by UserManager<ApplicationUser> for userId: {userId}");
-                return Result.Fail(new Error("Token generation failed by UserManager<ApplicationUser>")
-                    .WithMetadata("ErrorCode", CommonErrors.UnexpectedError));
-            }
-
-            return Result.Ok(result);
-         
-        }
+       
         /// <summary>
         /// Check if the password is correct and sign in the user
         /// </summary>
@@ -122,6 +97,18 @@ IRefreshTokenService refreshTokenService)
                return Result.Fail(new Error("Check Password SignIn failed by SignInManager<ApplicationUser>")
                     .WithMetadata("ErrorCode", CommonErrors.UnauthorizedAccess)).IncludeIdentityErrors(result);
             }
+            if (result.IsLockedOut)
+            {
+                return Result.Fail(new Error("User is locked out")
+                    .WithMetadata("ErrorCode", CommonErrors.UnauthorizedAccess));
+            }
+            if (result.IsNotAllowed)
+            {
+                return Result.Fail(new Error("User is not allowed to sign in")
+                    .WithMetadata("ErrorCode", CommonErrors.UnauthorizedAccess));
+            }
+
+
             return Result.Ok(user.Id);
         }
         /// <summary>
@@ -167,34 +154,48 @@ IRefreshTokenService refreshTokenService)
         /// <summary>
         /// Reset the password of a user
         /// </summary>
-        /// <param name="userId"></param>
-        /// <param name="token"></param>
+        /// <param name="email"></param>
+        /// <param name="code"></param>
         /// <param name="newPassword"></param>
-        /// <returns>The value of the user id</returns>
-        public async Task<Result<string>> ResetPasswordAsync(string userId, string token, string newPassword)
+        /// <returns>The value of the user id if successfully reseted</returns>
+        public async Task<Result<string>> ResetPasswordAsync(string email, string code, string newPassword)
         {
           
-               var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(userId, "userId");
+               var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(email, "email");
             if (validationResult.IsFailed)
                 return validationResult.ToResult<string>();
-            validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(token, "token");
+            validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(code, "code");
             if (validationResult.IsFailed)
                 return validationResult.ToResult<string>();
             validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(newPassword, "newPassword");
             if (validationResult.IsFailed)
                 return validationResult.ToResult<string>();
 
-            var user = await IdentityExceptionHelper.Execute(() => 
-                _userManager.FindByIdAsync(userId),_logger);
-                if (user == null) return
-                    Result.Fail(new Error($"Cannot find user by id({userId}) by UserManager<ApplicationUser>")
+            var user = await IdentityExceptionHelper.Execute(() =>
+            _userManager.FindByEmailAsync(email), _logger);
+            if (user == null)
+                return Result.Fail(new Error($"Cannot find user by email ({email}) by UserManager<ApplicationUser>")
                     .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
+          
+            var verificationResult = await _emailVerificationService.VerifyCodeAsync(user.Email!,code);
+            if (verificationResult.IsFailed)
+                return Result.Fail(verificationResult.Errors);
 
+           
+            var resetToken = await IdentityExceptionHelper.Execute(() =>
+                _userManager.GeneratePasswordResetTokenAsync(user), _logger);
+            if (string.IsNullOrEmpty(resetToken))
+            {
+                _logger.LogError($"Token generation failed by UserManager<ApplicationUser> for user id: {user.Id}");
+                return Result.Fail(new Error("Token generation failed by UserManager<ApplicationUser>")
+                    .WithMetadata("ErrorCode", CommonErrors.UnexpectedError));
+            }
             var result = await IdentityExceptionHelper.Execute(() => 
-            _userManager.ResetPasswordAsync(user, token, newPassword),_logger);
+            _userManager.ResetPasswordAsync(user, resetToken, newPassword),_logger);
                 if (!result.Succeeded)
                 return Result.Fail(new Error("Reset Password failed by UserManager<ApplicationUser>")
                     .WithMetadata("ErrorCode", CommonErrors.UnexpectedError)).IncludeIdentityErrors(result);
+
             return Result.Ok(user.Id);
 
         }
@@ -202,28 +203,24 @@ IRefreshTokenService refreshTokenService)
         /// Generate a password reset token for a user
         /// </summary>
         /// <param name="email"></param>
-        /// <returns>The value of reset token</returns>
-        public async Task<Result<string>> ForgotPasswordAsync(string email)
+        /// <returns>The result of the operation wether it was successful or not</returns>
+        public async Task<Result> ForgotPasswordAsync(string email)
         {
            
             var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(email, "email");
             if (validationResult.IsFailed)
-                return validationResult.ToResult<string>();
+                return Result.Fail(validationResult.Errors);
 
             var user = await IdentityExceptionHelper.Execute(() => 
             _userManager.FindByEmailAsync(email), _logger);
                 if (user == null)
-                return Result.Fail(new Error($"Cannot find user by email({email}) by UserManager<ApplicationUser>")
+                return Result.Fail(new Error($"Cannot find user by email ({email}) by UserManager<ApplicationUser>")
                     .WithMetadata("ErrorCode", CommonErrors.ResourceNotFound));
-            var token = await IdentityExceptionHelper.Execute(() => 
-            _userManager.GeneratePasswordResetTokenAsync(user), _logger);
-            if (string.IsNullOrEmpty(token))
-            {
-                _logger.LogError($"Token generation failed by UserManager<ApplicationUser> for email: {email}");
-                return Result.Fail(new Error("Token generation failed by UserManager<ApplicationUser>")
-                    .WithMetadata("ErrorCode", CommonErrors.UnexpectedError));
-            }
-            return Result.Ok(token);
+           
+            var result = await _emailVerificationService.SendVerificationCodeAsync(user.Email!);
+            if (result.IsFailed)
+                return Result.Fail(result.Errors);
+            return Result.Ok();
 
 
         }

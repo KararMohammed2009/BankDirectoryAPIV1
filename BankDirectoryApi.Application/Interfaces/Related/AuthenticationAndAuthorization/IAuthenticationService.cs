@@ -18,6 +18,13 @@ namespace BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAutho
         /// <returns>The result of the registration process, including authentication tokens.</returns>
         Task<Result<AuthDTO>> RegisterAsync(RegisterUserDTO model, ClientInfo clientInfo);
         /// <summary>
+        /// Registers a new user in the system by an admin.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="clientInfo"></param>
+        /// <returns>The result of the registration process, includeing user details.</returns>
+        Task<Result<UserDTO>> RegisterByAdminAsync(RegisterUserByAdminDTO model);
+        /// <summary>
         /// Logs in a user to the system.
         /// </summary>
         /// <param name="model"></param>

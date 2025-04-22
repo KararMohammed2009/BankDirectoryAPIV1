@@ -4,9 +4,9 @@ using FluentValidation;
 
 namespace BankDirectoryApi.API.Validators.Auth
 {
-    public class RegisterUserDtoValidator : AbstractValidator<RegisterUserDTO>
+    public class RegisterUserByAdminDtoValidator : AbstractValidator<RegisterUserByAdminDTO>
     {
-        public RegisterUserDtoValidator()
+        public RegisterUserByAdminDtoValidator()
         {
             // UserName: Optional, but if provided, must be between 3-50 characters and only letters, numbers, and underscores.
             RuleFor(x => x.UserName)
@@ -33,7 +33,10 @@ namespace BankDirectoryApi.API.Validators.Auth
                 .Matches(@"\d").WithMessage("Password must contain at least one number.")
                 .Matches(@"[\W_]").WithMessage("Password must contain at least one special character.");
 
-           
+            // Roles: Optional, if provided, should be a valid list.
+            RuleFor(x => x.RolesNames)
+                .Must(r => r == null || r.Any()).WithMessage("Roles must be a valid list or null.")
+                .When(x => x.RolesNames != null);
 
             // TwoFactorEnabled: No validation needed, since it's a boolean.
         }

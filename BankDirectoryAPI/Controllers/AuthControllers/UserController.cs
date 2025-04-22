@@ -62,9 +62,9 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
         /// <summary>
         /// Enables two-factor authentication (2FA) for the current user.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The result of the 2FA enabling process.</returns>
         [Authorize]
-        [HttpPost("enable-2fa")]
+        [HttpPost("Enable2fa")]
         public async Task<IActionResult> EnableTwoFactorAuthentication()
         {
             var _userId = UserHelper.GetUserId(HttpContext);
@@ -75,9 +75,9 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
         /// <summary>
         /// Disables two-factor authentication (2FA) for the current user.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The result of the 2FA disabling process.</returns>
         [Authorize]
-        [HttpPost("disable-2fa")]
+        [HttpPost("Disable2fa")]
         public async Task<IActionResult> DisableTwoFactorAuthentication()
         {
             var _userId = UserHelper.GetUserId(HttpContext);

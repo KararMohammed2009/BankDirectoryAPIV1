@@ -33,6 +33,8 @@ using BankDirectoryApi.API.Mappings.Classes;
 using BankDirectoryApi.Application.Interfaces.Related.ThirdParties;
 using BankDirectoryApi.Infrastructure.Services.ThirdParties;
 using BankDirectoryApi.API.Validators.Users;
+using BankDirectoryApi.Application.Interfaces.Related.ThirdParties.Verification;
+using BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification;
 
 namespace BankDirectoryApi.API.Extensions
 {
@@ -84,6 +86,7 @@ namespace BankDirectoryApi.API.Extensions
             builder.Services.AddValidatorsFromAssemblyContaining<LoginUserDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<LogoutUserDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserDtoValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserByAdminDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<UpdateUserDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<ChangePasswordDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<ResetPasswordDtoValidator>();
@@ -140,6 +143,8 @@ namespace BankDirectoryApi.API.Extensions
         {
             builder.Services.AddScoped<ISmsService, TwilioSmsService>();
             builder.Services.AddScoped<IEmailService, TwilioEmailService>();
+            builder.Services.AddScoped<ISmsVerificationService, TwilioSmsVerificationService>();
+            builder.Services.AddScoped<IEmailVerificationService, TwilioEmailVerificationService>();
         }
 
         public static void AddTheUserServices(this WebApplicationBuilder builder)

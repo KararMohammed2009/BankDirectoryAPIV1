@@ -80,7 +80,9 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
             var user = await _userService.CreateUserAsync(model);
            if(user.IsFailed)
                 return user.ToResult<AuthDTO>();
-
+            var roleAssignResult = await _roleService.AssignRoleAsync(user.Value.Id, "User");
+            if (roleAssignResult.IsFailed)
+                return roleAssignResult.ToResult<AuthDTO>();
             var userClaims = await _userService.GetUserCalimsAsync(user.Value.Id);
             if (userClaims.IsFailed)
                 return userClaims.ToResult<AuthDTO>();
@@ -105,6 +107,23 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                     SessionId = refreshTokenResult.Value.refreshTokenEntity.SessionId,
             };
            
+        }
+        public async Task<Result<UserDTO>> RegisterByAdminAsync(RegisterUserByAdminDTO model)
+        {
+            var validationResult = ValidationHelper.ValidateNullModel(model);
+            if (validationResult.IsFailed)
+                return validationResult.ToResult<UserDTO>();
+            var user = await _userService.CreateUserAsync(model);
+            if (user.IsFailed)
+                return user.ToResult<UserDTO>();
+            if (model.RolesNames !=null && model.RolesNames.Any())
+            foreach (var roleName in model.RolesNames)
+            {
+                var roleAssignResult = await _roleService.AssignRoleAsync(user.Value.Id, roleName);
+                if (roleAssignResult.IsFailed)
+                    return roleAssignResult.ToResult<UserDTO>();
+            }
+            return user;
         }
         /// <summary>
         /// Logs in a user using an external authentication provider.

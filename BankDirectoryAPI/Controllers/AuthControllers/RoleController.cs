@@ -34,7 +34,7 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
         /// </summary>
         /// <param name="model"></param>
         /// <returns>The result of the role assignment process.</returns>
-        [HttpPost("assign-role")]
+        [HttpPost("AssignRole")]
         public async Task<IActionResult> AssignRole([FromBody] RoleDTO model)
         {
             var result = await _roleService.AssignRoleAsync(model.UserId, model.RoleName);
@@ -45,7 +45,7 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
         /// </summary>
         /// <param name="model"></param>
         /// <returns>The result of the role removal process.</returns>
-        [HttpPost("remove-role")]
+        [HttpPost("RemoveRole")]
         public async Task<IActionResult> RemoveRole([FromBody] RoleDTO model)
         {
             var result = await _roleService.RemoveRoleAsync(model.UserId, model.RoleName);
