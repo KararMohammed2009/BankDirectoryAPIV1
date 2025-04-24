@@ -2,10 +2,8 @@
 using BankDirectoryApi.Common.Errors;
 using BankDirectoryApi.Common.Helpers;
 using FluentResults;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Threading.Channels;
-using Twilio;
+
 using Twilio.Clients;
 using Twilio.Rest.Verify.V2.Service;
 
@@ -13,37 +11,24 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
 {
     public class TwilioEmailVerificationService : IEmailVerificationService
     {
-        private readonly IConfiguration _configuration;
-        private readonly string _twilioAccountSid;
-        private readonly string _twilioAuthToken;
         private readonly string _serviceSid;
         private readonly ILogger<TwilioEmailVerificationService> _logger;
         private readonly ITwilioRestClient _twilioClient;
+
+
         /// <summary>
         /// Constructor for TwilioEmailVerificationService.
         /// </summary>
         /// <param name="configuration"></param>
         /// <param name="logger"></param>
-        public TwilioEmailVerificationService(IConfiguration configuration,
+        /// <param name="twilioRestClient"></param>
+        /// <param name="twilioSettings"></param>
+        public TwilioEmailVerificationService(
             ILogger<TwilioEmailVerificationService> logger,
-            ITwilioRestClient twilioRestClient)
+            ITwilioRestClient twilioRestClient,TwilioSettings twilioSettings)
         {
-            _configuration = configuration;
-            _twilioAccountSid = SecureVariablesHelper.GetSecureVariable(
-                "TWILIO_ACCOUNT_SID",
-                _configuration,
-                "Sms:Twilio:AccountSid",
-                logger).Value;
-            _twilioAuthToken = SecureVariablesHelper.GetSecureVariable("TWILIO_AUTH_TOKEN",
-                _configuration,
-                "Sms:Twilio:AuthToken",
-                logger).Value;
-            _serviceSid = SecureVariablesHelper.GetSecureVariable(
-                "TWILIO_VERIFICATION_SERVICE_SID",
-                _configuration,
-                "Verification:Twilio:ServiceSid",
-                logger).Value;
-
+         
+            _serviceSid = twilioSettings.VerificationServiceSid!;
             _logger = logger;
             _twilioClient = twilioRestClient;
         }
@@ -69,6 +54,25 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
                );
                 return Result.Ok();
             }
+            catch (Twilio.Exceptions.ApiException ex)
+            {
+                if (ex.Code == 20404) // Invalid email address
+                {
+                    return Result.Fail(new Error("Invalid email address.")
+                        .WithMetadata("ErrorCode", CommonErrors.InvalidInput));
+                }
+                else if (ex.Code == 20403) // Email address not verified
+                {
+                    return Result.Fail(new Error("Email address not verified.")
+                        .WithMetadata("ErrorCode", CommonErrors.InvalidInput));
+                }
+                else // Other Twilio API error
+                {
+                    _logger.LogError(ex, "Twilio error sending verification code to email: {Email}", email);
+                    return Result.Fail(new Error("Failed to send verification code.")
+                        .WithMetadata("ErrorCode", CommonErrors.ThirdPartyServiceError));
+                }
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending verification code to email: {Email}", email);
@@ -82,7 +86,7 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
         /// <param name="email"></param>
         /// <param name="code"></param>
         /// <returns>The result of the verification operation , true if the code is valid, false otherwise.</returns>
-        public async Task<Result<bool>> VerifyCodeAsync(string email, string code)
+        public async Task<Result<bool>> VerifyCodeAsync(string email, string code )
         {
             var validationResult = ValidationHelper.ValidateNullOrWhiteSpaceString(email, nameof(email));
             if (validationResult.IsFailed)
@@ -96,7 +100,11 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
                     to: email,
                     code: code,
                     pathServiceSid: _serviceSid,
-                    client: _twilioClient
+                    client: _twilioClient,
+                    verificationSid: null
+
+
+
                 );
                 if (verificationCheck.Status == "approved")
                 {
@@ -107,7 +115,27 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
                     return Result.Ok(false).WithSuccess(verificationCheck.Status);
                 }
             }
-            catch (Exception ex)
+            catch (Twilio.Exceptions.ApiException ex)
+            {
+                if (ex.Code == 20404) // Invalid email address
+                {
+                    return Result.Fail(new Error("Invalid email address.")
+                        .WithMetadata("ErrorCode", CommonErrors.InvalidInput));
+                }
+                else if (ex.Code == 20403) // Email address not verified
+                {
+                    return Result.Fail(new Error("Email address not verified.")
+                        .WithMetadata("ErrorCode", CommonErrors.InvalidInput));
+                }
+                else // Other Twilio API error
+                {
+                    _logger.LogError(ex, "Twilio error verifying code for email: {Email}", email);
+                    return Result.Fail(new Error("Failed to verify code.")
+                        .WithMetadata("ErrorCode", CommonErrors.ThirdPartyServiceError));
+                }
+            }
+
+            catch (Exception ex) // General exception
             {
                 _logger.LogError(ex, "Error verifying code for email: {Email}", email);
                 return Result.Fail(new Error("Failed to verify code.")

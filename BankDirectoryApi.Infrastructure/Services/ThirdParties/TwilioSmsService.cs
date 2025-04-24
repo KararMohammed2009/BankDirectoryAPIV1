@@ -2,10 +2,7 @@
 using BankDirectoryApi.Common.Errors;
 using BankDirectoryApi.Common.Helpers;
 using FluentResults;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Identity.Client;
-using Twilio;
 using Twilio.Clients;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
@@ -17,43 +14,27 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties
     /// </summary>
     public class TwilioSmsService : ISmsService
     {
-        private readonly IConfiguration _configuration;
-        private readonly string _twilioAccountSid;
-        private readonly string _twilioAuthToken;
-        private readonly string _twilioFromNumber;
+
         private readonly ILogger<TwilioSmsService> _logger;
         private readonly ITwilioRestClient _twilioClient;
+        private readonly string _fromNumber;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TwilioSmsService"/> class.
+        /// Constructor for TwilioSmsService.
         /// </summary>
-        /// <param name="configration"></param>
+        /// <param name="configuration"></param>
         /// <param name="logger"></param>
-        /// <exception cref="ArgumentException"></exception>
+        /// <param name="twilioClient"></param>
+        /// <param name="twilioSettings"></param>
         public TwilioSmsService(
-            IConfiguration configuration,
             ILogger<TwilioSmsService> logger,
-            ITwilioRestClient twilioClient
+            ITwilioRestClient twilioClient,
+            TwilioSettings twilioSettings
             )
         {
-            _configuration = configuration;
-            _twilioAccountSid = SecureVariablesHelper.GetSecureVariable(
-                "TWILIO_ACCOUNT_SID",
-                _configuration,
-                "Sms:Twilio:AccountSid",
-                logger).Value;
-            _twilioAuthToken = SecureVariablesHelper.GetSecureVariable("TWILIO_AUTH_TOKEN",
-                _configuration,
-                "Sms:Twilio:AuthToken",
-                logger).Value;
-            _twilioFromNumber = SecureVariablesHelper.GetSecureVariable(
-                "TWILIO_FROM_NUMBER",
-                _configuration,
-                "Sms:Twilio:FromNumber",
-                logger).Value;
-            
             _logger = logger;
             _twilioClient = twilioClient;
+            _fromNumber = twilioSettings.FromPhoneNumber!;
         }
         /// <summary>
         /// Sends an SMS message to the specified phone number.
@@ -72,12 +53,13 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties
 
             try
             {
-              
+                var fromNumber = new PhoneNumber(_fromNumber);
+                var toNumber = new PhoneNumber(phoneNumber);
                 var theMessage = await MessageResource.CreateAsync(
                body: message,
-               from: new PhoneNumber(_twilioFromNumber),
-               to: new PhoneNumber(phoneNumber),
-               client:_twilioClient);
+               from: fromNumber,
+               to: toNumber,
+               client: _twilioClient);
                 if (theMessage.ErrorCode != null)
                 {
                     _logger.LogError($"Failed to send SMS: {theMessage.ErrorMessage}");
@@ -87,9 +69,28 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties
 
                 return Result.Ok();
             }
+            catch (Twilio.Exceptions.ApiException ex)
+            {
+                if (ex.Code == 20404) // Invalid phone number
+                {
+                    return Result.Fail(new Error("Invalid phone number.")
+                        .WithMetadata("ErrorCode", CommonErrors.InvalidInput));
+                }
+                else if (ex.Code == 21608) // Phone number not verified
+                {
+                    return Result.Fail(new Error("Phone number not verified.")
+                        .WithMetadata("ErrorCode", CommonErrors.InvalidInput));
+                }
+                else
+                {
+                    _logger.LogError(ex, "Twilio error sending SMS to phone number: {PhoneNumber}", phoneNumber);
+                    return Result.Fail(new Error("Failed to send SMS.")
+                        .WithMetadata("ErrorCode", CommonErrors.ThirdPartyServiceError));
+                }
+            }
             catch (Exception ex)
             {
-               _logger.LogError(ex, "Error sending SMS to {PhoneNumber}", phoneNumber);
+                _logger.LogError(ex, "Error sending SMS to {PhoneNumber}", phoneNumber);
                 return Result.Fail(new Error("Failed to send SMS.")
                     .WithMetadata("ErrorCode", CommonErrors.ThirdPartyServiceError));
             }

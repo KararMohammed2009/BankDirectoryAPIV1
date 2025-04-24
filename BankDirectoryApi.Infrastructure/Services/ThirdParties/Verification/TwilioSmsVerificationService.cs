@@ -13,11 +13,8 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
     /// <summary>
     /// Service for sending SMS verification codes using Twilio.
     /// </summary>
-    public class TwilioSmsVerificationService:ISmsVerificationService
+    public class TwilioSmsVerificationService : ISmsVerificationService
     {
-        private readonly IConfiguration _configuration;
-        private readonly string _twilioAccountSid;
-        private readonly string _twilioAuthToken;
         private readonly string _serviceSid;
         private readonly ILogger<TwilioSmsVerificationService> _logger;
         private readonly ITwilioRestClient _twilioClient;
@@ -26,28 +23,18 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
         /// </summary>
         /// <param name="configuration"></param>
         /// <param name="logger"></param>
-        public TwilioSmsVerificationService(IConfiguration configuration,
+        /// <param name="twilioClient"></param>
+        /// <param name="twilioSettings"></param>
+        public TwilioSmsVerificationService(
             ILogger<TwilioSmsVerificationService> logger,
-              TwilioRestClient twilioClient)
+              ITwilioRestClient twilioClient, TwilioSettings twilioSettings)
         {
-            _configuration = configuration;
-            _twilioAccountSid = SecureVariablesHelper.GetSecureVariable(
-                "TWILIO_ACCOUNT_SID",
-                _configuration,
-                "Sms:Twilio:AccountSid",
-                logger).Value;
-            _twilioAuthToken = SecureVariablesHelper.GetSecureVariable("TWILIO_AUTH_TOKEN",
-                _configuration,
-                "Sms:Twilio:AuthToken",
-                logger).Value;
-            _serviceSid = SecureVariablesHelper.GetSecureVariable(
-                "TWILIO_VERIFICATION_SERVICE_SID",
-                _configuration,
-                "Verification:Twilio:ServiceSid",
-                logger).Value;
+
 
             _logger = logger;
             _twilioClient = twilioClient;
+            _serviceSid = twilioSettings.VerificationServiceSid!;
+
 
         }
         /// <summary>
@@ -68,14 +55,33 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
                     pathServiceSid: _serviceSid,
                     client: _twilioClient
                 );
-               
+
                 return Result.Ok();
+            }
+            catch (Twilio.Exceptions.ApiException ex)
+            {
+                if (ex.Code == 20404) // Invalid phone number
+                {
+                    return Result.Fail(new Error("Invalid phone number.")
+                        .WithMetadata("ErrorCode", CommonErrors.InvalidInput));
+                }
+                else if (ex.Code == 21608) // Phone number not verified
+                {
+                    return Result.Fail(new Error("Phone number not verified.")
+                        .WithMetadata("ErrorCode", CommonErrors.InvalidInput));
+                }
+                else
+                {
+                    _logger.LogError(ex, "Error sending verification code.");
+                    return Result.Fail(new Error("Error sending verification code.")
+                        .WithMetadata("ErrorCode", CommonErrors.ThirdPartyServiceError));
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending verification code.");
                 return Result.Fail(new Error("Error sending verification code.")
-                    .WithMetadata("ErrorCode",CommonErrors.ThirdPartyServiceError));
+                    .WithMetadata("ErrorCode", CommonErrors.ThirdPartyServiceError));
             }
         }
         /// <summary>
@@ -107,6 +113,25 @@ namespace BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification
                 else
                 {
                     return Result.Ok(false).WithSuccess(verificationCheck.Status);
+                }
+            }
+            catch (Twilio.Exceptions.ApiException ex)
+            {
+                if (ex.Code == 20404) // Invalid verification code
+                {
+                    return Result.Fail(new Error("Invalid verification code.")
+                        .WithMetadata("ErrorCode", CommonErrors.InvalidInput));
+                }
+                else if (ex.Code == 21608) // Phone number not verified
+                {
+                    return Result.Fail(new Error("Phone number not verified.")
+                        .WithMetadata("ErrorCode", CommonErrors.InvalidInput));
+                }
+                else
+                {
+                    _logger.LogError(ex, "Error verifying code.");
+                    return Result.Fail(new Error("Error verifying code.")
+                        .WithMetadata("ErrorCode", CommonErrors.ThirdPartyServiceError));
                 }
             }
             catch (Exception ex)

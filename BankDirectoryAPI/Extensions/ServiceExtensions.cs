@@ -31,12 +31,17 @@ using BankDirectoryApi.Domain.Entities.Identity;
 using BankDirectoryApi.API.Mappings.Interfaces;
 using BankDirectoryApi.API.Mappings.Classes;
 using BankDirectoryApi.Application.Interfaces.Related.ThirdParties;
-using BankDirectoryApi.Infrastructure.Services.ThirdParties;
 using BankDirectoryApi.API.Validators.Users;
 using BankDirectoryApi.Application.Interfaces.Related.ThirdParties.Verification;
-using BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification;
 using BankDirectoryApi.Common.Helpers;
 using Twilio.Clients;
+using SendGrid;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Configuration;
+using BankDirectoryApi.Infrastructure.Services.ThirdParties;
+using BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification;
 
 namespace BankDirectoryApi.API.Extensions
 {
@@ -143,20 +148,43 @@ namespace BankDirectoryApi.API.Extensions
         }
         public static void AddTheExternalServices(this WebApplicationBuilder builder)
         {
+            builder.Services.AddSingleton<ITwilioRestClient>(provider =>
+            {
+                var configuration = provider.GetRequiredService<IConfiguration>();
+                var logger = provider.GetRequiredService<ILogger<ITwilioRestClient>>();
+
+                var accountSid = SecureVariablesHelper.GetSecureVariable("Sms_Twilio_AccountSid", configuration, "Sms:Twilio:AccountSid", logger).Value;
+                var authToken = SecureVariablesHelper.GetSecureVariable("Sms_Twilio_AuthToken", configuration, "Sms:Twilio:AuthToken", logger).Value;
+
+                return new TwilioRestClient(accountSid, authToken);
+            });
+            builder.Services.AddSingleton<ISendGridClient>(provider =>
+            {
+                var configuration = provider.GetRequiredService<IConfiguration>();
+                var logger = provider.GetRequiredService<ILogger<ISendGridClient>>();
+
+                var accountSid = SecureVariablesHelper.GetSecureVariable("Email_SendGrid_ApiKey", configuration, "Email:SendGrid:ApiKey", logger).Value;
+
+                return new SendGridClient(accountSid);
+            });
+            builder.Services.AddSingleton<TwilioSettings>(provider => {
+                var configuration = provider.GetRequiredService<IConfiguration>();
+                var logger = provider.GetRequiredService<ILogger<TwilioSettings>>();
+                return new TwilioSettings
+                {
+                    FromEmail = SecureVariablesHelper.GetSecureVariable("Email_SendGrid_FromEmail", configuration, "Email:SendGrid:FromEmail", logger).Value,
+                    FromName = SecureVariablesHelper.GetSecureVariable("Email_SendGrid_FromName", configuration, "Email:SendGrid:FromName", logger).Value,
+                    FromPhoneNumber = SecureVariablesHelper.GetSecureVariable("Sms_Twilio_FromNumber", configuration, "Sms:Twilio:FromNumber", logger).Value,
+                    VerificationServiceSid = SecureVariablesHelper.GetSecureVariable("Verification_Twilio_ServiceSid", configuration, "Verification:Twilio:ServiceSid", logger).Value,
+                };
+            });
             builder.Services.AddScoped<ISmsService, TwilioSmsService>();
             builder.Services.AddScoped<IEmailService, TwilioEmailService>();
             builder.Services.AddScoped<ISmsVerificationService, TwilioSmsVerificationService>();
             builder.Services.AddScoped<IEmailVerificationService, TwilioEmailVerificationService>();
-            builder.Services.AddSingleton<TwilioRestClient>(provider =>
-            {
-                var configuration = provider.GetRequiredService<IConfiguration>();
-                var logger = provider.GetRequiredService<ILogger<TwilioRestClient>>();
+            
 
-                var accountSid = SecureVariablesHelper.GetSecureVariable("TWILIO_ACCOUNT_SID", configuration, "Sms:Twilio:AccountSid", logger).Value;
-                var authToken = SecureVariablesHelper.GetSecureVariable("TWILIO_AUTH_TOKEN", configuration, "Sms:Twilio:AuthToken", logger).Value;
 
-                return new TwilioRestClient(accountSid, authToken);
-            });
         }
 
         public static void AddTheUserServices(this WebApplicationBuilder builder)
@@ -189,6 +217,8 @@ namespace BankDirectoryApi.API.Extensions
             builder.Services.AddScoped<SignInManager<ApplicationUser>>();
             builder.Services.AddScoped<RoleManager<ApplicationRole>>();
             builder.Services.AddScoped<DbInitializer>();
+
+            
         }
       
         public static void AddTheSwagger(this WebApplicationBuilder builder)
@@ -248,8 +278,62 @@ namespace BankDirectoryApi.API.Extensions
         }
         public static void AddJwtAuth(this WebApplicationBuilder builder)
         {
+            using (var scope = builder.Services.BuildServiceProvider().CreateScope())
+            {
+                var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<JwtSettings>>();
+            var jwtSettings = new JwtSettings
+            {
+                SecretKey = SecureVariablesHelper.GetSecureVariable("BankDirectoryApi_JWT_SECRET", configuration, "JwtSettings:SecretKey", logger).Value,
+                Issuer = SecureVariablesHelper.GetSecureVariable("BankDirectoryApi_JWT_ISSUER", configuration, "JwtSettings:Issuer", logger).Value,
+                Audience = SecureVariablesHelper.GetSecureVariable("BankDirectoryApi_JWT_AUDIENCE", configuration, "JwtSettings:Audience", logger).Value,
+                AccessTokenExpirationHours = int.Parse(SecureVariablesHelper.GetSecureVariable("BankDirectoryApi_JWT_EXPIRATION_HOURS", configuration, "JwtSettings:ExpirationHours", logger).Value),
+            };
+            builder.Services.AddSingleton<JwtSettings>(provider =>
+            {
+                var configuration = provider.GetRequiredService<IConfiguration>();
+                var logger = provider.GetRequiredService<ILogger<JwtSettings>>();
+                return jwtSettings;
+            });
             // Add JWT Authentication and use authentication and authorization
-            builder.Services.AddJwtAuthentication(builder.Configuration);
+         
+              
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey));
+
+                builder.Services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = key,
+                        ValidIssuer = jwtSettings.Issuer,
+                        ValidAudience = jwtSettings.Audience,
+                        ClockSkew = TimeSpan.Zero, // Optional: disables clock skew
+                    };
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnTokenValidated = context =>
+                        {
+                            // Add logging here to inspect the token and validation results
+                            logger.LogInformation("Token validated: {Token}", context.SecurityToken);
+                            return Task.CompletedTask;
+                        },
+                        OnAuthenticationFailed = context =>
+                        {
+                            logger.LogError("Authentication failed: {Exception}", context.Exception);
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
+            }
         }
         public static void AddLimitRate(this WebApplicationBuilder builder)
         {

@@ -16,8 +16,8 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
     public class JwtTokenValidatorService : ITokenValidatorService
     {
 
-        private readonly IConfiguration _configuration;
         private readonly ILogger<JwtTokenValidatorService> _logger;
+        private readonly JwtSettings _jwtSettings;
 
         /// <summary>
         /// Constructor
@@ -25,11 +25,11 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         /// <param name="configuration"></param>
         /// <param name="logger"></param>
         public JwtTokenValidatorService(
-            IConfiguration configuration
-            ,ILogger<JwtTokenValidatorService> logger)
+          ILogger<JwtTokenValidatorService> logger, JwtSettings jwtSettings)
         {
-            _configuration = configuration;
+           
             _logger = logger;
+            _jwtSettings = jwtSettings;
         }
 
         /// <summary>
@@ -40,11 +40,8 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
         public async Task<Result<bool>> ValidateAccessTokenAsync(string accessToken)
         {
 
-            var jwtSecret = JwtHelper.GetJwtSecretKey(_configuration,_logger);
-            var jwtIssuer = JwtHelper.GetJwtIssuer(_configuration, _logger);
-            var jwtAudience = JwtHelper.GetJwtAudience(_configuration, _logger);
            
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret.Value));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
             
 
             
@@ -55,8 +52,8 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                     ValidateIssuer = true, 
                     ValidateAudience = true, 
                     ClockSkew = TimeSpan.Zero,
-                    ValidIssuer = jwtIssuer.Value,
-                    ValidAudience = jwtAudience.Value
+                    ValidIssuer = _jwtSettings.Issuer,
+                    ValidAudience = _jwtSettings.Audience,
                 };
             var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
             var validatedToken = await jwtSecurityTokenHandler.ValidateTokenAsync(accessToken, validationParameters);

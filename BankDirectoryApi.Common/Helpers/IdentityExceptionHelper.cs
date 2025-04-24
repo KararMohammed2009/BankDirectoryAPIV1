@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Infrastructure
 {
+    /// <summary>
+    /// Helper class for handling exceptions related to identity operations.
+    /// </summary>
     public static class IdentityExceptionHelper
     {
         /// <summary>

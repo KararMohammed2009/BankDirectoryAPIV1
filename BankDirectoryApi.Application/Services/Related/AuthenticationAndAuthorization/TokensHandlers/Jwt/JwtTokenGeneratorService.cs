@@ -18,29 +18,28 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
     /// </summary>
     public class JwtTokenGeneratorService : ITokenGeneratorService
     {
-        private readonly IConfiguration _configuration;
         private readonly IDateTimeProvider _dateTimeProvider;
         private readonly IGuidProvider _guidProvider;
         private readonly ILogger<JwtTokenGeneratorService> _logger;
+        private readonly JwtSettings _jwtSettings;
 
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="configuration"></param>
         /// <param name="dateTimeProvider"></param>
         /// <param name="guidProvider"></param>
         /// <param name="logger"></param>
+        /// <param name="jwtSettings"></param>
         public JwtTokenGeneratorService(
-            IConfiguration configuration
-            ,IDateTimeProvider dateTimeProvider,
+            IDateTimeProvider dateTimeProvider,
             IGuidProvider guidProvider,
-            ILogger<JwtTokenGeneratorService> logger)
+            ILogger<JwtTokenGeneratorService> logger, JwtSettings jwtSettings)
         {
             
-            _configuration = configuration;
             _dateTimeProvider = dateTimeProvider;
             _guidProvider = guidProvider;
             _logger = logger;
+            _jwtSettings = jwtSettings;
         }
 
         /// <summary>
@@ -89,18 +88,15 @@ namespace BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthori
                 }
             }
 
-            var jwtSecret = JwtHelper.GetJwtSecretKey(_configuration,_logger).Value;
-            var jwtIssuer = JwtHelper.GetJwtIssuer(_configuration,_logger).Value;
-            var jwtAudience = JwtHelper.GetJwtAudience(_configuration, _logger).Value;
-            var jwtExpirationHours = JwtHelper.GetJwtExpirationHours(_configuration, _logger).Value;
+         
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expires = _dateTimeProvider.UtcNow.Value.AddHours(jwtExpirationHours);
+            var expires = _dateTimeProvider.UtcNow.Value.AddHours(_jwtSettings.AccessTokenExpirationHours);
 
             var token = new JwtSecurityToken(
-                jwtIssuer,
-                jwtAudience,
+                _jwtSettings.Issuer,
+                _jwtSettings.Audience,
                 claims,
                 expires: expires,
                 signingCredentials: creds

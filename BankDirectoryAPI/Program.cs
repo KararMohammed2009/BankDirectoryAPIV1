@@ -31,6 +31,7 @@ builder.AddTheSwagger();
 
 builder.AddLimitRate();
 builder.AddTheCors();
+builder.AddTheExternalServices();
 builder.AddTheAuthentication();
 builder.AddTheAuthorization();
 builder.AddTheValidators();
@@ -38,7 +39,7 @@ builder.AddTheVersioning();
 builder.AddTheUserServices();
 builder.AddTheSerilogLogger();
 builder.AddJwtAuth();
-builder.AddTheExternalServices();
+
 
 var app = builder.Build();
 
@@ -53,8 +54,8 @@ if (builder.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 app.MapControllers();
-//app.InitializeDatabase();
+app.InitializeDatabase();
 app.Run();
 public partial class Program { }
