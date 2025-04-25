@@ -32,6 +32,22 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers
             _userService = userService;
             _actionGlobalMapper = actionGlobalMapper;
         }
+
+        /// <summary>
+        /// Retrieves all users based on the provided filter criteria.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The list of users that match the filter criteria.</returns>
+        [Authorize(Roles ="Admin")]
+        [HttpGet("All")]
+        public async Task<IActionResult> GetAllUsers([FromQuery] UserFilterDTO model,
+            CancellationToken cancellationToken)
+        {
+            var result = await _userService.GetAllUsersAsync(model, cancellationToken);
+            return _actionGlobalMapper.MapResultToApiResponse(result);
+        }
+
         /// <summary>
         /// Retrieves the current user's information based on the JWT token.
         /// </summary>

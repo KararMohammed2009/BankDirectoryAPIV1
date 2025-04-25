@@ -5,6 +5,9 @@ using BankDirectoryApi.Common.Errors;
 using BankDirectoryApi.Common.Extensions;
 using BankDirectoryApi.Common.Helpers;
 using BankDirectoryApi.Common.Services;
+using BankDirectoryApi.Domain.Classes.Pagination;
+using BankDirectoryApi.Domain.Classes.Specifications;
+using BankDirectoryApi.Domain.Entities;
 using BankDirectoryApi.Domain.Entities.Identity;
 using BankDirectoryApi.Infrastructure;
 using FluentResults;
@@ -62,17 +65,53 @@ namespace BankDirectoryApi.Application.Services.Related.UserManagement
             if (validationResult.IsFailed) return validationResult.ToResult<List<UserDTO>>();
 
             
-            var users = await IdentityExceptionHelper.Execute(() => _userManager.Users.ToListAsync(cancellationToken), _logger);
+
+            var users = await IdentityExceptionHelper.Execute(async () =>
+            {
+                var spec = new Specification<ApplicationUser>()
+                {
+                    Criteria = ExpressionFilterHelper.CreateFilter<ApplicationUser>(model),
+                    IsPagingEnabled = model.PaginationInfo != null,
+                    PageNumber = model.PaginationInfo?.PageNumber,
+                    PageSize = model.PaginationInfo?.PageSize,
+                    AsNoTracking = true,
+                };
+                var response = new PaginatedResponse<ApplicationUser>();
+                var query = _userManager.Users.AsQueryable();
+
+                if (model != null)
+                {
+                    query = query.Where(spec.Criteria);
+                }
+
+                if (spec.IsPagingEnabled && spec.PageNumber.HasValue && spec.PageSize.HasValue)
+                {
+                    query = query.Skip((spec.PageNumber.Value - 1) * spec.PageSize.Value)
+                        .Take(spec.PageSize.Value);
+                    response.Pagination = new PaginationInfo
+                    {
+                        PageNumber = spec.PageNumber.Value,
+                        PageSize = spec.PageSize.Value
+                    };
+                }
+
+                if (spec.AsNoTracking)
+                {
+                    query = query.AsNoTracking();
+                }
+                response.TotalItems = await query.CountAsync(cancellationToken);
+                response.Items = await query.ToListAsync(cancellationToken);
+                return response;
+            }, _logger);
             var roles = await IdentityExceptionHelper.Execute(() => _roleManager.Roles.ToListAsync(cancellationToken), _logger);
-            var usersDtos = _mapper.Map<List<UserDTO>>(users);
+            var usersDtos = _mapper.Map<List<UserDTO>>(users.Items);
             foreach (var item in usersDtos)
             {
-                var user = users.Find(o => o.Id == item.Id);
+                var user = users.Items.Find(o => o.Id == item.Id);
                 var userRoles = await IdentityExceptionHelper.Execute(() => _userManager.GetRolesAsync(user!), _logger);
                 item.RolesNames = userRoles;
             }
-            return Result.Ok( usersDtos);
-
+            return Result.Ok(usersDtos);
         }
         /// <summary>
         /// Retrieves a user by their ID.

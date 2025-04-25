@@ -20,14 +20,8 @@ namespace BankDirectoryApi.Application.DTOs.Related.UserManagement
         [SwaggerSchema("PhoneNumber", Description = "The phone number of the user. This is a partial match filter.")]
         public string? PhoneNumber { get; set; }
 
-        [Filter(FilterType.StartsWith, typeof(ApplicationRole), nameof(ApplicationRole.Name))]
-        [SwaggerSchema("RoleName", Description = "The name of the role assigned to the user. This is a partial match filter.")]
-        public string? RoleName { get; set; }
-
         [SwaggerSchema("PaginationInfo", Description = "Pagination information for the result set.")]
         public PaginationInfo? PaginationInfo { get; set; }
 
-        [SwaggerSchema("OrderingInfo", Description = "Ordering information for the result set.")]
-        public Dictionary<string, string>? OrderingInfo { get; set; }
     }
 }

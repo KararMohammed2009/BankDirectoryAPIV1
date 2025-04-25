@@ -71,7 +71,7 @@ namespace BankDirectoryApi.Common.Helpers
                     var valueProperty = Expression.Property(property, "Value");
                     condition = Expression.AndAlso(hasValueProperty, Expression.Equal(valueProperty, constant));
                 }
-
+                if(condition ==null)
                 switch (filterAttr?.Type)
                     {
                      
