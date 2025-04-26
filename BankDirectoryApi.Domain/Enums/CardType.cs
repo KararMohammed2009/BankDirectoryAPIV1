@@ -8,8 +8,11 @@ namespace BankDirectoryApi.Domain.Enums
 {
     public enum CardType
     {
-        Debit,
-        Credit,
-        Prepaid
+        Debit = 1,
+        Credit = 2,
+        Prepaid = 3,
+        Virtual = 4,
+        Gift = 5,
+        Business = 6
     }
 }

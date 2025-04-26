@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Identity;
 using BankDirectoryApi.Infrastructure.Repositories;
 using BankDirectoryApi.Infrastructure.Data;
 using FluentValidation;
-using BankDirectoryApi.API.Validators;
 using Asp.Versioning;
 using BankDirectoryApi.Common.Services;
 using BankDirectoryApi.Application.Services.Main;
@@ -25,13 +24,11 @@ using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthoriza
 using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization.TokensHandlers.Jwt;
 
 using Microsoft.OpenApi.Models;
-using BankDirectoryApi.API.Validators.Auth;
 using Serilog;
 using BankDirectoryApi.Domain.Entities.Identity;
 using BankDirectoryApi.API.Mappings.Interfaces;
 using BankDirectoryApi.API.Mappings.Classes;
 using BankDirectoryApi.Application.Interfaces.Related.ThirdParties;
-using BankDirectoryApi.API.Validators.Users;
 using BankDirectoryApi.Application.Interfaces.Related.ThirdParties.Verification;
 using BankDirectoryApi.Common.Helpers;
 using Twilio.Clients;
@@ -42,6 +39,11 @@ using System.Text;
 using System.Configuration;
 using BankDirectoryApi.Infrastructure.Services.ThirdParties;
 using BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification;
+using BankDirectoryApi.API.Validators.Related.Auth;
+using BankDirectoryApi.API.Validators.Core.Bank;
+using BankDirectoryApi.API.Validators.Core.Branch;
+using BankDirectoryApi.API.Validators.Core.ATM;
+using BankDirectoryApi.API.Validators.Core.Card;
 
 namespace BankDirectoryApi.API.Extensions
 {
@@ -89,7 +91,7 @@ namespace BankDirectoryApi.API.Extensions
         {
             // Register FluentValidation validators
 
-            #region Auth
+            #region Related
             builder.Services.AddValidatorsFromAssemblyContaining<LoginUserDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<LogoutUserDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserDtoValidator>();
@@ -102,10 +104,17 @@ namespace BankDirectoryApi.API.Extensions
             builder.Services.AddValidatorsFromAssemblyContaining<PaginationInfoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<RoleDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<UserFilterDtoValidator>();
-
             #endregion
+            #region Core
             builder.Services.AddValidatorsFromAssemblyContaining<BankDTOValidator>();
-
+            builder.Services.AddValidatorsFromAssemblyContaining<BankUpdateDTOValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<BranchDTOValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<BranchUpdateDTOValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<ATMDTOValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<ATMUpdateDTOValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<CardDTOValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<CardUpdateDTOValidator>();
+            #endregion  
 
 
         }

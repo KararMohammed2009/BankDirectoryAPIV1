@@ -1,4 +1,4 @@
-﻿using BankDirectoryApi.Application.DTOs.Core;
+﻿using BankDirectoryApi.Application.DTOs.Core.Bank;
 using BankDirectoryApi.Domain.Entities;
 using System;
 using System.Collections.Generic;

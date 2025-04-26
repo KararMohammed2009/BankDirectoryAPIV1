@@ -1,7 +1,7 @@
 ﻿using BankDirectoryApi.Application.DTOs.Related.UserManagement;
 using FluentValidation;
 
-namespace BankDirectoryApi.API.Validators.Users
+namespace BankDirectoryApi.API.Validators.Related.Auth
 {
     /// <summary>
     /// Validator for the UpdateUserDTO class.

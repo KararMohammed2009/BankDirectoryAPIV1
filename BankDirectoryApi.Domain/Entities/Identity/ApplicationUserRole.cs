@@ -7,16 +7,13 @@ using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Domain.Entities.Identity
 {
-    public class ApplicationRole :IdentityRole
+    public class ApplicationUserRole : IdentityUserRole<string> 
     {
 
-        public ApplicationRole()
-        {
-          
-        }
-        public ApplicationRole(string roleName) : this()
-        {
-            Name = roleName;
-        }
+        public ApplicationRole Role { get; set; } = null!;
+        public ApplicationUser User { get; set; } = null!;
+
+       
+
     }
 }

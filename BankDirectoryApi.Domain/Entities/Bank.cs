@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BankDirectoryApi.Domain.ValueObjects;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,11 +9,15 @@ namespace BankDirectoryApi.Domain.Entities
 {
     public class Bank
     {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Code { get; set; } = string.Empty; // Unique bank code
-        public string Website { get; set; } = string.Empty;
-        public string CustomerSupportNumber { get; set; } = string.Empty;
+        public required int Id { get; set; }
+        public required string Name { get; set; } = string.Empty;
+        public required string Code { get; set; } 
+        public string? Website { get; set; }
+        public string? CustomerSupportNumber { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+        public Address? Address { get; set; } 
+        public GeoCoordinate? GeoCoordinate { get; set; } 
 
         // Navigation properties
         public ICollection<Branch> Branches { get; set; } = new List<Branch>();

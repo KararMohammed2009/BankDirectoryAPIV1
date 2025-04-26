@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BankDirectoryApi.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,11 +9,12 @@ namespace BankDirectoryApi.Domain.Entities
 {
     public class Card
     {
-        public int Id { get; set; }
-        public int BankId { get; set; } // Foreign Key
-        public string Name { get; set; } = string.Empty;
-        public string Type { get; set; } = string.Empty; // Debit, Credit, etc.
-        public decimal AnnualFee { get; set; }
+        public required int Id { get; set; }
+        public required int BankId { get; set; } // Foreign Key
+        public required string Name { get; set; } 
+        public required CardType Type { get; set; }
+        public decimal? AnnualFee { get; set; }
+        public string? Description { get; set; }
 
         // Navigation Property
         public Bank Bank { get; set; } = null!;

@@ -1,15 +1,8 @@
 ﻿using BankDirectoryApi.Domain.Attributes;
-using BankDirectoryApi.Domain.Classes;
 using BankDirectoryApi.Domain.Classes.Pagination;
-using BankDirectoryApi.Domain.Entities;
 using BankDirectoryApi.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace BankDirectoryApi.Application.DTOs.Core
+namespace BankDirectoryApi.Application.DTOs.Core.Bank
 {
     /// <summary>
     /// Data Transfer Object for filtering banks.

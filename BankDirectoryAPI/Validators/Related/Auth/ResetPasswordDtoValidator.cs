@@ -1,7 +1,7 @@
 ﻿using BankDirectoryApi.Application.DTOs.Related.AuthenticationAndAuthorization;
 using FluentValidation;
 
-namespace BankDirectoryApi.API.Validators.Auth
+namespace BankDirectoryApi.API.Validators.Related.Auth
 {
     public class ResetPasswordDtoValidator : AbstractValidator<ResetPasswordDTO>
     {

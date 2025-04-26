@@ -1,7 +1,7 @@
 ﻿using BankDirectoryApi.Application.DTOs.Related.Communications;
 using FluentValidation;
 
-namespace BankDirectoryApi.API.Validators.Auth
+namespace BankDirectoryApi.API.Validators.Related.Auth
 {
     /// <summary>
     /// Validator for EmailConfirmationDTO.

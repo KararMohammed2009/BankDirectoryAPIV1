@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BankDirectoryApi.Domain.ValueObjects;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,10 +9,10 @@ namespace BankDirectoryApi.Domain.Entities
 {
     public class ATM
     {
-        public int Id { get; set; }
-        public int BankId { get; set; } // Foreign Key
-        public string Location { get; set; } = string.Empty;
-        public bool IsOperational { get; set; } = true;
+        public required int Id { get; set; }
+        public required int BankId { get; set; } // Foreign Key
+        public required GeoCoordinate? GeoCoordinate { get; set; }
+        public required bool IsOperational { get; set; }
 
         // Navigation Property
         public Bank Bank { get; set; } = null!;

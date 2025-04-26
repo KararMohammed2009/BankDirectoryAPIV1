@@ -6,10 +6,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using BankDirectoryApi.Application.DTOs.Core;
 using BankDirectoryApi.Application.Interfaces.Main;
 using BankDirectoryApi.Domain.Classes.Specifications;
 using BankDirectoryApi.Common.Helpers;
+using BankDirectoryApi.Application.DTOs.Core.Bank;
 
 namespace BankDirectoryApi.Application.Services.Main
 {

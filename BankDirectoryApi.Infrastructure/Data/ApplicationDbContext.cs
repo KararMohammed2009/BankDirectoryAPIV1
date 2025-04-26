@@ -1,30 +1,36 @@
 ﻿using BankDirectoryApi.Domain.Entities;
 using BankDirectoryApi.Domain.Entities.Identity;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BankDirectoryApi.Infrastructure.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
+    /// <summary>
+    /// ApplicationDbContext is the main database context for the application that inherits from IdentityDbContext (which provides identity features).
+    /// </summary>
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser,ApplicationRole,string>
     {
+       
+    
         public DbSet<Bank> Banks { get; set; } = null!;
         public DbSet<ATM> ATMs { get; set; } = null!;
         public DbSet<Card> Cards { get; set; } = null!;
         public DbSet<Branch> Branches { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
-        // Fix for CS7036: Pass the 'options' parameter to the base class constructor.
+
+
+
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         { }
-
+        public ApplicationDbContext()
+           
+        { }
+        /// <summary>
+        /// This method is called when the model for a derived context is being created.
+        /// </summary>
+        /// <param name="modelBuilder"></param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -32,24 +38,26 @@ namespace BankDirectoryApi.Infrastructure.Data
             ConfigureIdentity(modelBuilder); // Call to configure Identity
             ConfigureEntities(modelBuilder);
         }
+        /// <summary>
+        /// This method configures the Identity-related entities and their properties.
+        /// </summary>
+        /// <param name="modelBuilder"></param>
         private static void ConfigureIdentity(ModelBuilder modelBuilder)
         {
-            // Explicitly configure ApplicationUser
-            modelBuilder.Entity<ApplicationUser>(b =>
-            {
-                b.HasKey(u => u.Id);
-                b.Property(u => u.CreationDate).IsRequired();
-                // Add any other specific ApplicationUser configurations here
-            });
+            // Explicitly configure Identity
+         
 
-            // You might not need to reconfigure IdentityRole, but you can if needed
-            modelBuilder.Entity<ApplicationRole>(b =>
+            modelBuilder.Entity<ApplicationUser>(user =>
             {
-                b.HasKey(r => r.Id);
-                // Add any specific ApplicationRole configurations here
+                user.Property(u => u.CreationDate).IsRequired();
             });
+           
+
         }
-
+        /// <summary>
+        /// This method configures the entities and their relationships.
+        /// </summary>
+        /// <param name="modelBuilder"></param>
         private static void ConfigureEntities(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Branch>()
@@ -58,7 +66,7 @@ namespace BankDirectoryApi.Infrastructure.Data
             // Configure the relationship for RefreshToken
             modelBuilder.Entity<RefreshToken>()
                 .HasOne(rt => rt.User)
-                .WithMany()  // No explicit collection navigation property in ApplicationUser
+                .WithMany()  
                 .HasForeignKey(rt => rt.UserId);
         }
     }

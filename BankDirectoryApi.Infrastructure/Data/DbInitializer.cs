@@ -1,6 +1,6 @@
-﻿using BankDirectoryApi.Domain.Entities.Identity;
+﻿using BankDirectoryApi.Common.Services;
+using BankDirectoryApi.Domain.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace BankDirectoryApi.Infrastructure.Data
@@ -11,16 +11,19 @@ namespace BankDirectoryApi.Infrastructure.Data
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<DbInitializer> _logger;
+        private readonly IDateTimeProvider _dateTimeProvider;
 
         public DbInitializer(ApplicationDbContext context,
             RoleManager<ApplicationRole> roleManager, 
             UserManager<ApplicationUser> userManager,
+            IDateTimeProvider dateTimeProvider,
             ILogger<DbInitializer> logger)
         {
             _context = context;
             _roleManager = roleManager;
             _userManager = userManager;
             _logger = logger;
+            _dateTimeProvider = dateTimeProvider;
         }
 
         public async Task InitializeAsync()
@@ -60,15 +63,16 @@ namespace BankDirectoryApi.Infrastructure.Data
         {
             _logger.LogInformation("Seeding admin user...");
             // Check if the admin user exists
-            var adminUser = await _userManager.FindByEmailAsync("admin@bankdirectory.com");
-
+            var adminUser = await _userManager.FindByEmailAsync("admin@bankdirectoryapi.com");
+            
             if (adminUser == null)
             {
                 // Create the admin user
                 adminUser = new ApplicationUser
                 {
                     UserName = "admin",
-                    Email = "admin@bankdirectory.com",
+                    Email = "admin@bankdirectoryapi.com",
+                    CreationDate =_dateTimeProvider.UtcNow.Value,
                 };
 
                 var createResult = await _userManager.CreateAsync(adminUser, "Abc123$$");

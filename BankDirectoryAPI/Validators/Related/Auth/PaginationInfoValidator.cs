@@ -1,7 +1,7 @@
 ﻿using BankDirectoryApi.Domain.Classes.Pagination;
 using FluentValidation;
 
-namespace BankDirectoryApi.API.Validators.Auth
+namespace BankDirectoryApi.API.Validators.Related.Auth
 {
     public class PaginationInfoValidator : AbstractValidator<PaginationInfo>
     {

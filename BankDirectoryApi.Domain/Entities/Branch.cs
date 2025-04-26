@@ -11,9 +11,10 @@ namespace BankDirectoryApi.Domain.Entities
     {
         public int Id { get; set; }
         public int BankId { get; set; } // Foreign Key
-        public string Name { get; set; } = string.Empty;
-        public Address Address { get; set; } 
-        public string ContactNumber { get; set; } = string.Empty;
+        public required string Name { get; set; }
+        public Address? Address { get; set; } 
+        public GeoCoordinate? GeoCoordinate { get; set; }
+        public string? CustomerSupportNumber { get; set; }
 
         // Navigation Property
         public Bank Bank { get; set; } = null!;
