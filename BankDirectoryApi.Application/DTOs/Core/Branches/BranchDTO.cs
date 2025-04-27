@@ -1,7 +1,7 @@
 ﻿using BankDirectoryApi.Domain.ValueObjects;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace BankDirectoryApi.Application.DTOs.Core.Branch
+namespace BankDirectoryApi.Application.DTOs.Core.Branches
 {
     /// <summary>
     /// Data Transfer Object (DTO) representing a bank branch.

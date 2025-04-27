@@ -1,8 +1,8 @@
 ﻿using BankDirectoryApi.Domain.Attributes;
 using BankDirectoryApi.Domain.Classes.Pagination;
+using BankDirectoryApi.Domain.Entities;
 using BankDirectoryApi.Domain.Enums;
-
-namespace BankDirectoryApi.Application.DTOs.Core.Bank
+namespace BankDirectoryApi.Application.DTOs.Core.Banks
 {
     /// <summary>
     /// Data Transfer Object for filtering banks.

@@ -1,7 +1,7 @@
 ﻿using BankDirectoryApi.Domain.ValueObjects;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace BankDirectoryApi.Application.DTOs.Core.ATM
+namespace BankDirectoryApi.Application.DTOs.Core.ATMs
 {
     /// <summary>
     /// Data Transfer Object (DTO) representing an ATM.

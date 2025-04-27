@@ -59,8 +59,14 @@ namespace BankDirectoryApi.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Website = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CustomerSupportNumber = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Website = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CustomerSupportNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address_Street = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address_City = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address_State = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address_ZipCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    GeoCoordinate_Latitude = table.Column<double>(type: "float", nullable: true),
+                    GeoCoordinate_Longitude = table.Column<double>(type: "float", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -210,7 +216,8 @@ namespace BankDirectoryApi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     BankId = table.Column<int>(type: "int", nullable: false),
-                    Location = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    GeoCoordinate_Latitude = table.Column<double>(type: "float", nullable: true),
+                    GeoCoordinate_Longitude = table.Column<double>(type: "float", nullable: true),
                     IsOperational = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -232,11 +239,13 @@ namespace BankDirectoryApi.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     BankId = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Address_Street = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Address_City = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Address_State = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Address_ZipCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ContactNumber = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Address_Street = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address_City = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address_State = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address_ZipCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    GeoCoordinate_Latitude = table.Column<double>(type: "float", nullable: true),
+                    GeoCoordinate_Longitude = table.Column<double>(type: "float", nullable: true),
+                    CustomerSupportNumber = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -257,8 +266,9 @@ namespace BankDirectoryApi.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     BankId = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Type = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AnnualFee = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    Type = table.Column<int>(type: "int", nullable: false),
+                    AnnualFee = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {

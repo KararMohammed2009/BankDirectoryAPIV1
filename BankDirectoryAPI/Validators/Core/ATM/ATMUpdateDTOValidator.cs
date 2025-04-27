@@ -1,4 +1,4 @@
-﻿using BankDirectoryApi.Application.DTOs.Core.ATM;
+﻿using BankDirectoryApi.Application.DTOs.Core.ATMs;
 using FluentValidation;
 
 namespace BankDirectoryApi.API.Validators.Core.ATM

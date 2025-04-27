@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BankDirectoryApi.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250412110019_InitialCreate")]
+    [Migration("20250427202607_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -39,10 +39,6 @@ namespace BankDirectoryApi.Infrastructure.Migrations
                     b.Property<bool>("IsOperational")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Location")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("BankId");
@@ -63,7 +59,6 @@ namespace BankDirectoryApi.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CustomerSupportNumber")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -71,7 +66,6 @@ namespace BankDirectoryApi.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Website")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -90,8 +84,7 @@ namespace BankDirectoryApi.Infrastructure.Migrations
                     b.Property<int>("BankId")
                         .HasColumnType("int");
 
-                    b.Property<string>("ContactNumber")
-                        .IsRequired()
+                    b.Property<string>("CustomerSupportNumber")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -113,19 +106,21 @@ namespace BankDirectoryApi.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("AnnualFee")
+                    b.Property<decimal?>("AnnualFee")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("BankId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -399,7 +394,83 @@ namespace BankDirectoryApi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.OwnsOne("BankDirectoryApi.Domain.ValueObjects.GeoCoordinate", "GeoCoordinate", b1 =>
+                        {
+                            b1.Property<int>("ATMId")
+                                .HasColumnType("int");
+
+                            b1.Property<double>("Latitude")
+                                .HasColumnType("float");
+
+                            b1.Property<double>("Longitude")
+                                .HasColumnType("float");
+
+                            b1.HasKey("ATMId");
+
+                            b1.ToTable("ATMs");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ATMId");
+                        });
+
                     b.Navigation("Bank");
+
+                    b.Navigation("GeoCoordinate");
+                });
+
+            modelBuilder.Entity("BankDirectoryApi.Domain.Entities.Bank", b =>
+                {
+                    b.OwnsOne("BankDirectoryApi.Domain.ValueObjects.Address", "Address", b1 =>
+                        {
+                            b1.Property<int>("BankId")
+                                .HasColumnType("int");
+
+                            b1.Property<string>("City")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<string>("State")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<string>("Street")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<string>("ZipCode")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.HasKey("BankId");
+
+                            b1.ToTable("Banks");
+
+                            b1.WithOwner()
+                                .HasForeignKey("BankId");
+                        });
+
+                    b.OwnsOne("BankDirectoryApi.Domain.ValueObjects.GeoCoordinate", "GeoCoordinate", b1 =>
+                        {
+                            b1.Property<int>("BankId")
+                                .HasColumnType("int");
+
+                            b1.Property<double>("Latitude")
+                                .HasColumnType("float");
+
+                            b1.Property<double>("Longitude")
+                                .HasColumnType("float");
+
+                            b1.HasKey("BankId");
+
+                            b1.ToTable("Banks");
+
+                            b1.WithOwner()
+                                .HasForeignKey("BankId");
+                        });
+
+                    b.Navigation("Address");
+
+                    b.Navigation("GeoCoordinate");
                 });
 
             modelBuilder.Entity("BankDirectoryApi.Domain.Entities.Branch", b =>
@@ -439,10 +510,30 @@ namespace BankDirectoryApi.Infrastructure.Migrations
                                 .HasForeignKey("BranchId");
                         });
 
-                    b.Navigation("Address")
-                        .IsRequired();
+                    b.OwnsOne("BankDirectoryApi.Domain.ValueObjects.GeoCoordinate", "GeoCoordinate", b1 =>
+                        {
+                            b1.Property<int>("BranchId")
+                                .HasColumnType("int");
+
+                            b1.Property<double>("Latitude")
+                                .HasColumnType("float");
+
+                            b1.Property<double>("Longitude")
+                                .HasColumnType("float");
+
+                            b1.HasKey("BranchId");
+
+                            b1.ToTable("Branches");
+
+                            b1.WithOwner()
+                                .HasForeignKey("BranchId");
+                        });
+
+                    b.Navigation("Address");
 
                     b.Navigation("Bank");
+
+                    b.Navigation("GeoCoordinate");
                 });
 
             modelBuilder.Entity("BankDirectoryApi.Domain.Entities.Card", b =>

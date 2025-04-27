@@ -406,7 +406,6 @@ namespace BankDirectoryApi.API.Extensions
 
             // Register Automapper for dtos
             services.AddAutoMapper(typeof(BankProfile));
-            services.AddAutoMapper(typeof(BranchProfile));
             services.AddAutoMapper(typeof(BankWithBranchesProfile));
 
         }

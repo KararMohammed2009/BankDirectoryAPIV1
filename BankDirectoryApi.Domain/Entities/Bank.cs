@@ -14,8 +14,6 @@ namespace BankDirectoryApi.Domain.Entities
         public required string Code { get; set; } 
         public string? Website { get; set; }
         public string? CustomerSupportNumber { get; set; }
-        public double? Latitude { get; set; }
-        public double? Longitude { get; set; }
         public Address? Address { get; set; } 
         public GeoCoordinate? GeoCoordinate { get; set; } 
 

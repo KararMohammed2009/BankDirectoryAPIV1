@@ -1,7 +1,7 @@
 ﻿
 using BankDirectoryApi.API.Helpers;
 using BankDirectoryApi.API.Mappings.Interfaces;
-using BankDirectoryApi.Application.Services.Related.AuthenticationAndAuthorization;
+using BankDirectoryApi.Application.Interfaces.Related.AuthenticationAndAuthorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BankDirectoryApi.API.Controllers.AuthControllers.ExternalAuthProviders
@@ -13,7 +13,7 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers.ExternalAuthProviders
     [ApiController]
     public class GoogleController : ControllerBase
     {
-        private readonly AuthenticationService _authenticationService;
+        private readonly IAuthenticationService _authenticationService;
         private readonly string _providerName = "Google";
         private readonly IActionGlobalMapper _actionGlobalMapper;
         /// <summary>
@@ -21,7 +21,7 @@ namespace BankDirectoryApi.API.Controllers.AuthControllers.ExternalAuthProviders
         /// </summary>
         /// <param name="authenticationService"></param>
         /// <param name="actionGlobalMapper"></param>
-        public GoogleController(AuthenticationService authenticationService , IActionGlobalMapper actionGlobalMapper)
+        public GoogleController(IAuthenticationService authenticationService , IActionGlobalMapper actionGlobalMapper)
         {
             _actionGlobalMapper = actionGlobalMapper;
            _authenticationService = authenticationService;

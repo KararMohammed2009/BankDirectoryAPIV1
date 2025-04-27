@@ -62,6 +62,17 @@ namespace BankDirectoryApi.Infrastructure.Data
         {
             modelBuilder.Entity<Branch>()
                 .OwnsOne(b => b.Address);
+            modelBuilder.Entity<Branch>()
+                .OwnsOne(b => b.GeoCoordinate);
+            modelBuilder.Entity<Bank>()
+                .OwnsOne(b => b.Address);
+            modelBuilder.Entity<Bank>()
+                .OwnsOne(b => b.GeoCoordinate);
+            modelBuilder.Entity<ATM>()
+                .OwnsOne(a => a.GeoCoordinate);
+            modelBuilder.Entity<Card>()
+                .Property(c => c.AnnualFee)
+                .HasColumnType("decimal(18,2)"); // Specify the precision and scale for decimal type
 
             // Configure the relationship for RefreshToken
             modelBuilder.Entity<RefreshToken>()
