@@ -44,6 +44,7 @@ using BankDirectoryApi.API.Validators.Core.Bank;
 using BankDirectoryApi.API.Validators.Core.Branch;
 using BankDirectoryApi.API.Validators.Core.ATM;
 using BankDirectoryApi.API.Validators.Core.Card;
+using FluentValidation.AspNetCore;
 
 namespace BankDirectoryApi.API.Extensions
 {
@@ -89,9 +90,10 @@ namespace BankDirectoryApi.API.Extensions
         }
         public static void AddTheValidators(this WebApplicationBuilder builder)
         {
-            // Register FluentValidation validators
+            // Register FluentValidation validators  
+            builder.Services.AddFluentValidationAutoValidation();
 
-            #region Related
+            #region Related  
             builder.Services.AddValidatorsFromAssemblyContaining<LoginUserDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<LogoutUserDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserDtoValidator>();
@@ -105,18 +107,18 @@ namespace BankDirectoryApi.API.Extensions
             builder.Services.AddValidatorsFromAssemblyContaining<RoleDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<UserFilterDtoValidator>();
             #endregion
-            #region Core
+
+            #region Core  
             builder.Services.AddValidatorsFromAssemblyContaining<BankDTOValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<BankUpdateDTOValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<BankFilterDTOValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<BranchDTOValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<BranchUpdateDTOValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<ATMDTOValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<ATMUpdateDTOValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<CardDTOValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<CardUpdateDTOValidator>();
-            #endregion  
-
-
+            #endregion
         }
         public static void AddTheAuthentication(this WebApplicationBuilder builder)
         {

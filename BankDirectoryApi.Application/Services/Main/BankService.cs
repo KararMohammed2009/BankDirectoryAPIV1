@@ -54,7 +54,7 @@ namespace BankDirectoryApi.Application.Services.Main
             if (banksResult.IsFailed)
                 return banksResult.ToResult<PaginatedResponse<BankDTO>>();
             var banks = banksResult.Value;
-            var bankDTOs = _mapper.Map<List<BankDTO>>(banks);
+            var bankDTOs = _mapper.Map<List<BankDTO>>(banks.Items);
             var paginatedResult = banksResult.Value.To(bankDTOs);
             return Result.Ok(paginatedResult);
         }

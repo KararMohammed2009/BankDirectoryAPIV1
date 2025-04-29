@@ -14,7 +14,7 @@ namespace BankDirectoryApi.API.Extensions
                 Code = error.ErrorCode,
                 Message = error.ErrorMessage,
                 Field = error.PropertyName
-            }).ToList();
+            }).ToList();     
         }
         public static IActionResult ToBadRequest(this ValidationResult validationResult)
         {

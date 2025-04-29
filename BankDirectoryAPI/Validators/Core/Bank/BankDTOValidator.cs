@@ -16,7 +16,7 @@ namespace BankDirectoryApi.API.Validators.Core.Bank
             // Code Validation
             RuleFor(bank => bank.Code)
                 .NotEmpty().WithMessage("Code is required.")
-                .Matches(@"^[A-Z]{3,5}$").WithMessage("Code must be 3 to 5 uppercase letters.");
+                .Matches(@"^[A-Z]{3,8}$").WithMessage("Code must be 3 to 8 uppercase letters.");
             // Website Validation
             RuleFor(bank => bank.Website)
                 .Matches(@"^(http|https)://[^\s/$.?#].[^\s]*$").WithMessage("Website URL is invalid.")

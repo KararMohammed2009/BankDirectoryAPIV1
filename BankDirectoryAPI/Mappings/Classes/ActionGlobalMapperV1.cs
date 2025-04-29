@@ -31,7 +31,9 @@ namespace BankDirectoryApi.API.Mappings.Classes
         {
             if (result.IsSuccess)
             {
-                return new OkObjectResult(new ApiResponse<T>(result.Value, string.Empty, StatusCodes.Status200OK));
+                var response = new ApiResponse<T>(result.Value, string.Empty, StatusCodes.Status200OK);
+
+                return new OkObjectResult(response);
             }
 
             return HandleErrors(result.Errors);

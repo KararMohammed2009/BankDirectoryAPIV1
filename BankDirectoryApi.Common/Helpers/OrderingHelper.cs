@@ -20,7 +20,10 @@ namespace BankDirectoryApi.Common.Helpers
         public static List<Ordering<T>> GetOrderings<T>(Dictionary<string, string> orderingInfo)
         {
             var orderings = new List<Ordering<T>>();
-
+            if (orderingInfo == null || orderingInfo.Count == 0)
+            {
+                return orderings;
+            }
             foreach (var order in orderingInfo)
             {
                 var propertyName = order.Key;

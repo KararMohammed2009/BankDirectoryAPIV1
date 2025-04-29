@@ -2,6 +2,7 @@
 using BankDirectoryApi.Domain.Classes.Pagination;
 using BankDirectoryApi.Domain.Entities;
 using BankDirectoryApi.Domain.Enums;
+using Swashbuckle.AspNetCore.Annotations;
 namespace BankDirectoryApi.Application.DTOs.Core.Banks
 {
     /// <summary>
@@ -9,15 +10,21 @@ namespace BankDirectoryApi.Application.DTOs.Core.Banks
     /// </summary>
     public class BankFilterDTO
     {
+        [SwaggerSchema("The unique identifier of the bank.", Nullable = true)]
         [Filter(FilterType.Contains, typeof(Bank), nameof(Bank.Name))]
-        public string BankName { get; set; }
+        public string? BankName { get; set; }
 
-        [Filter(FilterType.Contains, typeof(Bank), nameof(Bank.Website))]
-        public string BankWebsite { get; set; }
+        [SwaggerSchema("The customer support phone number of the bank.", Nullable = true)]
+        [Filter(FilterType.Contains, typeof(Bank), nameof(Bank.CustomerSupportNumber))]
+        public string? CustomerSupportNumber { get; set; }
 
+        [SwaggerSchema("The code of the bank.", Nullable = true)]
         [Filter(FilterType.StartsWith, typeof(Bank), nameof(Bank.Code))]
-        public string BankCode { get; set; }
-        public PaginationInfo PaginationInfo { get; set; }
-        public Dictionary<string,string> OrderingInfo { get; set; }
+        public string? BankCode { get; set; }
+
+        [SwaggerSchema("the pagination information.", Nullable = true)]
+        public PaginationInfo? PaginationInfo { get; set; }
+        [SwaggerSchema("The ordering information.", Nullable = true)]
+        public Dictionary<string,string>? OrderingInfo { get; set; }
     }
 }

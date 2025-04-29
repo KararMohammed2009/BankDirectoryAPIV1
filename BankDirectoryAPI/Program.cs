@@ -17,11 +17,11 @@ var builder = WebApplication.CreateBuilder(args);
 //CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Add services to the container.
-builder.Services.AddControllers(
-    options =>
-    {
-        options.Filters.Add<CustomValidationFailureFilter>();
-    });
+builder.Services.AddScoped<CustomValidationFailureFilter>();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<CustomValidationFailureFilter>();
+});
 builder.Services.AddApplicationMappers();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
