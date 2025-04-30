@@ -8,6 +8,10 @@ using BankDirectoryApi;
 using System.Text;
 using BankDirectoryApi.Common.Extensions;
 using BankDirectoryApi.API.Filters;
+using Microsoft.AspNetCore.Mvc;
+using BankDirectoryApi.API.Models;
+using FluentResults;
+using System.Net;
 //using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,11 +21,7 @@ var builder = WebApplication.CreateBuilder(args);
 //CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Add services to the container.
-builder.Services.AddScoped<CustomValidationFailureFilter>();
-builder.Services.AddControllers(options =>
-{
-    options.Filters.Add<CustomValidationFailureFilter>();
-});
+builder.Services.AddControllers();
 builder.Services.AddApplicationMappers();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -36,9 +36,10 @@ builder.AddTheAuthentication();
 builder.AddTheAuthorization();
 builder.AddTheValidators();
 builder.AddTheVersioning();
+builder.AddJwtAuth();
 builder.AddTheUserServices();
 builder.AddTheSerilogLogger();
-builder.AddJwtAuth();
+
 
 
 var app = builder.Build();

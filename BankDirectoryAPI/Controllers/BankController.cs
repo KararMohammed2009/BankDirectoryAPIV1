@@ -1,12 +1,9 @@
 ﻿using Asp.Versioning;
-using BankDirectoryApi.API.Filters;
 using BankDirectoryApi.API.Mappings.Interfaces;
 using BankDirectoryApi.Application.DTOs.Core.Banks;
 using BankDirectoryApi.Application.Interfaces.Main;
-using BankDirectoryApi.Domain.Classes.Pagination;
 using FluentResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace BankDirectoryApi.API.Controllers
 {
@@ -16,7 +13,6 @@ namespace BankDirectoryApi.API.Controllers
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/Banks")]
     [ApiController]
-    [ServiceFilter(typeof(CustomValidationFailureFilter))]  
     public class BankController : Controller
     {
         private readonly IBankService _bankService;

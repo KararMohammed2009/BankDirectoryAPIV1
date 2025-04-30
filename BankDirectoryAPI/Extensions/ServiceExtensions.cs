@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using BankDirectoryApi.Application.Mappings;
 using BankDirectoryApi.API.Middleware;
 using AspNetCoreRateLimit;
-using BankDirectoryApi.Common.Extensions;
 using Microsoft.AspNetCore.Identity;
 using BankDirectoryApi.Infrastructure.Repositories;
 using BankDirectoryApi.Infrastructure.Data;
@@ -36,7 +35,6 @@ using SendGrid;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using System.Configuration;
 using BankDirectoryApi.Infrastructure.Services.ThirdParties;
 using BankDirectoryApi.Infrastructure.Services.ThirdParties.Verification;
 using BankDirectoryApi.API.Validators.Related.Auth;
@@ -45,6 +43,9 @@ using BankDirectoryApi.API.Validators.Core.Branch;
 using BankDirectoryApi.API.Validators.Core.ATM;
 using BankDirectoryApi.API.Validators.Core.Card;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Mvc;
+using BankDirectoryApi.API.Models;
+using System.Net;
 
 namespace BankDirectoryApi.API.Extensions
 {
@@ -52,7 +53,7 @@ namespace BankDirectoryApi.API.Extensions
     {
         public static void AddGlobalMappers(this IServiceCollection services)
         {
-            services.AddSingleton<IActionGlobalMapper,ActionGlobalMapperV1>();
+            services.AddScoped<IActionGlobalMapper,ActionGlobalMapperV1>();
         }
         public static void AddTheSerilogLogger(this WebApplicationBuilder builder)
         {
@@ -92,7 +93,23 @@ namespace BankDirectoryApi.API.Extensions
         {
             // Register FluentValidation validators  
             builder.Services.AddFluentValidationAutoValidation();
+            builder.Services.Configure<ApiBehaviorOptions>(options =>
+            {
+                options.InvalidModelStateResponseFactory = context =>
+                {
+                    var errors = context.ModelState
+                               .Where(x => x.Value?.Errors.Any() == true)
+                               .Select(x => new ApiError
+                               {
+                                   Field = x.Key,
+                                   Message = x.Value?.Errors.First().ErrorMessage ?? "Unknown error",
+                               })
+                               .ToList();
 
+                    return new BadRequestObjectResult(new
+                         ApiResponse<object>(errors, null, (int)HttpStatusCode.BadRequest));
+                };
+            });
             #region Related  
             builder.Services.AddValidatorsFromAssemblyContaining<LoginUserDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<LogoutUserDtoValidator>();
@@ -119,7 +136,10 @@ namespace BankDirectoryApi.API.Extensions
             builder.Services.AddValidatorsFromAssemblyContaining<CardDTOValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<CardUpdateDTOValidator>();
             #endregion
+
+           
         }
+     
         public static void AddTheAuthentication(this WebApplicationBuilder builder)
         {
            
@@ -302,8 +322,8 @@ namespace BankDirectoryApi.API.Extensions
             };
             builder.Services.AddSingleton<JwtSettings>(provider =>
             {
-                var configuration = provider.GetRequiredService<IConfiguration>();
-                var logger = provider.GetRequiredService<ILogger<JwtSettings>>();
+                //var configuration = provider.GetRequiredService<IConfiguration>();
+                //var logger = provider.GetRequiredService<ILogger<JwtSettings>>();
                 return jwtSettings;
             });
             // Add JWT Authentication and use authentication and authorization
@@ -409,6 +429,8 @@ namespace BankDirectoryApi.API.Extensions
             // Register Automapper for dtos
             services.AddAutoMapper(typeof(BankProfile));
             services.AddAutoMapper(typeof(BankWithBranchesProfile));
+            services.AddAutoMapper(typeof(BankWithATMsProfile));
+            services.AddAutoMapper(typeof(BankWithCardsProfile));
 
         }
 
