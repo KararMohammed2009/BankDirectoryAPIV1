@@ -1,6 +1,6 @@
 ﻿using Swashbuckle.AspNetCore.Annotations;
 
-namespace BankDirectoryApi.Application.DTOs.Core.Card
+namespace BankDirectoryApi.Application.DTOs.Core.Cards
 {
     /// <summary>
     /// Data Transfer Object (DTO) representing a card update.

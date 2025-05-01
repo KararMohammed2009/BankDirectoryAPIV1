@@ -10,13 +10,20 @@ namespace BankDirectoryApi.Application.DTOs.Core.Banks
     /// </summary>
     public class BankFilterDTO
     {
-        [SwaggerSchema("The unique identifier of the bank.", Nullable = true)]
+        [SwaggerSchema("The name of the bank.", Nullable = true)]
         [Filter(FilterType.Contains, typeof(Bank), nameof(Bank.Name))]
         public string? BankName { get; set; }
 
         [SwaggerSchema("The customer support phone number of the bank.", Nullable = true)]
         [Filter(FilterType.Contains, typeof(Bank), nameof(Bank.CustomerSupportNumber))]
         public string? CustomerSupportNumber { get; set; }
+        [SwaggerSchema("The geographical coordinates of the bank.", Nullable = true)]
+        [Filter(FilterType.Contains, typeof(Bank), nameof(Bank.GeoCoordinate))]
+        public string? GeoCoordinate { get; set; }
+
+        [SwaggerSchema("The address of the bank.", Nullable = true)]
+        [Filter(FilterType.Contains, typeof(Bank), nameof(Bank.Address))]
+        public string? Address { get; set; }
 
         [SwaggerSchema("The code of the bank.", Nullable = true)]
         [Filter(FilterType.StartsWith, typeof(Bank), nameof(Bank.Code))]

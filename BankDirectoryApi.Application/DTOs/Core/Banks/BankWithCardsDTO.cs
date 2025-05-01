@@ -1,4 +1,4 @@
-﻿using BankDirectoryApi.Application.DTOs.Core.Card;
+﻿using BankDirectoryApi.Application.DTOs.Core.Cards;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace BankDirectoryApi.Application.DTOs.Core.Banks

@@ -26,9 +26,8 @@ builder.Services.AddApplicationMappers();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddGlobalMappers();
-
+builder.AddTheSerilogLogger();
 builder.AddTheSwagger();
-
 builder.AddLimitRate();
 builder.AddTheCors();
 builder.AddTheExternalServices();
@@ -38,7 +37,7 @@ builder.AddTheValidators();
 builder.AddTheVersioning();
 builder.AddJwtAuth();
 builder.AddTheUserServices();
-builder.AddTheSerilogLogger();
+
 
 
 

@@ -129,15 +129,21 @@ namespace BankDirectoryApi.API.Extensions
             builder.Services.AddValidatorsFromAssemblyContaining<BankDTOValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<BankUpdateDTOValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<BankFilterDTOValidator>();
+
             builder.Services.AddValidatorsFromAssemblyContaining<BranchDTOValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<BranchUpdateDTOValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<BranchFilterDTOValidator>();
+
             builder.Services.AddValidatorsFromAssemblyContaining<ATMDTOValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<ATMUpdateDTOValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<ATMFilterDTOValidator>();
+
             builder.Services.AddValidatorsFromAssemblyContaining<CardDTOValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<CardUpdateDTOValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<CardFilterDTOValidator>();
             #endregion
 
-           
+
         }
      
         public static void AddTheAuthentication(this WebApplicationBuilder builder)
@@ -438,6 +444,9 @@ namespace BankDirectoryApi.API.Extensions
         {
             // Register application-layer services
             services.AddScoped<IBankService, BankService>();
+            services.AddScoped<IBranchService, BranchService>();
+            services.AddScoped<IATMService, ATMService>();
+            services.AddScoped<ICardService, CardService>();
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
             // Register Common Services
             services.AddScoped<IDateTimeProvider, DateTimeProvider>();

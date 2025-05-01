@@ -1,4 +1,4 @@
-﻿using BankDirectoryApi.Application.DTOs.Core.Card;
+﻿using BankDirectoryApi.Application.DTOs.Core.Cards;
 using FluentValidation;
 
 namespace BankDirectoryApi.API.Validators.Core.Card
